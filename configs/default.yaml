@@ -1,0 +1,28 @@
+# Structural configuration only.
+# Scientific thresholds and adaptive-routing cutoffs are experimental (v3 §8).
+# Do not invent those values here.
+
+project:
+  id: SIH26166
+  specification: "v3.0"
+
+paths:
+  data_raw: data/raw
+  data_interim: data/interim
+  data_processed: data/processed
+  data_external: data/external
+  manifests: data/manifests
+  outputs: outputs
+
+pipeline:
+  operations:
+    - ingest_product
+    - characterize_pair
+    - generate_representation
+    - match
+    - verify_matches
+    - select_control_points
+    - refine_points
+    - register
+    - evaluate
+    - export_result

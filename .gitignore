@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.env.*
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Scientific data — do not commit raw products unless explicitly permitted
+data/raw/
+data/interim/
+data/processed/
+data/external/
+*.tif
+*.tiff
+*.img
+*.cub
+*.jp2
+*.hdf
+*.h5
+*.lbl
+
+# Pipeline outputs
+outputs/
+
+# Secrets and local overrides
+*.pem
+*.key
+secrets/
+configs/local.yaml
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
