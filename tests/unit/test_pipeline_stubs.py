@@ -51,8 +51,6 @@ def test_unimplemented_scientific_operations_fail_closed(
     with pytest.raises(NotImplementedError):
         refine_points([], registration_pair)
     with pytest.raises(NotImplementedError):
-        evaluate(result, registration_pair)
-    with pytest.raises(NotImplementedError):
         export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
         io_export_result(result, registration_pair, tmp_path)
@@ -73,6 +71,20 @@ def test_select_control_points_is_implemented_and_fail_closed_on_empty(
     correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
     result = select_control_points(correspondences, registration_pair)
     assert result == []
+
+
+def test_evaluate_is_implemented_and_fail_closed_on_empty(
+    registration_pair: RegistrationPair,
+) -> None:
+    result = RegistrationResult(pair_id="pair-001")
+    evaluated = evaluate(result, registration_pair)
+    assert evaluated.metrics is not None
+    assert evaluated.metrics.rmse is None
+    assert evaluated.metrics.inlier_count is None
+    assert evaluated.metrics.inlier_ratio is None
+    assert evaluated.metrics.spatial_coverage is None
+    assert evaluated.metrics.control_point_count == 0
+    assert result.metrics is None
 
 
 def test_register_is_implemented_and_fail_closed_on_empty(
@@ -126,7 +138,10 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     registered = registration.register(registration_pair, [], correspondences)
     assert registered.transformation is None
     assert registered.correspondences is correspondences
-    with pytest.raises(NotImplementedError):
-        evaluation.evaluate(result, registration_pair)
+    evaluated = evaluation.evaluate(result, registration_pair)
+    assert evaluated.metrics is not None
+    assert evaluated.metrics.rmse is None
+    assert evaluated.metrics.inlier_count is None
+    assert evaluated.metrics.inlier_ratio is None
     with pytest.raises(NotImplementedError):
         io_exports.export_result(result, registration_pair, tmp_path)

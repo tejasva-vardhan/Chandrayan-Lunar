@@ -26,7 +26,7 @@ from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, Scien
 pytestmark = pytest.mark.wiring
 
 IMPLEMENTED_STAGES = frozenset(
-    {"verify_matches", "select_control_points", "register"}
+    {"verify_matches", "select_control_points", "register", "evaluate"}
 )
 UNIMPLEMENTED_STAGES = tuple(stage for stage in PIPELINE_STAGES if stage not in IMPLEMENTED_STAGES)
 
@@ -340,7 +340,7 @@ def test_implemented_register_runs_when_refine_is_injected(
     assert "refine_points" in calls
     assert "register" in calls
     assert "evaluate" in calls
-    assert "export_result" not in calls
+    assert "export_result" in calls
 
 
 def test_wrong_stage_return_type_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> None:
