@@ -1,25 +1,19 @@
-"""Spatially uniform control points. Owned by Shaiz.
+"""Spatially uniform control points. Owned per TEAM_MODULE_HANDOFF_V1.
 
 Pipeline import surface: select_control_points(correspondences, pair) -> list[ControlPoint].
 
 Spatial distribution is first-class (D-005). Do not keep only clustered
-top-confidence points.
+top-confidence points. The two-argument pipeline callable uses engineering
+grid/cap defaults (grid_bins=8, max-per-cell=1), not SIH or lunar-validated
+parameters.
 """
 
-from __future__ import annotations
+from src.control_points.select import select_control_points, select_control_points_with_settings
+from src.control_points.settings import ControlPointSettings, unvalidated_software_defaults
 
-from src.models.correspondence_set import CorrespondenceSet
-from src.models.registration_pair import RegistrationPair
-from src.models.registration_result import ControlPoint
-
-
-def select_control_points(
-    correspondences: CorrespondenceSet, pair: RegistrationPair
-) -> list[ControlPoint]:
-    """Select spatially distributed control points from verified correspondences."""
-    raise NotImplementedError(
-        f"select_control_points is not implemented. pair_id={pair.pair_id}"
-    )
-
-
-__all__ = ["select_control_points"]
+__all__ = [
+    "ControlPointSettings",
+    "select_control_points",
+    "select_control_points_with_settings",
+    "unvalidated_software_defaults",
+]
