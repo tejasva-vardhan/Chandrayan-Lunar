@@ -8,7 +8,8 @@ This repository is the team implementation of Smart India Hackathon 2026 problem
 
 **FACT**
 
-- Foundation only: documentation, canonical data contracts, pipeline interfaces, and tests for those contracts.
+- Foundation plus integration layer: documentation, canonical data contracts, module interfaces, pipeline orchestration, structural configuration, and wiring tests.
+- Scientific stages are not implemented. Default operations raise `NotImplementedError`.
 - No matcher, SPICE, sub-pixel, frontend, or HTTP scientific core is implemented yet.
 - Official SIH dataset and evaluator constraints are **pending/TBD**. Do not treat any local or public lunar product as the official SIH test set.
 
@@ -36,6 +37,7 @@ A lower-level source cannot silently override a higher-authority requirement.
 | Team work division & implementation plan | `docs/master/SIH26166_Team_Work_Division_and_Implementation_Plan.md` (PDF alongside) |
 | Recorded decisions D-001–D-014 | `docs/decisions/D-001_to_D-014.md` |
 | Interface freeze v1 | `docs/architecture/INTERFACE_FREEZE_V1.md` |
+| Team module handoff v1 | `docs/architecture/TEAM_MODULE_HANDOFF_V1.md` |
 | Official SIH guidelines / PS status | `docs/requirements/` |
 
 ## Team ownership
@@ -65,7 +67,7 @@ real lunar data → `LunarProduct` → SIFT baseline → `CorrespondenceSet` →
 
 ## Configuration
 
-Structural settings live in `configs/default.yaml`. Scientific thresholds and routing cutoffs are experimental and are not invented here.
+Structural settings live in `configs/default.yaml`. Slots exist for preprocessing, geometry, representation, matcher identity, verification, control points, refinement, registration, evaluation, and export. Scientific thresholds, routing cutoffs, and a final matcher are experimental and are not set here.
 
 ## Development setup
 
