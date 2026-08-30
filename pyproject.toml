@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +28,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "wiring: orchestration wiring tests using doubles; not scientific evidence",
+    "scientific: measured or synthetic scientific tests; not official SIH evidence",
 ]
 
 [tool.ruff]

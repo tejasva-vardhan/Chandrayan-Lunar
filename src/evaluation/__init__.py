@@ -1,20 +1,17 @@
-"""Independent evaluation. Owned by Shaiz.
+"""Independent evaluation. Owned per TEAM_MODULE_HANDOFF_V1 (Shaiz package).
 
 Pipeline import surface: evaluate(result, pair) -> RegistrationResult.
 
 Use result.correspondences as the canonical match collection.
-Do not invent metrics. Leave uncomputed RegistrationMetrics fields as None.
+Fill RegistrationMetrics only with values that can be computed from available
+data. Leave uncomputed fields as None. Do not invent RMSE, ratios, coverage,
+or counts.
+
+Metric formulas in this package are ENGINEERING IMPLEMENTATION DEFINITIONS.
+They are not official SIH evaluator definitions and are not lunar accuracy
+claims (D-011).
 """
 
-from __future__ import annotations
-
-from src.models.registration_pair import RegistrationPair
-from src.models.registration_result import RegistrationResult
-
-
-def evaluate(result: RegistrationResult, pair: RegistrationPair) -> RegistrationResult:
-    """Compute independent validation metrics when they are actually measured."""
-    raise NotImplementedError(f"evaluate is not implemented. pair_id={pair.pair_id}")
-
+from src.evaluation.evaluate import evaluate
 
 __all__ = ["evaluate"]
