@@ -25,6 +25,9 @@ from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, Scien
 
 pytestmark = pytest.mark.wiring
 
+IMPLEMENTED_STAGES = frozenset({"verify_matches"})
+UNIMPLEMENTED_STAGES = tuple(stage for stage in PIPELINE_STAGES if stage not in IMPLEMENTED_STAGES)
+
 STUBS: dict[str, Callable[..., Any]] = {
     "ingest_product": op_stubs.ingest_product,
     "characterize_pair": op_stubs.characterize_pair,
@@ -240,7 +243,7 @@ def test_default_pipeline_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> No
         ScientificPipeline().run(source_path, reference_path, output_dir)
 
 
-@pytest.mark.parametrize("fail_at", PIPELINE_STAGES)
+@pytest.mark.parametrize("fail_at", UNIMPLEMENTED_STAGES)
 def test_unimplemented_stage_fails_closed_and_is_not_skipped(
     fail_at: str,
     tmp_paths: tuple[Path, Path, Path],
@@ -268,6 +271,40 @@ def test_unimplemented_stage_fails_closed_and_is_not_skipped(
     assert fail_at in calls
     for later in PIPELINE_STAGES[fail_index + 1 :]:
         assert later not in calls
+
+
+def test_implemented_verify_matches_runs_then_later_stub_fails_closed(
+    tmp_paths: tuple[Path, Path, Path],
+) -> None:
+    source_path, reference_path, output_dir = tmp_paths
+    calls: list[str] = []
+    verify_index = PIPELINE_STAGES.index("verify_matches")
+
+    def wrap(name: str, fn: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            calls.append(name)
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    bound: dict[str, Callable[..., Any]] = {}
+    for index, name in enumerate(PIPELINE_STAGES):
+        if name == "verify_matches":
+            fn = STUBS[name]
+        elif index < verify_index:
+            fn = DOUBLES[name]
+        else:
+            fn = STUBS[name]
+        bound[name] = wrap(name, fn)
+
+    ops = PipelineOperations(**bound)  # type: ignore[arg-type]
+    with pytest.raises(NotImplementedError):
+        ScientificPipeline(ops).run(source_path, reference_path, output_dir)
+
+    assert "match" in calls
+    assert "verify_matches" in calls
+    assert "select_control_points" in calls
+    assert "refine_points" not in calls
 
 
 def test_wrong_stage_return_type_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> None:
