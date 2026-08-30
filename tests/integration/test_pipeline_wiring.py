@@ -25,7 +25,7 @@ from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, Scien
 
 pytestmark = pytest.mark.wiring
 
-IMPLEMENTED_STAGES = frozenset({"verify_matches"})
+IMPLEMENTED_STAGES = frozenset({"verify_matches", "select_control_points"})
 UNIMPLEMENTED_STAGES = tuple(stage for stage in PIPELINE_STAGES if stage not in IMPLEMENTED_STAGES)
 
 STUBS: dict[str, Callable[..., Any]] = {
@@ -273,7 +273,7 @@ def test_unimplemented_stage_fails_closed_and_is_not_skipped(
         assert later not in calls
 
 
-def test_implemented_verify_matches_runs_then_later_stub_fails_closed(
+def test_implemented_verify_and_control_points_run_then_later_stub_fails_closed(
     tmp_paths: tuple[Path, Path, Path],
 ) -> None:
     source_path, reference_path, output_dir = tmp_paths
@@ -289,7 +289,7 @@ def test_implemented_verify_matches_runs_then_later_stub_fails_closed(
 
     bound: dict[str, Callable[..., Any]] = {}
     for index, name in enumerate(PIPELINE_STAGES):
-        if name == "verify_matches":
+        if name in IMPLEMENTED_STAGES:
             fn = STUBS[name]
         elif index < verify_index:
             fn = DOUBLES[name]
@@ -304,7 +304,8 @@ def test_implemented_verify_matches_runs_then_later_stub_fails_closed(
     assert "match" in calls
     assert "verify_matches" in calls
     assert "select_control_points" in calls
-    assert "refine_points" not in calls
+    assert "refine_points" in calls
+    assert "register" not in calls
 
 
 def test_wrong_stage_return_type_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> None:
