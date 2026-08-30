@@ -14,7 +14,13 @@ import src.registration as registration
 import src.representation as representation
 import src.verification as verification
 from src.io import export_result as io_export_result
-from src.models import CorrespondenceSet, LunarProduct, RegistrationPair, RegistrationResult
+from src.models import (
+    ControlPoint,
+    CorrespondenceSet,
+    LunarProduct,
+    RegistrationPair,
+    RegistrationResult,
+)
 from src.pipeline.operations import (
     characterize_pair,
     evaluate,
@@ -48,8 +54,6 @@ def test_unimplemented_scientific_operations_fail_closed(
         generate_representation(registration_pair)
     with pytest.raises(NotImplementedError):
         match(registration_pair)
-    with pytest.raises(NotImplementedError):
-        refine_points([], registration_pair)
     with pytest.raises(NotImplementedError):
         export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
@@ -85,6 +89,19 @@ def test_evaluate_is_implemented_and_fail_closed_on_empty(
     assert evaluated.metrics.spatial_coverage is None
     assert evaluated.metrics.control_point_count == 0
     assert result.metrics is None
+
+
+def test_refine_points_is_implemented_and_fail_closed_on_empty(
+    registration_pair: RegistrationPair,
+) -> None:
+    assert refine_points([], registration_pair) == []
+    point = ControlPoint(source_xy=(5.0, 6.0), reference_xy=(7.0, 8.0), residual=0.3)
+    preserved = refine_points([point], registration_pair)
+    assert len(preserved) == 1
+    assert preserved[0].source_xy == point.source_xy
+    assert preserved[0].reference_xy == point.reference_xy
+    assert preserved[0].residual == point.residual
+    assert preserved[0].uncertainty is None
 
 
 def test_register_is_implemented_and_fail_closed_on_empty(
@@ -133,8 +150,8 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     assert verified.matches == []
     selected = control_points.select_control_points(correspondences, registration_pair)
     assert selected == []
-    with pytest.raises(NotImplementedError):
-        refinement.refine_points([], registration_pair)
+    refined = refinement.refine_points([], registration_pair)
+    assert refined == []
     registered = registration.register(registration_pair, [], correspondences)
     assert registered.transformation is None
     assert registered.correspondences is correspondences
