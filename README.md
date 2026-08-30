@@ -35,6 +35,7 @@ A lower-level source cannot silently override a higher-authority requirement.
 | Master Engineering & Research Specification v3.0 | `docs/master/SIH26166_Master_Engineering_Research_Spec_v3.md` |
 | Team work division & implementation plan | `docs/master/SIH26166_Team_Work_Division_and_Implementation_Plan.md` (PDF alongside) |
 | Recorded decisions D-001–D-014 | `docs/decisions/D-001_to_D-014.md` |
+| Interface freeze v1 | `docs/architecture/INTERFACE_FREEZE_V1.md` |
 | Official SIH guidelines / PS status | `docs/requirements/` |
 
 ## Team ownership

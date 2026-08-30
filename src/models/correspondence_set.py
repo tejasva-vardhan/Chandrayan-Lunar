@@ -8,6 +8,17 @@ from src.models.common import CorrespondenceStatus
 
 
 class Correspondence(BaseModel):
+    """One image-space correspondence.
+
+    source_xy and reference_xy are image pixel coordinates. Pixel-centre versus
+    pixel-corner origin is owned by ingestion/geometry and is not defined here.
+
+    confidence is an optional adapter-normalized value in [0, 1]. It is not the
+    raw native score or distance returned by a matcher. Leave None when a
+    meaningful normalization has not been defined. Do not add a raw score field
+    in this freeze.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     source_xy: tuple[float, float]
@@ -18,9 +29,10 @@ class Correspondence(BaseModel):
 
 
 class CorrespondenceSet(BaseModel):
-    """Unordered set of correspondences for one pair and one matcher identity.
+    """Canonical correspondence collection for one pair and one matcher identity.
 
-    The matcher identity is a label only. It does not select or endorse a final algorithm.
+    matches is the source of truth for correspondences. matcher_id is a label
+    only; it does not select or endorse a final algorithm.
     """
 
     model_config = ConfigDict(extra="forbid")
