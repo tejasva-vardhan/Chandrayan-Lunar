@@ -11,6 +11,7 @@ from src.pipeline.operations import (
     generate_representation,
     ingest_product,
     match,
+    preprocess,
     refine_points,
     register,
     select_control_points,
@@ -32,6 +33,8 @@ def test_all_scientific_operations_are_unimplemented(
     with pytest.raises(NotImplementedError):
         characterize_pair(source_product, reference_product)
     with pytest.raises(NotImplementedError):
+        preprocess(registration_pair)
+    with pytest.raises(NotImplementedError):
         generate_representation(registration_pair)
     with pytest.raises(NotImplementedError):
         match(registration_pair)
@@ -42,10 +45,10 @@ def test_all_scientific_operations_are_unimplemented(
     with pytest.raises(NotImplementedError):
         refine_points([], registration_pair)
     with pytest.raises(NotImplementedError):
-        register(registration_pair, [])
+        register(registration_pair, [], correspondences)
     with pytest.raises(NotImplementedError):
         evaluate(result, registration_pair)
     with pytest.raises(NotImplementedError):
-        export_result(result, tmp_path)
+        export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
-        io_export_result(result, tmp_path)
+        io_export_result(result, registration_pair, tmp_path)

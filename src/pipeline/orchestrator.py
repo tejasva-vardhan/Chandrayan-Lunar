@@ -7,32 +7,36 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import src.pipeline.operations as operations
 from src.io.exports import ExportManifest
 from src.models.correspondence_set import CorrespondenceSet
 from src.models.lunar_product import LunarProduct
 from src.models.registration_pair import RegistrationPair
 from src.models.registration_result import ControlPoint, RegistrationResult
-from src.pipeline import operations
 
 
 @dataclass(frozen=True)
 class PipelineOperations:
     ingest_product: Callable[[Path], LunarProduct]
     characterize_pair: Callable[[LunarProduct, LunarProduct], RegistrationPair]
+    preprocess: Callable[[RegistrationPair], RegistrationPair]
     generate_representation: Callable[[RegistrationPair], Any]
     match: Callable[[RegistrationPair, Any | None], CorrespondenceSet]
     verify_matches: Callable[[CorrespondenceSet, RegistrationPair], CorrespondenceSet]
     select_control_points: Callable[[CorrespondenceSet, RegistrationPair], list[ControlPoint]]
     refine_points: Callable[[list[ControlPoint], RegistrationPair], list[ControlPoint]]
-    register: Callable[[RegistrationPair, list[ControlPoint]], RegistrationResult]
+    register: Callable[
+        [RegistrationPair, list[ControlPoint], CorrespondenceSet], RegistrationResult
+    ]
     evaluate: Callable[[RegistrationResult, RegistrationPair], RegistrationResult]
-    export_result: Callable[[RegistrationResult, Path], ExportManifest]
+    export_result: Callable[[RegistrationResult, RegistrationPair, Path], ExportManifest]
 
 
 def default_operations() -> PipelineOperations:
     return PipelineOperations(
         ingest_product=operations.ingest_product,
         characterize_pair=operations.characterize_pair,
+        preprocess=operations.preprocess,
         generate_representation=operations.generate_representation,
         match=operations.match,
         verify_matches=operations.verify_matches,
@@ -45,9 +49,11 @@ def default_operations() -> PipelineOperations:
 
 
 class ScientificPipeline:
-    """Runs the logical operations in specification order.
+    """Runs the frozen operation order.
 
     HTTP is not used. Callers inject implementations; defaults raise NotImplementedError.
+    The verified CorrespondenceSet is passed to register and remains on the result
+    for evaluate/export. Do not fabricate scientific values in this module.
     """
 
     def __init__(self, ops: PipelineOperations | None = None) -> None:
@@ -62,12 +68,13 @@ class ScientificPipeline:
         source = self.ops.ingest_product(source_path)
         reference = self.ops.ingest_product(reference_path)
         pair = self.ops.characterize_pair(source, reference)
+        pair = self.ops.preprocess(pair)
         representation = self.ops.generate_representation(pair)
         correspondences = self.ops.match(pair, representation)
         verified = self.ops.verify_matches(correspondences, pair)
         control_points = self.ops.select_control_points(verified, pair)
         refined = self.ops.refine_points(control_points, pair)
-        registered = self.ops.register(pair, refined)
+        registered = self.ops.register(pair, refined, verified)
         evaluated = self.ops.evaluate(registered, pair)
-        manifest = self.ops.export_result(evaluated, output_dir)
+        manifest = self.ops.export_result(evaluated, pair, output_dir)
         return evaluated, manifest
