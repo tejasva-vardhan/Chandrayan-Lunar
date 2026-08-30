@@ -30,7 +30,7 @@ from src.pipeline.operations import (
 )
 
 
-def test_all_scientific_operations_are_unimplemented(
+def test_unimplemented_scientific_operations_fail_closed(
     tmp_path: Path,
     source_product: LunarProduct,
     reference_product: LunarProduct,
@@ -50,8 +50,6 @@ def test_all_scientific_operations_are_unimplemented(
     with pytest.raises(NotImplementedError):
         match(registration_pair)
     with pytest.raises(NotImplementedError):
-        verify_matches(correspondences, registration_pair)
-    with pytest.raises(NotImplementedError):
         select_control_points(correspondences, registration_pair)
     with pytest.raises(NotImplementedError):
         refine_points([], registration_pair)
@@ -63,6 +61,15 @@ def test_all_scientific_operations_are_unimplemented(
         export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
         io_export_result(result, registration_pair, tmp_path)
+
+
+def test_verify_matches_is_implemented_and_fail_closed_on_empty(
+    registration_pair: RegistrationPair,
+) -> None:
+    correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
+    result = verify_matches(correspondences, registration_pair)
+    assert result.matches == []
+    assert result.pair_id == correspondences.pair_id
 
 
 def test_owning_modules_fail_closed_with_the_same_callables(
@@ -96,8 +103,8 @@ def test_owning_modules_fail_closed_with_the_same_callables(
         representation.generate_representation(registration_pair)
     with pytest.raises(NotImplementedError):
         matching.match(registration_pair)
-    with pytest.raises(NotImplementedError):
-        verification.verify_matches(correspondences, registration_pair)
+    verified = verification.verify_matches(correspondences, registration_pair)
+    assert verified.matches == []
     with pytest.raises(NotImplementedError):
         control_points.select_control_points(correspondences, registration_pair)
     with pytest.raises(NotImplementedError):
