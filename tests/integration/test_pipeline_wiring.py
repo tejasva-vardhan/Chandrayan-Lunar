@@ -27,6 +27,7 @@ pytestmark = pytest.mark.wiring
 
 IMPLEMENTED_STAGES = frozenset(
     {
+        "characterize_pair",
         "verify_matches",
         "select_control_points",
         "refine_points",

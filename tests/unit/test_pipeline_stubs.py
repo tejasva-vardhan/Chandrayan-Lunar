@@ -38,16 +38,12 @@ from src.pipeline.operations import (
 
 def test_unimplemented_scientific_operations_fail_closed(
     tmp_path: Path,
-    source_product: LunarProduct,
-    reference_product: LunarProduct,
     registration_pair: RegistrationPair,
 ) -> None:
     result = RegistrationResult(pair_id="pair-001")
 
     with pytest.raises(NotImplementedError):
         ingest_product(tmp_path / "missing")
-    with pytest.raises(NotImplementedError):
-        characterize_pair(source_product, reference_product)
     with pytest.raises(NotImplementedError):
         preprocess(registration_pair)
     with pytest.raises(NotImplementedError):
@@ -58,6 +54,27 @@ def test_unimplemented_scientific_operations_fail_closed(
         export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
         io_export_result(result, registration_pair, tmp_path)
+
+
+def test_characterize_pair_is_implemented_and_does_not_invent_values(
+    source_product: LunarProduct,
+    reference_product: LunarProduct,
+) -> None:
+    pair = characterize_pair(source_product, reference_product)
+    assert isinstance(pair, RegistrationPair)
+    assert pair.source == source_product
+    assert pair.reference == reference_product
+    assert pair.characterization is not None
+    assert pair.characterization.gsd_ratio is None
+    assert pair.characterization.sun_angle_difference_degrees is None
+    assert pair.characterization.viewing_geometry_difference is None
+    assert pair.characterization.expected_overlap is None
+    assert pair.characterization.valid_pixel_ratio is None
+    assert pair.characterization.texture_contrast is None
+    assert pair.characterization.difficulty is None
+    assert pair.overlap_mask_uri is None
+    assert pair.characterization.sensor_pair == "OHRC/LRO_NAC"
+    assert pair.characterization.modality == "OHRC/LRO_NAC"
 
 
 def test_verify_matches_is_implemented_and_fail_closed_on_empty(
@@ -138,8 +155,9 @@ def test_owning_modules_fail_closed_with_the_same_callables(
 
     with pytest.raises(NotImplementedError):
         ingestion.ingest_product(tmp_path / "missing")
-    with pytest.raises(NotImplementedError):
-        geometry.characterize_pair(source_product, reference_product)
+    characterized = geometry.characterize_pair(source_product, reference_product)
+    assert characterized.characterization is not None
+    assert characterized.characterization.difficulty is None
     with pytest.raises(NotImplementedError):
         preprocessing.preprocess(registration_pair)
     with pytest.raises(NotImplementedError):
