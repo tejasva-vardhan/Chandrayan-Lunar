@@ -50,8 +50,6 @@ def test_unimplemented_scientific_operations_fail_closed(
     with pytest.raises(NotImplementedError):
         match(registration_pair)
     with pytest.raises(NotImplementedError):
-        select_control_points(correspondences, registration_pair)
-    with pytest.raises(NotImplementedError):
         refine_points([], registration_pair)
     with pytest.raises(NotImplementedError):
         register(registration_pair, [], correspondences)
@@ -70,6 +68,14 @@ def test_verify_matches_is_implemented_and_fail_closed_on_empty(
     result = verify_matches(correspondences, registration_pair)
     assert result.matches == []
     assert result.pair_id == correspondences.pair_id
+
+
+def test_select_control_points_is_implemented_and_fail_closed_on_empty(
+    registration_pair: RegistrationPair,
+) -> None:
+    correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
+    result = select_control_points(correspondences, registration_pair)
+    assert result == []
 
 
 def test_owning_modules_fail_closed_with_the_same_callables(
@@ -105,8 +111,8 @@ def test_owning_modules_fail_closed_with_the_same_callables(
         matching.match(registration_pair)
     verified = verification.verify_matches(correspondences, registration_pair)
     assert verified.matches == []
-    with pytest.raises(NotImplementedError):
-        control_points.select_control_points(correspondences, registration_pair)
+    selected = control_points.select_control_points(correspondences, registration_pair)
+    assert selected == []
     with pytest.raises(NotImplementedError):
         refinement.refine_points([], registration_pair)
     with pytest.raises(NotImplementedError):
