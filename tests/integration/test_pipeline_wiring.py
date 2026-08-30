@@ -26,7 +26,13 @@ from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, Scien
 pytestmark = pytest.mark.wiring
 
 IMPLEMENTED_STAGES = frozenset(
-    {"verify_matches", "select_control_points", "register", "evaluate"}
+    {
+        "verify_matches",
+        "select_control_points",
+        "refine_points",
+        "register",
+        "evaluate",
+    }
 )
 UNIMPLEMENTED_STAGES = tuple(stage for stage in PIPELINE_STAGES if stage not in IMPLEMENTED_STAGES)
 
@@ -307,10 +313,12 @@ def test_implemented_verify_and_control_points_run_then_later_stub_fails_closed(
     assert "verify_matches" in calls
     assert "select_control_points" in calls
     assert "refine_points" in calls
-    assert "register" not in calls
+    assert "register" in calls
+    assert "evaluate" in calls
+    assert "export_result" in calls
 
 
-def test_implemented_register_runs_when_refine_is_injected(
+def test_implemented_register_runs_with_real_refine_points(
     tmp_paths: tuple[Path, Path, Path],
 ) -> None:
     source_path, reference_path, output_dir = tmp_paths
@@ -325,8 +333,8 @@ def test_implemented_register_runs_when_refine_is_injected(
 
     bound: dict[str, Callable[..., Any]] = {}
     for name in PIPELINE_STAGES:
-        if name in IMPLEMENTED_STAGES or name == "refine_points":
-            fn = STUBS[name] if name in IMPLEMENTED_STAGES else DOUBLES[name]
+        if name in IMPLEMENTED_STAGES:
+            fn = STUBS[name]
         elif PIPELINE_STAGES.index(name) < PIPELINE_STAGES.index("verify_matches"):
             fn = DOUBLES[name]
         else:
