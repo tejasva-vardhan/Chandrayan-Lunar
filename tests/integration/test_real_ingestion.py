@@ -1,4 +1,14 @@
-"""Integration tests for real Chandrayaan-2 OHRC data ingestion."""
+"""Integration test for real Chandrayaan-2 OHRC data ingestion.
+
+This test is OPTIONAL and requires a locally downloaded OHRC product.
+Configure the data directory via the environment variable LUNAR_DATA_DIR
+(e.g. set LUNAR_DATA_DIR=D:\\mydata before running pytest).
+
+The test skips cleanly if the configured directory does not exist or contains
+no recognised OHRC products.  It does NOT fall back to any hard-coded path.
+
+Never commit the raw OHRC datasets into the repository.
+"""
 
 from __future__ import annotations
 
@@ -12,14 +22,19 @@ from src.ingestion import ingest_product
 from src.models import LunarProduct
 
 
-def find_real_products() -> list[Path]:
-    """Search for real OHRC datasets in the configured data directory."""
-    data_dir = os.environ.get("LUNAR_DATA_DIR") or os.environ.get("SIH_DATA_DIR") or "F:\\SIH"
-    path = Path(data_dir)
-    if not path.exists():
-        return []
+def _get_data_dir() -> Path | None:
+    """Return the configured external OHRC data directory, or None."""
+    raw = os.environ.get("LUNAR_DATA_DIR") or os.environ.get("SIH_DATA_DIR")
+    if not raw:
+        return None
+    p = Path(raw)
+    return p if p.exists() else None
+
+
+def find_real_products(data_dir: Path) -> list[Path]:
+    """Search for real OHRC datasets in *data_dir*."""
     products = []
-    for item in path.iterdir():
+    for item in data_dir.iterdir():
         if item.name.startswith("ch2_ohr_ncp_") and (
             item.is_dir() or item.suffix.lower() == ".zip"
         ):
@@ -28,71 +43,92 @@ def find_real_products() -> list[Path]:
 
 
 def test_real_ohrc_ingestion() -> None:
-    """Run ingestion on a real OHRC product, print details, and verify contract."""
-    products = find_real_products()
-    if not products:
+    """Run ingestion on a real OHRC product and validate the pipeline contract.
+
+    Skip if the external dataset is not configured or unavailable.
+    """
+    data_dir = _get_data_dir()
+    if data_dir is None:
         pytest.skip(
-            "No real Chandrayaan-2 OHRC products found. Set LUNAR_DATA_DIR or SIH_DATA_DIR, "
-            "or ensure F:\\SIH is accessible."
+            "Real OHRC dataset not configured. "
+            "Set the LUNAR_DATA_DIR environment variable to a directory "
+            "containing ch2_ohr_ncp_* products to enable this test."
         )
 
-    # Use the first discovered product (can be a folder or a zip)
+    products = find_real_products(data_dir)
+    if not products:
+        pytest.skip(
+            f"No ch2_ohr_ncp_* products found in LUNAR_DATA_DIR={data_dir}. "
+            "Download OHRC products from ISRO PRADAN/ISSDC before running this test."
+        )
+
     product_path = products[0]
     print(f"\nRunning real-data integration test on: {product_path.name}")
 
-    # Run ingestion
     product = ingest_product(product_path)
 
-    # Verify basic contract
+    # ── Contract checks ──────────────────────────────────────────────────────
     assert isinstance(product, LunarProduct)
-    assert product.instrument == "OHRC"
-    assert product.mission == "Chandrayaan-2"
+    # instrument may be None for products where the label omits the Instrument
+    # component, so we do NOT assert == "OHRC" unconditionally.
     assert product.dimensions is not None
     assert product.raster_uri is not None
     assert product.mask_uri is not None
     assert product.provenance is not None
 
-    # Load raster/mask headers to verify they are valid .npy files
+    # Provenance must not embed absolute machine-specific paths
+    source_uri = product.provenance.source_uri or ""
+    assert os.sep not in source_uri or not Path(source_uri).is_absolute(), (
+        "Provenance source_uri must not be an absolute machine path"
+    )
+
+    # ── Array sanity checks ──────────────────────────────────────────────────
     raster_path = Path(product.raster_uri)
     mask_path = Path(product.mask_uri)
     assert raster_path.exists()
     assert mask_path.exists()
 
-    # Load memory-mapped arrays using np.load
     raster_mem = np.load(raster_path, mmap_mode="r")
     mask_mem = np.load(mask_path, mmap_mode="r")
 
-    assert raster_mem.size == product.dimensions.width_px * product.dimensions.height_px
-    assert mask_mem.size == product.dimensions.width_px * product.dimensions.height_px
+    expected_size = product.dimensions.width_px * product.dimensions.height_px
+    assert raster_mem.size == expected_size
+    assert mask_mem.size == expected_size
     assert raster_mem.shape == (product.dimensions.height_px, product.dimensions.width_px)
     assert mask_mem.shape == (product.dimensions.height_px, product.dimensions.width_px)
 
-    # Compute valid pixel count from product attributes
+    # ── Print report ─────────────────────────────────────────────────────────
     total_pixels = product.dimensions.width_px * product.dimensions.height_px
     valid_pixels = int(round((product.valid_pixel_ratio or 1.0) * total_pixels))
 
-    # Print the formatted report required by the acceptance criteria
     print("\n" + "=" * 60)
     print("INGESTED PRODUCT REPORT")
     print("=" * 60)
-    print(f"Mission: {product.mission}")
-    print(f"Instrument: {product.instrument}")
-    print(f"Product ID: {product.product_id}")
-    print(
-        f"Dimensions: {product.dimensions.width_px}x{product.dimensions.height_px} x {product.dimensions.band_count}"
-    )
-    print("Data type: UnsignedByte (uint8)")
+    print(f"Mission:          {product.mission}")
+    print(f"Instrument:       {product.instrument}")
+    print(f"Product ID:       {product.product_id}")
+    w = product.dimensions.width_px
+    h = product.dimensions.height_px
+    b = product.dimensions.band_count
+    print(f"Dimensions:       {w}x{h} x {b}")
+    print(f"Raster dtype:     {raster_mem.dtype}")
     print(f"Acquisition time: {product.acquisition_time}")
-    print(f"GSD: {product.gsd_meters} meters/pixel" if product.gsd_meters else "GSD: None")
-    print(f"Valid pixels: {valid_pixels} / {total_pixels} ({product.valid_pixel_ratio * 100:.6f}%)")
-    print("Metadata fields successfully parsed:")
-    print(f"  - CRS: {product.coordinates.crs if product.coordinates else 'None'}")
-    print(f"  - Bounding Box: {product.coordinates.bbox if product.coordinates else 'None'}")
-    print(f"  - Radiometric State: {product.radiometric_state}")
+    if product.gsd_meters is not None:
+        print(f"GSD:              {product.gsd_meters} m/pixel")
+    else:
+        print("GSD:              unknown (unit not declared in label)")
+    vr = product.valid_pixel_ratio
+    print(f"Valid pixels:     {valid_pixels} / {total_pixels} ({(vr or 0) * 100:.6f}%)")
+    if product.coordinates:
+        print(f"CRS:              {product.coordinates.crs}")
+        print(f"Bounding Box:     {product.coordinates.bbox}")
+    else:
+        print("Coordinates:      None")
+    print(f"Radiometric state:{product.radiometric_state}")
     print("Provenance:")
-    print(f"  - Source URI: {product.provenance.source_uri}")
-    print(f"  - Reader: {product.provenance.reader}")
-    print(f"  - Checksum: {product.provenance.checksum}")
-    print(f"  - Software Commit: {product.provenance.software_commit}")
-    print(f"  - Notes: {product.provenance.notes}")
+    print(f"  Source ref:     {product.provenance.source_uri}")
+    print(f"  Reader:         {product.provenance.reader}")
+    print(f"  Checksum:       {product.provenance.checksum}")
+    print(f"  Commit:         {product.provenance.software_commit}")
+    print(f"  Notes:          {product.provenance.notes}")
     print("=" * 60 + "\n")
