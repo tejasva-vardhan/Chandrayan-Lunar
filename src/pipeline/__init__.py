@@ -13,9 +13,10 @@ from src.pipeline.operations import (
     select_control_points,
     verify_matches,
 )
-from src.pipeline.orchestrator import PipelineOperations, ScientificPipeline
+from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, ScientificPipeline
 
 __all__ = [
+    "PIPELINE_STAGES",
     "PipelineOperations",
     "ScientificPipeline",
     "characterize_pair",
