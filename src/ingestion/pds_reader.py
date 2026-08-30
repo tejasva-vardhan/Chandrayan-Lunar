@@ -19,6 +19,36 @@ _NAMESPACES = {
     "isda": "https://isda.issdc.gov.in/pds4/isda/v1",
 }
 
+# ── PDS4 data_type → (numpy dtype, bytes per element) ──────────────────────
+_PDS4_DTYPE_MAP: dict[str, tuple[np.dtype, int]] = {
+    # Unsigned integers
+    "unsignedbyte": (np.dtype("uint8"), 1),
+    "unsignedlsb2": (np.dtype("<u2"), 2),
+    "unsignedmsb2": (np.dtype(">u2"), 2),
+    "unsignedlsb4": (np.dtype("<u4"), 4),
+    "unsignedmsb4": (np.dtype(">u4"), 4),
+    # Signed integers
+    "signedbyte": (np.dtype("int8"), 1),
+    "signedlsb2": (np.dtype("<i2"), 2),
+    "signedmsb2": (np.dtype(">i2"), 2),
+    "signedlsb4": (np.dtype("<i4"), 4),
+    "signedmsb4": (np.dtype(">i4"), 4),
+    # Floating-point
+    "ieee754lsbsingle": (np.dtype("<f4"), 4),
+    "ieee754msbsingle": (np.dtype(">f4"), 4),
+    "ieee754lsbdouble": (np.dtype("<f8"), 8),
+    "ieee754msbdouble": (np.dtype(">f8"), 8),
+    # PDS3-style aliases still found in some PDS4 labels
+    "pc_real": (np.dtype("<f4"), 4),
+    "sun_integer": (np.dtype(">i2"), 2),
+    "sun_unsigned_integer": (np.dtype(">u2"), 2),
+}
+
+# Accepted unit strings that unambiguously mean metres
+_METRE_UNITS = frozenset({"m", "meter", "meters", "metre", "metres"})
+# Centimetre unit strings
+_CENTIMETRE_UNITS = frozenset({"cm", "centimeter", "centimeters", "centimetre", "centimetres"})
+
 
 def sanitize_filename(name: str) -> str:
     """Sanitize product ID to be a valid Windows/Unix filename."""
@@ -107,6 +137,82 @@ def extract_bbox(root: ET.Element) -> tuple[float, float, float, float] | None:
     return None
 
 
+def _parse_dtype(array_node: ET.Element) -> tuple[np.dtype, int] | None:
+    """
+    Parse the numeric data type from a PDS4 Array_2D_Image Element_Array node.
+
+    Returns (numpy_dtype, bytes_per_element) or None when the type is absent/unrecognised.
+    """
+    elem_array = array_node.find("pds:Element_Array", _NAMESPACES)
+    if elem_array is None:
+        return None
+    type_node = elem_array.find("pds:data_type", _NAMESPACES)
+    if type_node is None or not type_node.text:
+        return None
+    key = type_node.text.strip().lower().replace(" ", "").replace("_", "")
+    return _PDS4_DTYPE_MAP.get(key)
+
+
+def _parse_gsd(root: ET.Element) -> float | None:
+    """
+    Parse GSD from the PDS4 label, converting to metres only when the unit is explicit.
+
+    Returns None if the value is absent or the unit is unknown.
+    """
+    gsd_node = root.find(".//isda:Product_Parameters/isda:pixel_resolution", _NAMESPACES)
+    if gsd_node is None or not gsd_node.text:
+        return None
+
+    raw_text = gsd_node.text.strip()
+    try:
+        value = float(raw_text)
+    except ValueError:
+        return None
+
+    unit_attr = (gsd_node.get("unit") or "").strip().lower()
+    if not unit_attr:
+        # No unit information in the node — do not assume metres.
+        return None
+
+    if unit_attr in _METRE_UNITS:
+        return value
+    if unit_attr in _CENTIMETRE_UNITS:
+        return value / 100.0
+
+    # Unknown unit — report as unknown rather than silently guessing.
+    return None
+
+
+def _parse_special_constants(array_node: ET.Element) -> set[float] | None:
+    """
+    Parse NoData / special constant values from a PDS4 Array_2D_Image node.
+
+    Returns a set of numeric values that the label declares as invalid/NoData,
+    or None if the label does not define any special constants.
+    """
+    sc_node = array_node.find("pds:Special_Constants", _NAMESPACES)
+    if sc_node is None:
+        return None
+    nodata_values: set[float] = set()
+    for tag in (
+        "pds:missing_constant",
+        "pds:invalid_constant",
+        "pds:no_data_constant",
+        "pds:saturated_constant",
+        "pds:high_instrument_saturation",
+        "pds:low_instrument_saturation",
+        "pds:high_representation_saturation",
+        "pds:low_representation_saturation",
+    ):
+        node = sc_node.find(tag, _NAMESPACES)
+        if node is not None and node.text:
+            try:
+                nodata_values.add(float(node.text.strip()))
+            except ValueError:
+                pass
+    return nodata_values if nodata_values else None
+
+
 def parse_metadata_from_xml(xml_content: bytes) -> dict:
     """Parse metadata from PDS4 XML label bytes."""
     root = ET.fromstring(xml_content)
@@ -119,7 +225,7 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
     mission_node = root.find(".//pds:Investigation_Area/pds:name", _NAMESPACES)
     mission = mission_node.text.strip() if mission_node is not None and mission_node.text else None
 
-    # Instrument
+    # ── FIX 1: instrument — no silent OHRC default ──────────────────────────
     instrument = None
     components = root.findall(".//pds:Observing_System/pds:Observing_System_Component", _NAMESPACES)
     for comp in components:
@@ -132,17 +238,13 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
         )
         if is_instrument:
             if name_node is not None and name_node.text:
-                # Standardize name (e.g. "orbiter high resolution camera" -> "OHRC")
                 raw_name = name_node.text.strip()
+                # Normalise known OHRC descriptions to the canonical abbreviation.
                 if "high resolution camera" in raw_name.lower() or "ohrc" in raw_name.lower():
                     instrument = "OHRC"
                 else:
                     instrument = raw_name
-                break
-
-    # If instrument is still not found, fallback to searching for isda parameters
-    if not instrument:
-        instrument = "OHRC"  # default to OHRC for this project context
+            break  # first Instrument component wins; leave None if name is missing
 
     # Acquisition Time
     time_node = root.find(".//pds:Time_Coordinates/pds:start_date_time", _NAMESPACES)
@@ -152,20 +254,23 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
     proc_node = root.find(".//pds:Primary_Result_Summary/pds:processing_level", _NAMESPACES)
     radiometric_state = proc_node.text.strip() if proc_node is not None and proc_node.text else None
 
-    # GSD
-    gsd_node = root.find(".//isda:Product_Parameters/isda:pixel_resolution", _NAMESPACES)
-    gsd_meters = None
-    if gsd_node is not None and gsd_node.text:
-        try:
-            gsd_meters = float(gsd_node.text)
-        except ValueError:
-            pass
+    # ── FIX 4: GSD — unit-validated conversion ──────────────────────────────
+    gsd_meters = _parse_gsd(root)
 
     # Dimensions
     width = None
     height = None
+    dtype_info: tuple[np.dtype, int] | None = None
+    nodata_values: set[float] | None = None
+
     array_node = root.find(".//pds:Array_2D_Image", _NAMESPACES)
     if array_node is not None:
+        # ── FIX 3: parse dtype from PDS4 Element_Array ─────────────────────
+        dtype_info = _parse_dtype(array_node)
+
+        # ── FIX 2: parse NoData constants from PDS4 Special_Constants ──────
+        nodata_values = _parse_special_constants(array_node)
+
         axis_arrays = array_node.findall("pds:Axis_Array", _NAMESPACES)
         for axis in axis_arrays:
             name_node = axis.find("pds:axis_name", _NAMESPACES)
@@ -219,6 +324,9 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
         "coordinates": coordinates,
         "img_filename": img_filename,
         "expected_md5": expected_md5,
+        # carry through for use by the streaming writer
+        "dtype_info": dtype_info,
+        "nodata_values": nodata_values,
     }
 
 
@@ -296,11 +404,11 @@ def ingest_from_pds(source: Path) -> LunarProduct:
 
         def img_stream_factory():
             return z.open(img_zip_path)
+
     elif source.is_dir():
-        # Directory ingestion
-        # Find XML file
+        # Directory ingestion — find the observational XML label
         xml_paths = list(source.rglob("*.xml"))
-        # Filter for those under a 'data' directory and avoid browse/geometry files
+        # Prefer files under a 'data' directory; avoid browse/geometry products
         data_xml_paths = []
         for p in xml_paths:
             parts_lower = [part.lower() for part in p.parts]
@@ -344,13 +452,11 @@ def ingest_from_pds(source: Path) -> LunarProduct:
         metadata = parse_metadata_from_xml(xml_content)
         img_filename = metadata.get("img_filename")
 
-        # Locate img file
+        # Locate the binary image file
         img_path = None
         if img_filename:
-            # Try exact path relative to source
             img_path = xml_path.parent / img_filename
             if not img_path.exists():
-                # Search rglob
                 img_paths = list(source.rglob(img_filename))
                 if img_paths:
                     img_path = img_paths[0]
@@ -364,8 +470,9 @@ def ingest_from_pds(source: Path) -> LunarProduct:
 
         def img_stream_factory():
             return open(img_path, "rb")
+
     else:
-        # Input is direct XML file
+        # Direct XML file path supplied
         if source.suffix.lower() == ".xml":
             with open(source, "rb") as f:
                 xml_content = f.read()
@@ -373,15 +480,30 @@ def ingest_from_pds(source: Path) -> LunarProduct:
             img_filename = metadata.get("img_filename")
             img_path = source.parent / img_filename if img_filename else None
             if img_path is None or not img_path.exists():
-                # Check for same name with .img suffix
                 img_path = source.with_suffix(".img")
             if not img_path.exists():
                 raise FileNotFoundError(f"Could not locate image file for label: {source}")
 
             def img_stream_factory():
                 return open(img_path, "rb")
+
         else:
             raise ValueError(f"Unsupported source format: {source}")
+
+    # ── FIX 3: resolve dtype from PDS4 metadata ─────────────────────────────
+    dtype_info: tuple[np.dtype, int] | None = metadata.get("dtype_info")
+    if dtype_info is None:
+        raise ValueError(
+            "Cannot determine pixel data type: PDS4 label does not specify "
+            "Element_Array/data_type. Refusing to guess."
+        )
+    raster_dtype, bytes_per_pixel = dtype_info
+
+    # ── FIX 2: resolve NoData mask strategy from PDS4 metadata ──────────────
+    nodata_values: set[float] | None = metadata.get("nodata_values")
+    # nodata_values == None  → label defines no special constants → all pixels valid
+    # nodata_values == set() → (shouldn't happen after our parser, but defensive)
+    # nodata_values == {v,…} → those specific values are invalid
 
     # Build output paths
     product_id = metadata["product_id"]
@@ -398,71 +520,96 @@ def ingest_from_pds(source: Path) -> LunarProduct:
     if height <= 0 or width <= 0:
         raise ValueError(f"Parsed invalid dimensions: {height}x{width}")
 
-    # Memory-mapped streaming write
-    # Using np.lib.format.open_memmap to write directly to disk with small memory footprint
+    # Memory-mapped streaming write directly to disk
     out_raster = np.lib.format.open_memmap(
-        str(raster_path), mode="w+", dtype=np.uint8, shape=(height, width)
+        str(raster_path), mode="w+", dtype=raster_dtype, shape=(height, width)
     )
     out_mask = np.lib.format.open_memmap(
         str(mask_path), mode="w+", dtype=bool, shape=(height, width)
     )
 
-    chunk_height = 5000
+    chunk_rows = max(1, 5000 // bytes_per_pixel)  # aim for ~5 000 rows of uint8 equivalent
     valid_pixels = 0
     md5_hash = hashlib.md5()
 
     with img_stream_factory() as stream:
-        for i in range(0, height, chunk_height):
-            actual_chunk_height = min(chunk_height, height - i)
-            bytes_to_read = actual_chunk_height * width
+        for i in range(0, height, chunk_rows):
+            actual_chunk_height = min(chunk_rows, height - i)
+            bytes_to_read = actual_chunk_height * width * bytes_per_pixel
             data = stream.read(bytes_to_read)
             if len(data) < bytes_to_read:
                 raise ValueError(
                     f"Unexpected End of File: read {len(data)} bytes, expected {bytes_to_read}"
                 )
 
-            # Update checksum
             md5_hash.update(data)
 
-            # Reshape into numpy chunk
-            chunk = np.frombuffer(data, dtype=np.uint8).reshape(actual_chunk_height, width)
+            chunk = np.frombuffer(data, dtype=raster_dtype).reshape(actual_chunk_height, width)
             out_raster[i : i + actual_chunk_height, :] = chunk
 
-            # Compute valid mask chunk (zero is padding/NoData)
-            mask_chunk = chunk != 0
+            # ── FIX 2: mask based on PDS4 special constants, not zero assumption ──
+            if nodata_values:
+                # Mark pixels whose value matches any declared special constant as invalid
+                mask_chunk = np.ones((actual_chunk_height, width), dtype=bool)
+                for bad_val in nodata_values:
+                    # Cast to the raster dtype for safe comparison
+                    try:
+                        bad_cast = raster_dtype.type(bad_val)
+                        mask_chunk &= chunk != bad_cast
+                    except (OverflowError, ValueError):
+                        pass
+            elif raster_dtype.kind == "f":
+                # Floating-point without explicit NoData: mask NaN and infinite values
+                chunk_f = chunk.astype(float)
+                mask_chunk = np.isfinite(chunk_f)
+            else:
+                # Integer data with no declared NoData: all pixels are valid
+                mask_chunk = np.ones((actual_chunk_height, width), dtype=bool)
+
             out_mask[i : i + actual_chunk_height, :] = mask_chunk
             valid_pixels += int(np.sum(mask_chunk))
 
     out_raster.flush()
     out_mask.flush()
 
-    # Clean up ZIP if open
+    # Clean up ZIP handle if open
     if "z" in locals():
         z.close()
 
-    # Finalize properties
+    # Finalise provenance
     total_pixels = height * width
     valid_pixel_ratio = float(valid_pixels) / total_pixels
     checksum = md5_hash.hexdigest()
 
-    # Verify MD5 checksum if specified in XML
     expected_md5 = metadata.get("expected_md5")
     if expected_md5 and checksum != expected_md5:
         notes = f"MD5 mismatch: expected {expected_md5}, computed {checksum}"
     else:
         notes = f"Successfully ingested from {source_filename}"
 
+    # ── FIX 5: provenance stores source filename, not absolute machine path ──
     provenance = Provenance(
-        source_uri=str(source.resolve()),
+        source_uri=source_filename,
         reader="pds4_stream_reader",
         checksum=checksum,
         software_commit=get_git_commit(),
         notes=notes,
     )
 
+    # ── FIX 1: guard instrument — the frozen LunarProduct contract requires a
+    # non-empty string.  We must not invent one; raise clearly instead.
+    instrument_value: str | None = metadata["instrument"]
+    if not instrument_value:
+        raise ValueError(
+            "PDS4 label does not declare an Instrument component. "
+            "Cannot populate the required 'instrument' field of LunarProduct. "
+            "Verify that the product XML contains an Observing_System_Component "
+            "with type='Instrument' and a non-empty name."
+        )
+
     return LunarProduct(
         product_id=product_id,
-        instrument=metadata["instrument"],
+        instrument=instrument_value,
         mission=metadata["mission"],
         dimensions=metadata["dimensions"],
         gsd_meters=metadata["gsd_meters"],
@@ -470,7 +617,7 @@ def ingest_from_pds(source: Path) -> LunarProduct:
         radiometric_state=metadata["radiometric_state"],
         coordinates=metadata["coordinates"],
         valid_pixel_ratio=valid_pixel_ratio,
-        raster_uri=str(raster_path.resolve()),
-        mask_uri=str(mask_path.resolve()),
+        raster_uri=str(raster_path),
+        mask_uri=str(mask_path),
         provenance=provenance,
     )

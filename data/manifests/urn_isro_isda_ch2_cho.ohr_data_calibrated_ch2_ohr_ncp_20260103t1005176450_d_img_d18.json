@@ -8,7 +8,7 @@
       "height_px": 101075,
       "band_count": 1
     },
-    "gsd_meters": 0.25,
+    "gsd_meters": null,
     "acquisition_time": "2026-01-03T10:05:17.645000Z",
     "radiometric_state": "Calibrated",
     "coordinates": {
@@ -20,19 +20,19 @@
         -84.522148
       ]
     },
-    "valid_pixel_ratio": 0.99998563772776,
-    "raster_uri": "F:\\SIH\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_raster.npy",
-    "mask_uri": "F:\\SIH\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_mask.npy",
+    "valid_pixel_ratio": 1.0,
+    "raster_uri": null,
+    "mask_uri": null,
     "provenance": {
-      "source_uri": "F:\\SIH\\ch2_ohr_ncp_20260103T1005176450_d_img_d18",
+      "source_uri": "ch2_ohr_ncp_20260103T1005176450_d_img_d18",
       "reader": "pds4_stream_reader",
       "checksum": "40347cb3a97e4fce72e04526643098e1",
-      "software_commit": "4e709616e6ba74b5ae787b81e971179f446fd291",
-      "notes": "Successfully ingested from ch2_ohr_ncp_20260103T1005176450_d_img_d18"
+      "software_commit": "94eab2e8fb357963b02040a65de98fc4d6d39eec",
+      "notes": "Reference manifest — raster/mask paths are machine-local and excluded. Set LUNAR_DATA_DIR and re-run ingestion to populate them locally."
     }
   },
-  "source_path": "F:\\SIH\\ch2_ohr_ncp_20260103T1005176450_d_img_d18",
-  "raster_path": "F:\\SIH\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_raster.npy",
-  "mask_path": "F:\\SIH\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_mask.npy",
-  "processing_state": "ingested"
+  "source_path": "external — set LUNAR_DATA_DIR=<path-to-ohrc-products>",
+  "raster_path": null,
+  "mask_path": null,
+  "processing_state": "reference"
 }
