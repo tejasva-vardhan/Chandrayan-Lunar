@@ -25,6 +25,9 @@ include = ["src*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "wiring: orchestration wiring tests using doubles; not scientific evidence",
+]
 
 [tool.ruff]
 line-length = 100

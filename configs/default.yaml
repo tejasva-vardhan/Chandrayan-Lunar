@@ -1,6 +1,8 @@
 # Structural configuration only.
 # Scientific thresholds and adaptive-routing cutoffs are experimental (v3 §8).
 # Do not invent those values here.
+# Do not select a final matcher here (D-007).
+# Do not assume a transformation model here (D-010).
 
 project:
   id: SIH26166
@@ -27,3 +29,30 @@ pipeline:
     - register
     - evaluate
     - export_result
+
+ingestion: {}
+
+preprocessing: {}
+
+geometry: {}
+
+representation:
+  representation_id: null
+
+matching:
+  matcher_id: null
+
+routing: {}
+
+verification: {}
+
+control_points: {}
+
+refinement: {}
+
+registration:
+  model_name: null
+
+evaluation: {}
+
+export: {}

@@ -12,6 +12,14 @@ FORBIDDEN_ROOTS = {
     "httpx",
     "aiohttp",
     "uvicorn",
+    "sqlalchemy",
+    "psycopg",
+    "psycopg2",
+    "asyncpg",
+    "pymongo",
+    "redis",
+    "boto3",
+    "botocore",
 }
 
 
