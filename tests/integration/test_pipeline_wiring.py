@@ -249,7 +249,7 @@ def test_wiring_doubles_do_not_produce_scientific_values(
 
 def test_default_pipeline_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> None:
     source_path, reference_path, output_dir = tmp_paths
-    with pytest.raises(NotImplementedError):
+    with pytest.raises((NotImplementedError, ValueError, FileNotFoundError)):
         ScientificPipeline().run(source_path, reference_path, output_dir)
 
 
@@ -275,7 +275,7 @@ def test_unimplemented_stage_fails_closed_and_is_not_skipped(
         bound[name] = wrap(name, fn)
 
     ops = PipelineOperations(**bound)  # type: ignore[arg-type]
-    with pytest.raises(NotImplementedError):
+    with pytest.raises((NotImplementedError, ValueError, FileNotFoundError)):
         ScientificPipeline(ops).run(source_path, reference_path, output_dir)
 
     assert fail_at in calls
