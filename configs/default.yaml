@@ -18,6 +18,7 @@ pipeline:
   operations:
     - ingest_product
     - characterize_pair
+    - preprocess
     - generate_representation
     - match
     - verify_matches
