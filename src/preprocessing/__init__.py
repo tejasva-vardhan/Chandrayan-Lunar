@@ -3,19 +3,26 @@
 Pipeline import surface: preprocess(pair) -> RegistrationPair.
 
 Owns pair-aware normalization, orientation when required, and scale-aware
-resampling when required. Do not invent thresholds in this package.
+resampling when required. This package currently implements a software
+baseline: finite-value masking plus optional percentile intensity
+normalization. It does not invent thresholds in configs/default.yaml.
 Preserve characterization produced by geometry unless a later architecture
 decision says otherwise.
+
+SOFTWARE BASELINE only. Not a final Chandrayaan-2 preprocessing pipeline.
 """
 
-from __future__ import annotations
+from src.preprocessing.preprocess import preprocess, preprocess_with_settings
+from src.preprocessing.settings import (
+    PreprocessingSettings,
+    minimal_preprocessing_defaults,
+    unvalidated_software_defaults,
+)
 
-from src.models.registration_pair import RegistrationPair
-
-
-def preprocess(pair: RegistrationPair) -> RegistrationPair:
-    """Return an updated pair after pair-aware preprocessing."""
-    raise NotImplementedError(f"preprocess is not implemented. pair_id={pair.pair_id}")
-
-
-__all__ = ["preprocess"]
+__all__ = [
+    "PreprocessingSettings",
+    "minimal_preprocessing_defaults",
+    "preprocess",
+    "preprocess_with_settings",
+    "unvalidated_software_defaults",
+]

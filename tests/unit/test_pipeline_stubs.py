@@ -45,8 +45,6 @@ def test_unimplemented_scientific_operations_fail_closed(
     with pytest.raises(NotImplementedError):
         ingest_product(tmp_path / "missing")
     with pytest.raises(NotImplementedError):
-        preprocess(registration_pair)
-    with pytest.raises(NotImplementedError):
         generate_representation(registration_pair)
     with pytest.raises(NotImplementedError):
         match(registration_pair)
@@ -75,6 +73,19 @@ def test_characterize_pair_is_implemented_and_does_not_invent_values(
     assert pair.overlap_mask_uri is None
     assert pair.characterization.sensor_pair == "OHRC/LRO_NAC"
     assert pair.characterization.modality == "OHRC/LRO_NAC"
+
+
+def test_preprocess_is_implemented_and_fail_closed_without_rasters(
+    registration_pair: RegistrationPair,
+) -> None:
+    result = preprocess(registration_pair)
+    assert isinstance(result, RegistrationPair)
+    assert result is not registration_pair
+    assert result.pair_id == registration_pair.pair_id
+    assert result.source.product_id == registration_pair.source.product_id
+    assert result.reference.product_id == registration_pair.reference.product_id
+    assert result.source.raster_uri is None
+    assert result.characterization == registration_pair.characterization
 
 
 def test_verify_matches_is_implemented_and_fail_closed_on_empty(
@@ -158,8 +169,9 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     characterized = geometry.characterize_pair(source_product, reference_product)
     assert characterized.characterization is not None
     assert characterized.characterization.difficulty is None
-    with pytest.raises(NotImplementedError):
-        preprocessing.preprocess(registration_pair)
+    preprocessed = preprocessing.preprocess(registration_pair)
+    assert preprocessed.pair_id == registration_pair.pair_id
+    assert preprocessed.source.raster_uri is None
     with pytest.raises(NotImplementedError):
         representation.generate_representation(registration_pair)
     with pytest.raises(NotImplementedError):
