@@ -36,7 +36,6 @@ def test_unimplemented_scientific_operations_fail_closed(
     reference_product: LunarProduct,
     registration_pair: RegistrationPair,
 ) -> None:
-    correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
     result = RegistrationResult(pair_id="pair-001")
 
     with pytest.raises(NotImplementedError):
@@ -51,8 +50,6 @@ def test_unimplemented_scientific_operations_fail_closed(
         match(registration_pair)
     with pytest.raises(NotImplementedError):
         refine_points([], registration_pair)
-    with pytest.raises(NotImplementedError):
-        register(registration_pair, [], correspondences)
     with pytest.raises(NotImplementedError):
         evaluate(result, registration_pair)
     with pytest.raises(NotImplementedError):
@@ -76,6 +73,17 @@ def test_select_control_points_is_implemented_and_fail_closed_on_empty(
     correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
     result = select_control_points(correspondences, registration_pair)
     assert result == []
+
+
+def test_register_is_implemented_and_fail_closed_on_empty(
+    registration_pair: RegistrationPair,
+) -> None:
+    correspondences = CorrespondenceSet(pair_id="pair-001", matcher_id="unspecified")
+    result = register(registration_pair, [], correspondences)
+    assert result.transformation is None
+    assert result.registered_source_uri is None
+    assert result.metrics is None
+    assert result.correspondences is correspondences
 
 
 def test_owning_modules_fail_closed_with_the_same_callables(
@@ -115,8 +123,9 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     assert selected == []
     with pytest.raises(NotImplementedError):
         refinement.refine_points([], registration_pair)
-    with pytest.raises(NotImplementedError):
-        registration.register(registration_pair, [], correspondences)
+    registered = registration.register(registration_pair, [], correspondences)
+    assert registered.transformation is None
+    assert registered.correspondences is correspondences
     with pytest.raises(NotImplementedError):
         evaluation.evaluate(result, registration_pair)
     with pytest.raises(NotImplementedError):
