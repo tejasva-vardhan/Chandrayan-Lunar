@@ -1,28 +1,19 @@
-"""Image registration. Owned by Shaiz.
+"""Image registration. Owned per TEAM_MODULE_HANDOFF_V1.
 
 Pipeline import surface:
 register(pair, control_points, correspondences) -> RegistrationResult.
 
-Do not assume homography or any other specific transformation (D-010).
-TransformationModel.model_name is an unconstrained label.
-Attach the provided CorrespondenceSet to RegistrationResult.correspondences.
-Do not invent inliers, counts, metrics, or transformations.
+Do not assume homography is the lunar model (D-010). The two-argument
+callable uses projective_2d_baseline as an engineering software baseline.
+Attach the provided CorrespondenceSet. Do not invent metrics.
 """
 
-from __future__ import annotations
+from src.registration.register import register, register_with_settings
+from src.registration.settings import RegistrationSettings, unvalidated_software_defaults
 
-from src.models.correspondence_set import CorrespondenceSet
-from src.models.registration_pair import RegistrationPair
-from src.models.registration_result import ControlPoint, RegistrationResult
-
-
-def register(
-    pair: RegistrationPair,
-    control_points: list[ControlPoint],
-    correspondences: CorrespondenceSet,
-) -> RegistrationResult:
-    """Estimate a transform and produce a RegistrationResult."""
-    raise NotImplementedError(f"register is not implemented. pair_id={pair.pair_id}")
-
-
-__all__ = ["register"]
+__all__ = [
+    "RegistrationSettings",
+    "register",
+    "register_with_settings",
+    "unvalidated_software_defaults",
+]
