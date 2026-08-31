@@ -29,6 +29,8 @@ IMPLEMENTED_STAGES = frozenset(
     {
         "characterize_pair",
         "preprocess",
+        "generate_representation",  # Chuba — implemented (representation engine)
+        "match",                    # Chuba — implemented (SIFT adapter)
         "verify_matches",
         "select_control_points",
         "refine_points",
