@@ -44,10 +44,15 @@ def test_unimplemented_scientific_operations_fail_closed(
 
     with pytest.raises(FileNotFoundError):
         ingest_product(tmp_path / "missing")
-    with pytest.raises(NotImplementedError):
-        generate_representation(registration_pair)
-    with pytest.raises(NotImplementedError):
-        match(registration_pair)
+    # generate_representation is implemented: returns empty RepresentationResult
+    # when raster_uri is None (graceful degradation).
+    from src.representation import RepresentationResult
+    rep = generate_representation(registration_pair)
+    assert isinstance(rep, RepresentationResult)
+    assert rep.representation_id == "none"
+    # match is implemented: returns a CorrespondenceSet (no raster_uri → empty set)
+    result_cs = match(registration_pair)
+    assert isinstance(result_cs, CorrespondenceSet)
     with pytest.raises(NotImplementedError):
         export_result(result, registration_pair, tmp_path)
     with pytest.raises(NotImplementedError):
@@ -172,10 +177,16 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     preprocessed = preprocessing.preprocess(registration_pair)
     assert preprocessed.pair_id == registration_pair.pair_id
     assert preprocessed.source.raster_uri is None
-    with pytest.raises(NotImplementedError):
-        representation.generate_representation(registration_pair)
-    with pytest.raises(NotImplementedError):
-        matching.match(registration_pair)
+    # generate_representation is implemented — returns empty RepresentationResult (no raster_uri)
+    from src.representation import RepresentationResult
+    rep = representation.generate_representation(registration_pair)
+    assert isinstance(rep, RepresentationResult)
+    assert rep.representation_id == "none"
+    # match is implemented — returns empty CorrespondenceSet (no raster_uri → SIFT skips)
+    cs = matching.match(registration_pair)
+    assert isinstance(cs, CorrespondenceSet)
+    assert cs.pair_id == registration_pair.pair_id
+    assert cs.matcher_id == "sift"
     verified = verification.verify_matches(correspondences, registration_pair)
     assert verified.matches == []
     selected = control_points.select_control_points(correspondences, registration_pair)
