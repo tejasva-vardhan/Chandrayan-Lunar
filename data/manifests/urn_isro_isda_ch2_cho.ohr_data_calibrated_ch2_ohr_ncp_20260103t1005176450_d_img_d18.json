@@ -1,0 +1,38 @@
+{
+  "product": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20260103t1005176450_d_img_d18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 101075,
+      "band_count": 1
+    },
+    "gsd_meters": null,
+    "acquisition_time": "2026-01-03T10:05:17.645000Z",
+    "radiometric_state": "Calibrated",
+    "coordinates": {
+      "crs": "Polar stereographic",
+      "bbox": [
+        22.79426,
+        -85.325413,
+        27.751481,
+        -84.522148
+      ]
+    },
+    "valid_pixel_ratio": 1.0,
+    "raster_uri": null,
+    "mask_uri": null,
+    "provenance": {
+      "source_uri": "ch2_ohr_ncp_20260103T1005176450_d_img_d18",
+      "reader": "pds4_stream_reader",
+      "checksum": "40347cb3a97e4fce72e04526643098e1",
+      "software_commit": "94eab2e8fb357963b02040a65de98fc4d6d39eec",
+      "notes": "Reference manifest — raster/mask paths are machine-local and excluded. Set LUNAR_DATA_DIR and re-run ingestion to populate them locally."
+    }
+  },
+  "source_path": "external — set LUNAR_DATA_DIR=<path-to-ohrc-products>",
+  "raster_path": null,
+  "mask_path": null,
+  "processing_state": "reference"
+}
