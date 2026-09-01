@@ -42,7 +42,7 @@ def test_unimplemented_scientific_operations_fail_closed(
 ) -> None:
     result = RegistrationResult(pair_id="pair-001")
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(FileNotFoundError):
         ingest_product(tmp_path / "missing")
     # generate_representation is implemented: returns empty RepresentationResult
     # when raster_uri is None (graceful degradation).
@@ -169,7 +169,7 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     assert evaluate is evaluation.evaluate
     assert export_result is io_exports.export_result
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(FileNotFoundError):
         ingestion.ingest_product(tmp_path / "missing")
     characterized = geometry.characterize_pair(source_product, reference_product)
     assert characterized.characterization is not None
