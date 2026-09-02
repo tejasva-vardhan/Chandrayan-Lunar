@@ -17,6 +17,7 @@ from src.refinement import (
     unvalidated_software_defaults,
 )
 from src.refinement.peak import parabolic_offset, quadratic_offset_2d, refine_peak_subpixel
+from src.refinement.raster import load_software_raster
 from src.refinement.zncc import estimate_zncc_displacement
 
 
@@ -142,6 +143,15 @@ def test_missing_raster_file_preserves_points(tmp_path: Path) -> None:
     point = _cp((8.0, 8.0), (9.0, 9.0))
     result = refine_points([point], pair)
     assert result[0].reference_xy == point.reference_xy
+
+
+def test_software_raster_is_memory_mapped_for_local_refinement(tmp_path: Path) -> None:
+    path = tmp_path / "large-handle.npy"
+    np.save(path, _texture(16, 16).astype(np.int16))
+    loaded, error = load_software_raster(str(path))
+    assert error is None
+    assert isinstance(loaded, np.memmap)
+    assert loaded.shape == (16, 16)
 
 
 def test_identity_method_is_passthrough_without_rasters(

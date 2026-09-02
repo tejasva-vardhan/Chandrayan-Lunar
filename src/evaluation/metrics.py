@@ -72,6 +72,10 @@ def rmse_from_inlier_residuals(correspondences: CorrespondenceSet | None) -> flo
     included residuals. Units: the stored residual's units (verification
     image-space transfer error in input pixel tuples). Missing, non-finite,
     or negative residuals are omitted; if none remain, RMSE is None, not 0.
+
+    This is a diagnostic of the verification model fit, not an independent
+    registration-accuracy measurement. Evaluation has no held-out ground
+    truth or independently measured residuals in this baseline.
     """
 
     if correspondences is None:
