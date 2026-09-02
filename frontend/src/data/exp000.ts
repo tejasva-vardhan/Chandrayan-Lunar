@@ -1,0 +1,23 @@
+export const exp000 = {
+  id: "EXP-000 / pair 01",
+  source: "Chandrayaan-2 OHRC",
+  reference: "LRO NAC",
+  sourceProduct: "ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+  referenceProduct: "M150368601RC",
+  rawMatches: 36,
+  verified: 4,
+  rejected: 32,
+  inlierRatio: "11.1%",
+  coverage: "23.2%",
+  refinement: "Indeterminate",
+  registration: "Blocked by output-size safety limit",
+  independentAccuracy: "Not independently validated",
+  residualNote: "Verification transfer residuals are diagnostic fit values, not accuracy.",
+  flags: ["registration_output_too_large", "not_independently_validated"],
+  points: [
+    { x: 23, y: 22, rx: 54, ry: 75, residual: "1.27e-11" },
+    { x: 14, y: 78, rx: 66, ry: 72, residual: "2.20e-10" },
+    { x: 73, y: 31, rx: 55, ry: 42, residual: "4.89e-10" },
+    { x: 40, y: 57, rx: 94, ry: 53, residual: "5.77e-10" },
+  ],
+} as const;
