@@ -20,9 +20,19 @@ class RegistrationSettings:
         Registry label for a replaceable 2D map. The two-argument API uses
         projective_2d_baseline as a software baseline consistent with
         verification, not as a final lunar model.
+
+    max_output_pixels
+        Engineering memory and disk guard for the full-resolution warp. A
+        registration larger than this fails with a quality flag instead of
+        risking an unbounded allocation. It is not a scientific threshold.
     """
 
     model_id: str
+    max_output_pixels: int = 16_777_216
+
+    def __post_init__(self) -> None:
+        if self.max_output_pixels < 1:
+            raise ValueError("max_output_pixels must be >= 1")
 
 
 # Frozen two-argument API: engineering default only.

@@ -19,6 +19,7 @@ FLAG_INVALID_TRANSFORMATION = "invalid_transformation"
 FLAG_SOURCE_RASTER_UNAVAILABLE = "source_raster_unavailable"
 FLAG_UNSUPPORTED_RASTER = "unsupported_raster_encoding"
 FLAG_WARP_FAILED = "warp_failed"
+FLAG_OUTPUT_TOO_LARGE = "registration_output_too_large"
 
 
 def snapshot_inliers(correspondences: CorrespondenceSet) -> list[Correspondence]:
