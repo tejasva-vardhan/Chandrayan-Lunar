@@ -95,6 +95,21 @@ def export_result(
                 "rmse is derived from verification transfer residuals and is not an "
                 "independent registration-accuracy metric"
             ),
+            "projective_fit_limitation": _projective_fit_limitation(result),
+            "independent_ground_truth_used": False,
+            "spatial_coverage_definition": (
+                "mean of the source and reference control-point AABB-area fractions: "
+                "0.5 * (source_bbox_area / source_image_area + reference_bbox_area / "
+                "reference_image_area); this measures extent, not accuracy or uniformity"
+            ),
+            "control_point_selection_note": (
+                "control points copy eligible verified inliers after exact duplicate removal; "
+                "selection does not create correspondences or alter the verified set"
+            ),
+            "refinement_outcome_note": (
+                "unchanged coordinates are indeterminate because the current ControlPoint "
+                "interface has no per-point refinement outcome field"
+            ),
         },
     )
     return ExportManifest(
@@ -111,3 +126,22 @@ def export_result(
 def _write_json(path: Path, payload: Any) -> str:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return str(path)
+
+
+def _projective_fit_limitation(result: RegistrationResult) -> str | None:
+    transformation = result.transformation
+    if transformation is None or transformation.model_name != "projective_2d_baseline":
+        return None
+
+    fit_count = len(result.control_points)
+    minimum = 4
+    if fit_count == minimum:
+        return (
+            "projective DLT was fit from exactly its four-point minimum; residuals on those "
+            "same fit points are expected to be extremely small and are not evidence of "
+            "accurate correspondence or registration"
+        )
+    return (
+        f"projective DLT minimum is {minimum} points; this result carries {fit_count} "
+        "control points, and verification residuals are not independent accuracy evidence"
+    )
