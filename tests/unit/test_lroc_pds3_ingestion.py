@@ -29,6 +29,8 @@ def _write_synthetic_pds3(
     valid_minimum: int = -32752,
     low_saturation: int = -32767,
     high_saturation: int = 32767,
+    low_instr_saturation: int = -32766,
+    high_instr_saturation: int = -32765,
     start_time: str | None = "2026-08-31T00:00:00Z",
     stop_time: str | None = "2026-08-31T00:10:00Z",
 ) -> Path:
@@ -52,6 +54,8 @@ def _write_synthetic_pds3(
         f"NULL = {null_value}",
         f"LOW_REPR_SATURATION = {low_saturation}",
         f"HIGH_REPR_SATURATION = {high_saturation}",
+        f"LOW_INSTR_SATURATION = {low_instr_saturation}",
+        f"HIGH_INSTR_SATURATION = {high_instr_saturation}",
         'UNIT = "Scaled I/F"',
         'TARGET_NAME = "MOON"',
         'INSTRUMENT_NAME = "LUNAR RECONNAISSANCE ORBITER CAMERA"',
@@ -64,6 +68,12 @@ def _write_synthetic_pds3(
     label_text = "\n".join(label_lines) + "\n"
     label_bytes = label_text.encode("latin-1")
     padded_label_size = record_bytes * label_records
+    if len(label_bytes) > padded_label_size:
+        record_bytes = (len(label_bytes) + label_records - 1) // label_records
+        label_lines[1] = f"RECORD_BYTES = {record_bytes}"
+        label_text = "\n".join(label_lines) + "\n"
+        label_bytes = label_text.encode("latin-1")
+        padded_label_size = record_bytes * label_records
     if len(label_bytes) > padded_label_size:
         raise AssertionError("label text does not fit into declared label records")
     label_bytes = label_bytes + (b" " * (padded_label_size - len(label_bytes)))
@@ -97,11 +107,10 @@ def test_reads_one_record_embedded_label_and_decodes_int16(tmp_path: Path) -> No
     label = read_lroc_pds3_label(path)
     raster, valid_mask = load_lroc_pds3_raster(path, label)
 
-    assert label.record_bytes == 512
     assert label.label_records == 1
     assert label.lines == 2
     assert label.line_samples == 4
-    assert label.image_offset_bytes == 512
+    assert label.image_offset_bytes == label.record_bytes * label.label_records
     assert np.array_equal(raster, array)
     assert valid_mask.dtype == bool
     assert valid_mask.tolist() == [[True, True, True, True], [False, True, False, False]]
@@ -142,13 +151,14 @@ def test_ingest_materializes_lunar_product_and_preserves_metadata(tmp_path: Path
     assert product.valid_pixel_ratio == pytest.approx(7 / 8)
     assert product.raster_uri is not None
     assert product.mask_uri is not None
-    assert np.array_equal(np.load(product.raster_uri), array.astype(float))
+    assert np.array_equal(np.load(product.raster_uri), array)
+    assert np.load(product.raster_uri).dtype == np.dtype("<i2")
     assert np.array_equal(
         np.load(product.mask_uri),
-        np.array([[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 0.0, 1.0]]),
+        np.array([[True, True, True, True], [True, True, False, True]]),
     )
     assert product.provenance is not None
-    assert product.provenance.source_uri == str(path)
+    assert product.provenance.source_uri == path.name
     assert product.provenance.reader == "lroc_pds3_embedded_label"
     assert product.provenance.notes is not None
     assert "instrument_name=LUNAR RECONNAISSANCE ORBITER CAMERA" in product.provenance.notes
@@ -171,6 +181,21 @@ def test_dispatches_lroc_from_embedded_label_not_filename(
     assert product.product_id == "arbitrary-name"
     assert product.provenance is not None
     assert product.provenance.reader == "lroc_pds3_embedded_label"
+
+
+def test_instrument_saturation_sentinels_are_invalid(tmp_path: Path) -> None:
+    """Real LROC CDR labels declare instrument saturation sentinels; mask them."""
+    array = np.array([[-32766, -32765], [0, 1]], dtype=np.int16)
+    path = _write_synthetic_pds3(
+        tmp_path / "instr_sat.IMG", array, record_bytes=512, label_records=1
+    )
+
+    label = read_lroc_pds3_label(path)
+    _raster, valid_mask = load_lroc_pds3_raster(path, label)
+
+    assert -32766 in label.saturation_values
+    assert -32765 in label.saturation_values
+    assert valid_mask.tolist() == [[False, False], [True, True]]
 
 
 def test_zero_is_not_treated_as_invalid(tmp_path: Path) -> None:
@@ -262,6 +287,20 @@ def test_uses_memmap_for_raster_access(tmp_path: Path, monkeypatch: pytest.Monke
 
     assert called["used"] is True
     assert np.array_equal(raster, array)
+
+
+def test_ingest_streams_raster_in_row_chunks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("src.ingestion.lroc_pds3._MATERIALIZE_CHUNK_ROWS", 1)
+    array = np.arange(12, dtype=np.int16).reshape(3, 4)
+    path = _write_synthetic_pds3(tmp_path / "chunked.IMG", array, record_bytes=512, label_records=1)
+
+    product = ingest_lroc_pds3_product(path)
+    written = np.load(product.raster_uri)
+
+    assert written.dtype == np.dtype("<i2")
+    assert np.array_equal(written, array)
 
 
 def test_missing_optional_timestamps_stay_unset(tmp_path: Path) -> None:

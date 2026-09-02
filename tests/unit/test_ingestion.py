@@ -562,6 +562,21 @@ def test_gsd_metres_unit(tmp_path: Path) -> None:
     assert product.gsd_meters == pytest.approx(0.25)
 
 
+def test_gsd_metres_per_pixel_unit(tmp_path: Path) -> None:
+    """Real OHRC labels declare GSD as unit='m/pixel'; store metres, do not drop it."""
+    product_dir = tmp_path / "ch2_gsd_mpixel"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    xml_content = _make_mock_xml(pixel_resolution="0.26", pixel_resolution_unit="m/pixel")
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(bytes([1] * 64))
+
+    product = ingest_product(product_dir)
+    assert product.gsd_meters == pytest.approx(0.26)
+
+
 def test_gsd_centimetres_unit(tmp_path: Path) -> None:
     """GSD with unit='cm' → converted to metres (÷100) in gsd_meters."""
     product_dir = tmp_path / "ch2_gsd_cm"
@@ -631,3 +646,42 @@ def test_gsd_missing_node_is_none(tmp_path: Path) -> None:
 
     product = ingest_product(product_dir)
     assert product.gsd_meters is None
+
+
+def test_declared_byte_offset_is_skipped(tmp_path: Path) -> None:
+    """PDS4 Array_2D_Image offset is applied; the header is not treated as pixels."""
+    product_dir = tmp_path / "ch2_offset"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    img_data = np.arange(64, dtype=np.uint8).reshape(8, 8)
+    header = b"\xff" * 16
+    xml_content = _make_mock_xml(img_filename="mock.img").replace(
+        '<offset unit="byte">0</offset>',
+        '<offset unit="byte">16</offset>',
+    )
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(header + img_data.tobytes())
+
+    product = ingest_product(product_dir)
+    raster = np.load(product.raster_uri)
+    assert np.array_equal(raster, img_data)
+
+
+def test_offset_without_unit_is_rejected(tmp_path: Path) -> None:
+    """An offset value without a unit must not be assumed to be bytes."""
+    product_dir = tmp_path / "ch2_offset_nounit"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    xml_content = _make_mock_xml(img_filename="mock.img").replace(
+        '<offset unit="byte">0</offset>',
+        "<offset>16</offset>",
+    )
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(b"\x00" * 80)
+
+    with pytest.raises(ValueError, match="offset has no unit"):
+        ingest_product(product_dir)
