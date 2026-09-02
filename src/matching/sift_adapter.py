@@ -79,6 +79,10 @@ def run_sift(
 
     # --- Obtain image arrays ---
     src_arr, ref_arr = _get_arrays(pair, representation)
+    src_mask = _matching_mask(representation, "source", src_arr)
+    ref_mask = _matching_mask(representation, "reference", ref_arr)
+    src_scale = _matching_view_scale(representation, "source")
+    ref_scale = _matching_view_scale(representation, "reference")
 
     if src_arr is None or ref_arr is None:
         # No image data available (missing raster_uri, non-RepresentationResult double).
@@ -103,8 +107,8 @@ def run_sift(
         sigma=cfg.sigma,
     )
 
-    kp_src, desc_src = sift.detectAndCompute(src_u8, None)
-    kp_ref, desc_ref = sift.detectAndCompute(ref_u8, None)
+    kp_src, desc_src = sift.detectAndCompute(src_u8, src_mask)
+    kp_ref, desc_ref = sift.detectAndCompute(ref_u8, ref_mask)
 
     quality_flags: list[str] = []
 
@@ -127,8 +131,8 @@ def run_sift(
             continue
         m, n = match_pair
         if m.distance < cfg.ratio_threshold * n.distance:
-            src_pt = kp_src[m.queryIdx].pt  # (x, y) pixel coordinates
-            ref_pt = kp_ref[m.trainIdx].pt
+            src_pt = _map_point_to_original(kp_src[m.queryIdx].pt, src_scale)
+            ref_pt = _map_point_to_original(kp_ref[m.trainIdx].pt, ref_scale)
             good.append((m.distance, src_pt, ref_pt))
 
     if len(good) < cfg.min_matches:
@@ -218,3 +222,46 @@ def _to_uint8(arr: np.ndarray) -> np.ndarray:
 
 def _rep_id(representation: RepresentationResult | None) -> str | None:
     return representation.representation_id if representation is not None else None
+
+
+def _matching_view_scale(
+    representation: RepresentationResult | None,
+    role: str,
+) -> tuple[float, float]:
+    if not isinstance(representation, RepresentationResult):
+        return 1.0, 1.0
+
+    view = representation.metadata.get(f"{role}_matching_view")
+    if not isinstance(view, dict):
+        return 1.0, 1.0
+
+    x_scale = float(view.get("x_scale", 1.0))
+    y_scale = float(view.get("y_scale", 1.0))
+    if not np.isfinite(x_scale) or not np.isfinite(y_scale) or x_scale <= 0 or y_scale <= 0:
+        raise ValueError(f"invalid {role} matching-view coordinate scale")
+    return x_scale, y_scale
+
+
+def _matching_mask(
+    representation: RepresentationResult | None,
+    role: str,
+    array: np.ndarray | None,
+) -> np.ndarray | None:
+    """Return an OpenCV-compatible validity mask for a matching view."""
+    if array is None or not isinstance(representation, RepresentationResult):
+        return None
+
+    mask = representation.metadata.get(f"{role}_valid_mask")
+    if mask is None:
+        return None
+    if not isinstance(mask, np.ndarray) or mask.shape != array.shape:
+        raise ValueError(f"{role} valid mask does not match its matching view")
+    return (mask.astype(np.uint8, copy=False) * 255)
+
+
+def _map_point_to_original(
+    point_xy: tuple[float, float],
+    scale_xy: tuple[float, float],
+) -> tuple[float, float]:
+    x_scale, y_scale = scale_xy
+    return float(point_xy[0] * x_scale), float(point_xy[1] * y_scale)

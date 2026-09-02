@@ -20,6 +20,16 @@ from src.representation._loader import load_array
 
 
 def build_intensity(raster_uri: str, *, lo_pct: float = 2.0, hi_pct: float = 98.0) -> np.ndarray:
+    """Load image and return percentile-stretched float32 array in [0, 1]."""
+    return build_intensity_array(load_array(raster_uri), lo_pct=lo_pct, hi_pct=hi_pct)
+
+
+def build_intensity_array(
+    img: np.ndarray,
+    *,
+    lo_pct: float = 2.0,
+    hi_pct: float = 98.0,
+) -> np.ndarray:
     """Load image and return percentile-stretched float32 array in [0, 1].
 
     Parameters
@@ -36,8 +46,6 @@ def build_intensity(raster_uri: str, *, lo_pct: float = 2.0, hi_pct: float = 98.
     np.ndarray
         float32 array, shape (H, W), values in [0, 1].
     """
-    img = load_array(raster_uri)  # float32, [0, 1] raw
-
     lo = float(np.percentile(img, lo_pct))
     hi = float(np.percentile(img, hi_pct))
 

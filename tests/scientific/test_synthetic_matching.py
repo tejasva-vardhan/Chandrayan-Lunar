@@ -30,7 +30,11 @@ import numpy as np
 import pytest
 
 from src.matching import match
-from src.matching.sift_adapter import SiftSettings, run_sift
+from src.matching.sift_adapter import (
+    SiftSettings,
+    _map_point_to_original,
+    run_sift,
+)
 from src.models import CorrespondenceSet, LunarProduct, RegistrationPair
 from src.models.common import ImageDimensions
 from src.representation._types import RepresentationResult
@@ -200,3 +204,34 @@ def test_sift_coordinates_are_within_image_bounds() -> None:
         assert 0 <= sy < h, f"source_xy y={sy} out of bounds (height={h})"
         assert 0 <= rx < w, f"reference_xy x={rx} out of bounds (width={w})"
         assert 0 <= ry < h, f"reference_xy y={ry} out of bounds (height={h})"
+
+
+def test_matching_view_coordinate_mapping_is_deterministic() -> None:
+    assert _map_point_to_original((10.5, 4.25), (8.0, 8.0)) == (84.0, 34.0)
+
+
+def test_sift_outputs_original_coordinate_system_for_scaled_views() -> None:
+    arr = _synthetic_image(256, 256, seed=21)
+    with tempfile.TemporaryDirectory() as tmp:
+        pair, rep = _pair_from_arrays(arr, arr.copy(), tmp, pair_id="scaled-view")
+        rep.metadata["source_matching_view"] = {
+            "x_scale": 4.0,
+            "y_scale": 4.0,
+            "stride": 4,
+            "policy": "stride_decimation",
+        }
+        rep.metadata["reference_matching_view"] = {
+            "x_scale": 4.0,
+            "y_scale": 4.0,
+            "stride": 4,
+            "policy": "stride_decimation",
+        }
+        rep.array = rep.array[::4, ::4]
+        rep.metadata["reference_array"] = rep.metadata["reference_array"][::4, ::4]
+        cs = run_sift(pair, rep, settings=SiftSettings(min_matches=4))
+    assert cs.matches
+    for match_item in cs.matches:
+        assert 0.0 <= match_item.source_xy[0] < 256
+        assert 0.0 <= match_item.source_xy[1] < 256
+        assert 0.0 <= match_item.reference_xy[0] < 256
+        assert 0.0 <= match_item.reference_xy[1] < 256
