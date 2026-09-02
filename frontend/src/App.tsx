@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
 import { exp000 } from "./data/exp000";
 
@@ -67,7 +68,7 @@ function App() {
       <div className="ambient-stars" aria-hidden="true" />
       <ScrollSatellite reducedMotion={reducedMotion} />
       <section className="hero" id="mission">
-        <MoonScene progress={progress} reducedMotion={reducedMotion} />
+        <CesiumMoon reducedMotion={reducedMotion}><MoonScene progress={progress} reducedMotion={reducedMotion} /></CesiumMoon>
         <nav className="top-nav" aria-label="Primary navigation">
           <a className="brand" href="#mission">field<span>SPACE</span></a>
           <div><a href="#results">EXP-000</a><a href="#quality">Quality</a><a href="#report">Report</a></div>
@@ -86,7 +87,6 @@ function App() {
           <span>{stages[activeStage]}</span>
           <input aria-label="Mission timeline" type="range" min="0" max="100" value={Math.round(progress * 100)} onChange={(event) => setProgress(Number(event.target.value) / 100)} />
         </aside>
-        <div className="scroll-cue">SCROLL / SCRUB THE ORBIT <span>↓</span></div>
       </section>
 
       <section className="bridge" aria-label="Scientific workflow">

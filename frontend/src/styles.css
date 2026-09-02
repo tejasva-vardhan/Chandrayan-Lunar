@@ -84,6 +84,10 @@ button, input { font: inherit; color: inherit; }
 .moon-canvas {
   position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%;
 }
+.cesium-moon { position: absolute; inset: 0; z-index: 0; }
+.cesium-moon .cesium-viewer, .cesium-moon .cesium-viewer-cesiumWidget, .cesium-moon .cesium-widget { width: 100%; height: 100%; }
+.cesium-moon .cesium-viewer-toolbar { display: none; }
+.cesium-moon .cesium-widget-credits { right: 12px; bottom: 8px; font: 8px var(--mono); opacity: .65; }
 .hero::before {
   content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
   background:
@@ -100,7 +104,7 @@ button, input { font: inherit; color: inherit; }
 .hud-corner.tl { top: 18px; left: 18px; border-top: 1px solid; border-left: 1px solid; }
 .hud-corner.br { bottom: 18px; right: 18px; border-bottom: 1px solid; border-right: 1px solid; }
 
-.top-nav, .hero-copy, .mission-control, .scroll-cue, .orbital-path { position: relative; z-index: 2; }
+.top-nav, .hero-copy, .mission-control, .orbital-path { position: relative; z-index: 2; }
 .top-nav {
   position: absolute; inset: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; gap: 30px; padding: 26px 4vw; font: 11px var(--mono); letter-spacing: .1em;
@@ -153,8 +157,6 @@ h1 em {
 .orbital-path b { position: absolute; top: 6%; left: 11%; width: 110px; height: 1px; background: linear-gradient(90deg, var(--signal), transparent); transform: rotate(32deg); }
 @keyframes rotateMoon { from { transform: rotate(-28deg); } to { transform: rotate(332deg); } }
 
-.scroll-cue { position: absolute; right: 4vw; bottom: 27px; color: #84a09e; font: 9px var(--mono); letter-spacing: .14em; }
-.scroll-cue span { padding-left: 10px; color: var(--signal); }
 
 /* ---------- bridge / workflow ---------- */
 .bridge, .results-shell, .quality, .report { position: relative; }
@@ -270,7 +272,6 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   .mission-control { right: 22px; bottom: 60px; left: 22px; min-width: 0; padding-left: 14px; }
   .mission-control input { min-height: 32px; }
   .orbital-path { top: 18%; right: -36vw; width: 96vw; height: 96vw; opacity: .7; }
-  .scroll-cue { display: none; }
   .bridge, .results-shell { padding: 60px 22px; }
   .workflow, .metric-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .workflow > div { min-height: 88px; padding-right: 10px; }
