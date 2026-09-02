@@ -1,0 +1,884 @@
+{
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M106979273RC",
+    "lroc_source_name": "M106979273RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20230302T1959055531_d_img_n18",
+    "ohrc_source_name": "ch2_ohr_ncp_20230302T1959055531_d_img_n18"
+  },
+  "experiment_id": "EXP-001",
+  "failed_stage": null,
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "experiment_id": "EXP-001",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest",
+      "matching-view policy (stride_decimation, 4,194,304 pixels per image)",
+      "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
+      "representation routing and intensity percentile stretch",
+      "coordinate mapping back to original image pixels",
+      "geometric model projective_2d_baseline",
+      "robust estimator ransac_style_baseline",
+      "verification residual_limit 3.0",
+      "RANSAC max_trials 500",
+      "rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap",
+      "evaluation metric definitions",
+      "Lowe ratio threshold 0.75 and min_matches 4 in every adapter"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; there is no surveyed lunar control in this project's data",
+      "rng_seed": 0
+    },
+    "independent_variable": "matcher_id",
+    "inherited_from": "EXP-000",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "single_representation_per_pair": "generate_representation is called once per pair and the identical RepresentationResult object is passed to every matcher, so the matching view, stride, validity masks, and coordinate scales are the same objects rather than merely the same settings",
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "hypothesis": "H1: On Chandrayaan-2 OHRC <-> LROC NAC pairs, replacing the SIFT baseline with an illumination/appearance-robust matcher materially increases the number of geometrically verified correspondences beyond the four-point projective DLT minimum, holding the matching-view policy, preprocessing, coordinate mapping, geometric model, residual threshold, RANSAC budget, random seed, control-point policy, and evaluation procedure constant. H0: matcher choice does not move verified yield above that minimum, which would mean the correspondence bottleneck lies elsewhere.",
+  "interpretation": {
+    "any_matcher_exceeds_model_minimum": false,
+    "decision_rule": "A matcher counts as improving verified yield only if it produces strictly more verified inliers than the geometric model's minimum sample size (4 for projective_2d_baseline). A verified count of exactly 4 means RANSAC's consensus set is the minimal sample itself, no correspondence corroborated the fit, and the near-zero fit residual is an algebraic identity rather than evidence.",
+    "exceeds_model_minimum_by_matcher": {
+      "orb": false,
+      "rift": false,
+      "sift": false
+    },
+    "highest_verified_yield_count": 4,
+    "highest_verified_yield_is_tied": false,
+    "highest_verified_yield_matcher": "orb",
+    "highest_verified_yield_matchers": [
+      "orb"
+    ],
+    "independent_accuracy": "NOT VALIDATED",
+    "model_min_samples": 4,
+    "single_pair_caveat": "one pair cannot establish a globally superior matcher; these counts are evidence about this pair only",
+    "verified_inliers_by_matcher": {
+      "orb": 4,
+      "rift": 0,
+      "sift": 0
+    }
+  },
+  "matcher_configuration": {
+    "orb": {
+      "edge_threshold": 31,
+      "fast_threshold": 20,
+      "min_matches": 4,
+      "n_levels": 8,
+      "nfeatures": 20000,
+      "patch_size": 31,
+      "ratio_threshold": 0.75,
+      "scale_factor": 1.2,
+      "wta_k": 2
+    },
+    "rift": {
+      "descriptor_grid": 6,
+      "fast_threshold": 10,
+      "log_gabor": {
+        "cut_off": 0.5,
+        "gain": 10.0,
+        "k_noise": 2.0,
+        "low_pass_cutoff": 0.45,
+        "low_pass_order": 15,
+        "min_wavelength": 3.0,
+        "mult": 1.6,
+        "n_orient": 6,
+        "n_scale": 4,
+        "sigma_on_f": 0.75
+      },
+      "max_keypoints": 20000,
+      "min_matches": 4,
+      "patch_size": 96,
+      "ratio_threshold": 0.75
+    },
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    }
+  },
+  "matchers": {
+    "orb": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 0,
+        "checkpoint_matcher_ids": [],
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "reason": "no other matcher produced verified correspondences on this pair, so no cross-matcher checkpoint set exists",
+        "status": "NOT_POSSIBLE_NO_INDEPENDENT_CHECKPOINTS",
+        "transform_from_matcher_id": "orb",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 4,
+          "inlier_count": 4,
+          "inlier_ratio": 0.125,
+          "rmse": 4.219053186943524e-11,
+          "spatial_coverage": 0.23282788693091191
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "4 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 4,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "orb",
+        "raw_match_count": 32,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "orb",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198184960,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40510413,
+          "tracemalloc_stage_peak_bytes": 40511608
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198127616,
+          "process_rss_delta_bytes": 3346432,
+          "tracemalloc_current_bytes": 40456195,
+          "tracemalloc_stage_peak_bytes": 83279767
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198184960,
+          "process_rss_delta_bytes": 57344,
+          "tracemalloc_current_bytes": 40505708,
+          "tracemalloc_stage_peak_bytes": 40789182
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198184960,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40507613,
+          "tracemalloc_stage_peak_bytes": 40518016
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198127616,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40491803,
+          "tracemalloc_stage_peak_bytes": 40492998
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198127616,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40489507,
+          "tracemalloc_stage_peak_bytes": 40493099
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 1,
+        "input_count": 4,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 4
+      },
+      "register": {
+        "control_points_used_for_fit": 4,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": true,
+        "minimal_sample_warning": "the transform was fitted from exactly 4 points, the projective DLT minimum, so its fit residuals are an algebraic identity and carry no information about registration accuracy",
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "arm_total": 2.0165373999625444,
+        "evaluate": 0.00019589997828006744,
+        "match": 1.0567868000362068,
+        "refine_points": 0.31390599999576807,
+        "register": 0.0020004999823868275,
+        "select_control_points": 0.0001775999553501606,
+        "verify_matches": 0.6434706000145525
+      },
+      "select_control_points": {
+        "control_point_count": 4,
+        "points": [
+          {
+            "reference_xy": [
+              4273.92041015625,
+              25194.240234375
+            ],
+            "residual": 1.5883642114725243e-11,
+            "source_xy": [
+              1527.5521774291992,
+              8577.792846679688
+            ]
+          },
+          {
+            "reference_xy": [
+              4060.939208984375,
+              29163.1171875
+            ],
+            "residual": 1.929865463709843e-11,
+            "source_xy": [
+              4089.139678955078,
+              41455.417236328125
+            ]
+          },
+          {
+            "reference_xy": [
+              2703.974853515625,
+              42118.96875
+            ],
+            "residual": 5.165937912179361e-11,
+            "source_xy": [
+              4780.064025878906,
+              35871.631103515625
+            ]
+          },
+          {
+            "reference_xy": [
+              1700.3521728515625,
+              11819.521484375
+            ],
+            "residual": 6.186068467793938e-11,
+            "source_xy": [
+              4670.080230712891,
+              67614.64038085938
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": 0.2328210283273892,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 4,
+          "reference_occupied_fraction": 0.0625,
+          "source_occupied_cells": 4,
+          "source_occupied_fraction": 0.0625,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": 0.125,
+        "inlier_residual_max": 6.186068467793938e-11,
+        "inlier_residual_min": 1.5883642114725243e-11,
+        "inliers_above_model_minimum": 0,
+        "model_min_samples": 4,
+        "raw_match_count": 32,
+        "rejected_count": 28,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 4,
+          "raw": 0,
+          "rejected": 28
+        },
+        "verified_inlier_count": 4
+      }
+    },
+    "rift": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 0,
+        "checkpoint_matcher_ids": [
+          "orb"
+        ],
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "NOT_POSSIBLE_NO_FITTED_TRANSFORM",
+        "transform_from_matcher_id": "rift",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 0,
+          "inlier_count": 0,
+          "inlier_ratio": null,
+          "rmse": null,
+          "spatial_coverage": null
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "0 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 0,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "rift",
+        "raw_match_count": 0,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "rift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40439417,
+          "tracemalloc_stage_peak_bytes": 40440612
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": -3514368,
+          "tracemalloc_current_bytes": 40433848,
+          "tracemalloc_stage_peak_bytes": 819326932
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40435452,
+          "tracemalloc_stage_peak_bytes": 40436647
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40436884,
+          "tracemalloc_stage_peak_bytes": 40438079
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40435244,
+          "tracemalloc_stage_peak_bytes": 40436439
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 194781184,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40434860,
+          "tracemalloc_stage_peak_bytes": 40436055
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 0,
+        "limitation": null,
+        "outcome": "NO_POINTS",
+        "output_count": 0
+      },
+      "register": {
+        "control_points_used_for_fit": 0,
+        "full_raster_warp_blocked": false,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": null,
+        "quality_flags": [
+          "insufficient_control_points"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": false
+      },
+      "runtime_seconds": {
+        "arm_total": 35.99115810007788,
+        "evaluate": 7.179984822869301e-05,
+        "match": 35.99082050006837,
+        "refine_points": 4.460010677576065e-05,
+        "register": 7.770000956952572e-05,
+        "select_control_points": 4.67000063508749e-05,
+        "verify_matches": 9.680003859102726e-05
+      },
+      "select_control_points": {
+        "control_point_count": 0,
+        "points": [],
+        "selection_succeeded": false
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": null,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": null,
+          "reference_occupied_fraction": null,
+          "source_occupied_cells": null,
+          "source_occupied_fraction": null,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": null,
+        "inlier_residual_max": null,
+        "inlier_residual_min": null,
+        "inliers_above_model_minimum": -4,
+        "model_min_samples": 4,
+        "raw_match_count": 0,
+        "rejected_count": 0,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 0,
+          "raw": 0,
+          "rejected": 0
+        },
+        "verified_inlier_count": 0
+      }
+    },
+    "sift": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 0,
+        "checkpoint_matcher_ids": [
+          "orb"
+        ],
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "NOT_POSSIBLE_NO_FITTED_TRANSFORM",
+        "transform_from_matcher_id": "sift",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 0,
+          "inlier_count": 0,
+          "inlier_ratio": 0.0,
+          "rmse": null,
+          "spatial_coverage": null
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "0 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 0,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "raw_match_count": 26,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198295552,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40322250,
+          "tracemalloc_stage_peak_bytes": 40323445
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198275072,
+          "process_rss_delta_bytes": 1675264,
+          "tracemalloc_current_bytes": 40288570,
+          "tracemalloc_stage_peak_bytes": 86158266
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198295552,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40317378,
+          "tracemalloc_stage_peak_bytes": 40318573
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198295552,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40319266,
+          "tracemalloc_stage_peak_bytes": 40320461
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198295552,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 40316866,
+          "tracemalloc_stage_peak_bytes": 40318061
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 198295552,
+          "process_rss_delta_bytes": 20480,
+          "tracemalloc_current_bytes": 40316298,
+          "tracemalloc_stage_peak_bytes": 40319204
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 0,
+        "limitation": null,
+        "outcome": "NO_POINTS",
+        "output_count": 0
+      },
+      "register": {
+        "control_points_used_for_fit": 0,
+        "full_raster_warp_blocked": false,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": null,
+        "quality_flags": [
+          "insufficient_control_points"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": false
+      },
+      "runtime_seconds": {
+        "arm_total": 3.179160399828106,
+        "evaluate": 0.00012820004485547543,
+        "match": 2.5653274001087993,
+        "refine_points": 6.569991819560528e-05,
+        "register": 0.00010830000974237919,
+        "select_control_points": 0.00028449995443224907,
+        "verify_matches": 0.6132462997920811
+      },
+      "select_control_points": {
+        "control_point_count": 0,
+        "points": [],
+        "selection_succeeded": false
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": null,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": null,
+          "reference_occupied_fraction": null,
+          "source_occupied_cells": null,
+          "source_occupied_fraction": null,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": 0.0,
+        "inlier_residual_max": null,
+        "inlier_residual_min": null,
+        "inliers_above_model_minimum": -4,
+        "model_min_samples": 4,
+        "raw_match_count": 26,
+        "rejected_count": 0,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 26,
+          "inlier": 0,
+          "raw": 0,
+          "rejected": 0
+        },
+        "verified_inlier_count": 0
+      }
+    }
+  },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 156344320,
+      "process_rss_delta_bytes": 0,
+      "tracemalloc_current_bytes": 14309,
+      "tracemalloc_stage_peak_bytes": 15504
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 196599808,
+      "process_rss_delta_bytes": 40255488,
+      "tracemalloc_current_bytes": 40141036,
+      "tracemalloc_stage_peak_bytes": 81701732
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 156344320,
+      "process_rss_delta_bytes": -97038336,
+      "tracemalloc_current_bytes": 10423,
+      "tracemalloc_stage_peak_bytes": 180153642
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 156344320,
+      "process_rss_delta_bytes": 0,
+      "tracemalloc_current_bytes": 16020,
+      "tracemalloc_stage_peak_bytes": 18150
+    },
+    "process_rss_bytes": 134316032,
+    "process_tracemalloc_current_bytes": 335386,
+    "process_tracemalloc_peak_bytes": 40514938
+  },
+  "pair_manifest_id": "pair_03_south_mid",
+  "reproducibility": {
+    "git_commit": "779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.00019029993563890457,
+    "generate_representation": 0.5164741999469697,
+    "ingest_product": 432.01398139982484,
+    "matcher_arms": {
+      "orb": 2.0165373999625444,
+      "rift": 35.99115810007788,
+      "sift": 3.179160399828106
+    },
+    "preprocess": 0.0002758000046014786,
+    "total": 473.72484580008313
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 1124304000,
+      "stage": "preprocess"
+    }
+  ],
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "illumination_note": "sun_angle_difference_degrees is None: LunarProduct carries no Sun vector and SPICE is not implemented",
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20230302t1959055531_d_img_n18__M106979273RC"
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "shared_across_matchers": true,
+      "source_matching_view": {
+        "matching_shape": [
+          5512,
+          706
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          93692,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 17,
+        "x_scale": 17.0,
+        "y_scale": 17.0
+      },
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M106979273RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 93692,
+          "pixel_count": 1124304000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.25,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20230302t1959055531_d_img_n18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 1124304000
+    }
+  },
+  "status": "completed",
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=1124304000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
+}

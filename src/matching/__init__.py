@@ -8,14 +8,17 @@ final algorithm choice (D-007).
 
 Implemented adapters
 --------------------
-sift  — SIFT/ASIFT baseline (EXP-000). Not the final method.
+sift  — SIFT baseline (EXP-000). Wired through this frozen surface.
 
-Future adapters (add after EXP-001 benchmark):
-rift  — RIFT/RIFT2 (illumination-robust).
-lightglue — LightGlue (deep learning, requires PyTorch + GPU).
-loftr — LoFTR-family (dense matching for difficult pairs).
+EXP-001 comparison adapters live behind ``src.matching.portfolio.run_matcher``
+and are deliberately *not* selected here (D-007):
+rift  — in-repository RIFT (phase congruency + MIM).
+orb   — ORB (oriented FAST + rBRIEF).
 
-The adapter selected is determined by src.routing.select_matcher_id().
+Blocked for EXP-001 (see experiments/EXP-001): LightGlue, LoFTR.
+
+The adapter selected by this function is determined by
+src.routing.select_matcher_id(), which currently always returns ``sift``.
 """
 
 from __future__ import annotations
