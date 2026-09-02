@@ -10,8 +10,6 @@ Does not re-run matching or verification. Does not invent metrics.
 
 from __future__ import annotations
 
-import numpy as np
-
 from src.models.correspondence_set import CorrespondenceSet
 from src.models.registration_pair import RegistrationPair
 from src.models.registration_result import ControlPoint, RegistrationResult, TransformationModel
@@ -22,6 +20,7 @@ from src.registration.result import (
     FLAG_DEGENERATE_CONTROL_POINTS,
     FLAG_INSUFFICIENT_CONTROL_POINTS,
     FLAG_INVALID_TRANSFORMATION,
+    FLAG_OUTPUT_TOO_LARGE,
     FLAG_SOURCE_RASTER_UNAVAILABLE,
     FLAG_UNSUPPORTED_RASTER,
     FLAG_WARP_FAILED,
@@ -105,6 +104,17 @@ def register_with_settings(
             [FLAG_SOURCE_RASTER_UNAVAILABLE],
         )
 
+    output_shape = _output_hw(pair)
+    if output_shape is not None and output_shape[0] * output_shape[1] > settings.max_output_pixels:
+        return build_result(
+            pair,
+            control_points,
+            correspondences,
+            transformation,
+            None,
+            [FLAG_OUTPUT_TOO_LARGE],
+        )
+
     try:
         source = load_raster(source_uri)
     except ValueError:
@@ -126,7 +136,19 @@ def register_with_settings(
             [FLAG_SOURCE_RASTER_UNAVAILABLE],
         )
 
-    height, width = _output_hw(pair, source)
+    if output_shape is None:
+        output_shape = int(source.shape[0]), int(source.shape[1])
+    height, width = output_shape
+    if height * width > settings.max_output_pixels:
+        return build_result(
+            pair,
+            control_points,
+            correspondences,
+            transformation,
+            None,
+            [FLAG_OUTPUT_TOO_LARGE],
+        )
+
     try:
         warped = warp_to_grid(source, validated, height, width)
         uri = save_raster(registered_uri_for(source_uri), warped)
@@ -143,7 +165,11 @@ def register_with_settings(
     return build_result(pair, control_points, correspondences, transformation, uri, [])
 
 
-def _output_hw(pair: RegistrationPair, source: np.ndarray) -> tuple[int, int]:
+def _output_hw(pair: RegistrationPair) -> tuple[int, int] | None:
+    dimensions = pair.reference.dimensions
+    if dimensions is not None:
+        return dimensions.height_px, dimensions.width_px
+
     reference_uri = pair.reference.raster_uri
     if reference_uri is not None:
         try:
@@ -152,4 +178,7 @@ def _output_hw(pair: RegistrationPair, source: np.ndarray) -> tuple[int, int]:
             reference = None
         else:
             return int(reference.shape[0]), int(reference.shape[1])
-    return int(source.shape[0]), int(source.shape[1])
+    source_dimensions = pair.source.dimensions
+    if source_dimensions is not None:
+        return source_dimensions.height_px, source_dimensions.width_px
+    return None

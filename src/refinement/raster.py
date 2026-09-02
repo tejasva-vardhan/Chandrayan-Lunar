@@ -38,12 +38,14 @@ def load_software_raster(uri: str | None) -> tuple[np.ndarray | None, str | None
     if path.suffix.lower() != ENGINEERING_RASTER_SUFFIX:
         return None, RASTER_UNSUPPORTED
     try:
-        array = np.load(path)
+        # Keep large ingested rasters memory-mapped. Refinement samples only
+        # local windows, so loading an entire real product is unnecessary.
+        array = np.load(path, mmap_mode="r")
     except (OSError, ValueError):
         return None, RASTER_UNAVAILABLE
     if array.ndim not in (2, 3) or array.size == 0:
         return None, RASTER_UNSUPPORTED
-    return np.asarray(array, dtype=float), None
+    return array, None
 
 
 def as_intensity(array: np.ndarray) -> np.ndarray | None:
@@ -58,7 +60,9 @@ def as_intensity(array: np.ndarray) -> np.ndarray | None:
     """
 
     if array.ndim == 2:
-        return np.asarray(array, dtype=float)
+        # Window extraction performs the numeric promotion it needs. Keeping
+        # this handle avoids materializing a full-resolution product.
+        return array
     if array.ndim == 3:
         if array.shape[0] < 1 or array.shape[1] < 1:
             return None
