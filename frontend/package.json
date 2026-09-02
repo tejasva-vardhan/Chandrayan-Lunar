@@ -10,14 +10,18 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "cesium": "^1.145.0",
     "framer-motion": "^13.2.0",
     "react": "latest",
     "react-dom": "latest",
+    "three": "^0.185.1",
     "typescript": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "vite-plugin-cesium": "^1.2.23"
   },
   "devDependencies": {
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "@types/three": "^0.185.4"
   }
 }
