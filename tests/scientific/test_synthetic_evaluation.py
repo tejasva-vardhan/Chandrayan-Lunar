@@ -11,7 +11,7 @@ import math
 
 import pytest
 
-from src.evaluation import evaluate
+from src.evaluation import EvaluationCheckpoint, evaluate, evaluate_with_checkpoints
 from src.models import (
     ControlPoint,
     Correspondence,
@@ -19,6 +19,7 @@ from src.models import (
     LunarProduct,
     RegistrationPair,
     RegistrationResult,
+    TransformationModel,
 )
 from src.models.common import ImageDimensions
 
@@ -48,7 +49,7 @@ def _result(
     )
 
 
-def test_synthetic_zero_transfer_error_rmse() -> None:
+def test_synthetic_fit_residuals_are_not_independent_rmse() -> None:
     # Synthetic stored residuals (TEST ONLY). Not a lunar generating model.
     pair = _pair(32, 32)
     matches = [
@@ -62,12 +63,12 @@ def test_synthetic_zero_transfer_error_rmse() -> None:
     ]
     metrics = evaluate(_result(pair, matches), pair).metrics
     assert metrics is not None
-    assert metrics.rmse == 0.0
+    assert metrics.rmse is None
     assert metrics.inlier_count == 4
     assert metrics.inlier_ratio == 1.0
 
 
-def test_synthetic_known_rmse_and_ratio() -> None:
+def test_synthetic_independent_checkpoint_rmse_and_fit_ratio() -> None:
     pair = _pair(32, 32)
     matches = [
         Correspondence(
@@ -86,11 +87,28 @@ def test_synthetic_known_rmse_and_ratio() -> None:
             residual=50.0,
         ),
     ]
-    metrics = evaluate(_result(pair, matches), pair).metrics
+    result = _result(pair, matches).model_copy(
+        update={
+            "transformation": TransformationModel(
+                model_name="synthetic_translation",
+                parameters={
+                    "matrix": [[1.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+                },
+            )
+        }
+    )
+    metrics = evaluate_with_checkpoints(
+        result,
+        pair,
+        [
+            EvaluationCheckpoint("held-out-1", (12.0, 0.0), (14.0, 0.0)),
+            EvaluationCheckpoint("held-out-2", (16.0, 0.0), (17.0, 0.0)),
+        ],
+    ).metrics
     assert metrics is not None
     assert metrics.inlier_count == 3
     assert metrics.inlier_ratio == pytest.approx(0.75)
-    assert metrics.rmse == pytest.approx(math.sqrt((1.0 + 4.0 + 4.0) / 3.0))
+    assert metrics.rmse == pytest.approx(math.sqrt(0.5))
 
 
 def test_synthetic_known_coverage_box() -> None:

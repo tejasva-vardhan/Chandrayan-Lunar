@@ -21,14 +21,20 @@ _INLIER_STATUS = "inlier"
 
 
 def compute_registration_metrics(
-    result: RegistrationResult, pair: RegistrationPair
+    result: RegistrationResult,
+    pair: RegistrationPair,
+    independent_residuals: list[float] | None = None,
 ) -> RegistrationMetrics:
-    """Fill frozen metric fields from result + pair. Do not invent values."""
+    """Fill frozen metric fields from result + pair. Do not invent values.
+
+    RMSE is reserved for independently supplied checkpoint residuals.  Fit
+    residuals remain verification diagnostics and are not evaluation evidence.
+    """
 
     correspondences = result.correspondences
     inlier_count = count_inliers(correspondences)
     return RegistrationMetrics(
-        rmse=rmse_from_inlier_residuals(correspondences),
+        rmse=rmse_from_independent_residuals(independent_residuals),
         inlier_count=inlier_count,
         inlier_ratio=inlier_ratio_from_matches(correspondences),
         spatial_coverage=spatial_coverage_from_control_points(result, pair),
@@ -82,6 +88,15 @@ def rmse_from_inlier_residuals(correspondences: CorrespondenceSet | None) -> flo
         if item.status == _INLIER_STATUS and _usable_residual(item.residual)
     ]
     if not residuals:
+        return None
+    values = np.asarray(residuals, dtype=float)
+    return float(np.sqrt(np.mean(np.square(values))))
+
+
+def rmse_from_independent_residuals(residuals: list[float] | None) -> float | None:
+    """RMSE for an explicit held-out checkpoint population only."""
+
+    if not residuals or any(not _usable_residual(value) for value in residuals):
         return None
     values = np.asarray(residuals, dtype=float)
     return float(np.sqrt(np.mean(np.square(values))))

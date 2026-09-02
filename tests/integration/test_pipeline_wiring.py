@@ -36,6 +36,7 @@ IMPLEMENTED_STAGES = frozenset(
         "refine_points",
         "register",
         "evaluate",
+        "export_result",
     }
 )
 UNIMPLEMENTED_STAGES = tuple(stage for stage in PIPELINE_STAGES if stage not in IMPLEMENTED_STAGES)
@@ -285,7 +286,7 @@ def test_unimplemented_stage_fails_closed_and_is_not_skipped(
         assert later not in calls
 
 
-def test_implemented_verify_and_control_points_run_then_later_stub_fails_closed(
+def test_implemented_verify_and_control_points_run_through_export(
     tmp_paths: tuple[Path, Path, Path],
 ) -> None:
     source_path, reference_path, output_dir = tmp_paths
@@ -310,8 +311,7 @@ def test_implemented_verify_and_control_points_run_then_later_stub_fails_closed(
         bound[name] = wrap(name, fn)
 
     ops = PipelineOperations(**bound)  # type: ignore[arg-type]
-    with pytest.raises(NotImplementedError):
-        ScientificPipeline(ops).run(source_path, reference_path, output_dir)
+    result, manifest = ScientificPipeline(ops).run(source_path, reference_path, output_dir)
 
     assert "match" in calls
     assert "verify_matches" in calls
@@ -320,9 +320,11 @@ def test_implemented_verify_and_control_points_run_then_later_stub_fails_closed(
     assert "register" in calls
     assert "evaluate" in calls
     assert "export_result" in calls
+    assert result.metrics is not None
+    assert manifest.registration_report == "registration_report.json"
 
 
-def test_implemented_register_runs_with_real_refine_points(
+def test_implemented_register_runs_with_real_refine_points_through_export(
     tmp_paths: tuple[Path, Path, Path],
 ) -> None:
     source_path, reference_path, output_dir = tmp_paths
@@ -346,13 +348,14 @@ def test_implemented_register_runs_with_real_refine_points(
         bound[name] = wrap(name, fn)
 
     ops = PipelineOperations(**bound)  # type: ignore[arg-type]
-    with pytest.raises(NotImplementedError):
-        ScientificPipeline(ops).run(source_path, reference_path, output_dir)
+    result, manifest = ScientificPipeline(ops).run(source_path, reference_path, output_dir)
 
     assert "refine_points" in calls
     assert "register" in calls
     assert "evaluate" in calls
     assert "export_result" in calls
+    assert result.metrics is not None
+    assert manifest.registration_report == "registration_report.json"
 
 
 def test_wrong_stage_return_type_fails_closed(tmp_paths: tuple[Path, Path, Path]) -> None:
