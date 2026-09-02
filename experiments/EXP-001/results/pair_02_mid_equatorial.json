@@ -1,0 +1,1184 @@
+{
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M1504316436RC",
+    "lroc_source_name": "M1504316436RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18"
+  },
+  "experiment_id": "EXP-001",
+  "failed_stage": null,
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "experiment_id": "EXP-001",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest",
+      "matching-view policy (stride_decimation, 4,194,304 pixels per image)",
+      "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
+      "representation routing and intensity percentile stretch",
+      "coordinate mapping back to original image pixels",
+      "geometric model projective_2d_baseline",
+      "robust estimator ransac_style_baseline",
+      "verification residual_limit 3.0",
+      "RANSAC max_trials 500",
+      "rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap",
+      "evaluation metric definitions",
+      "Lowe ratio threshold 0.75 and min_matches 4 in every adapter"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; there is no surveyed lunar control in this project's data",
+      "rng_seed": 0
+    },
+    "independent_variable": "matcher_id",
+    "inherited_from": "EXP-000",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "single_representation_per_pair": "generate_representation is called once per pair and the identical RepresentationResult object is passed to every matcher, so the matching view, stride, validity masks, and coordinate scales are the same objects rather than merely the same settings",
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "hypothesis": "H1: On Chandrayaan-2 OHRC <-> LROC NAC pairs, replacing the SIFT baseline with an illumination/appearance-robust matcher materially increases the number of geometrically verified correspondences beyond the four-point projective DLT minimum, holding the matching-view policy, preprocessing, coordinate mapping, geometric model, residual threshold, RANSAC budget, random seed, control-point policy, and evaluation procedure constant. H0: matcher choice does not move verified yield above that minimum, which would mean the correspondence bottleneck lies elsewhere.",
+  "interpretation": {
+    "any_matcher_exceeds_model_minimum": true,
+    "decision_rule": "A matcher counts as improving verified yield only if it produces strictly more verified inliers than the geometric model's minimum sample size (4 for projective_2d_baseline). A verified count of exactly 4 means RANSAC's consensus set is the minimal sample itself, no correspondence corroborated the fit, and the near-zero fit residual is an algebraic identity rather than evidence.",
+    "exceeds_model_minimum_by_matcher": {
+      "orb": true,
+      "rift": false,
+      "sift": true
+    },
+    "highest_verified_yield_count": 25,
+    "highest_verified_yield_is_tied": false,
+    "highest_verified_yield_matcher": "sift",
+    "highest_verified_yield_matchers": [
+      "sift"
+    ],
+    "independent_accuracy": "NOT VALIDATED",
+    "model_min_samples": 4,
+    "single_pair_caveat": "one pair cannot establish a globally superior matcher; these counts are evidence about this pair only",
+    "verified_inliers_by_matcher": {
+      "orb": 24,
+      "rift": 0,
+      "sift": 25
+    }
+  },
+  "matcher_configuration": {
+    "orb": {
+      "edge_threshold": 31,
+      "fast_threshold": 20,
+      "min_matches": 4,
+      "n_levels": 8,
+      "nfeatures": 20000,
+      "patch_size": 31,
+      "ratio_threshold": 0.75,
+      "scale_factor": 1.2,
+      "wta_k": 2
+    },
+    "rift": {
+      "descriptor_grid": 6,
+      "fast_threshold": 10,
+      "log_gabor": {
+        "cut_off": 0.5,
+        "gain": 10.0,
+        "k_noise": 2.0,
+        "low_pass_cutoff": 0.45,
+        "low_pass_order": 15,
+        "min_wavelength": 3.0,
+        "mult": 1.6,
+        "n_orient": 6,
+        "n_scale": 4,
+        "sigma_on_f": 0.75
+      },
+      "max_keypoints": 20000,
+      "min_matches": 4,
+      "patch_size": 96,
+      "ratio_threshold": 0.75
+    },
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    }
+  },
+  "matchers": {
+    "orb": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 25,
+        "checkpoint_matcher_ids": [
+          "sift"
+        ],
+        "checkpoint_transfer_error_pixels": {
+          "count": 25,
+          "max": 107.09028724451916,
+          "mean": 55.10317356165775,
+          "median": 58.7429540631951,
+          "min": 17.735843367836356,
+          "rmse": 61.32381173198242
+        },
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "transform_from_matcher_id": "orb",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 17,
+          "inlier_count": 24,
+          "inlier_ratio": 0.025396825396825397,
+          "rmse": 1.7444997876615607,
+          "spatial_coverage": 0.2549687873087545
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 24,
+        "held_out_transfer_error_pixels": {
+          "count": 24,
+          "max": 3.9660392737328416,
+          "mean": 2.0343863867436576,
+          "median": 2.0039248872391333,
+          "min": 0.45077927174421784,
+          "rmse": 2.2215202598749366
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 24,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "orb",
+        "raw_match_count": 945,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "orb",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312147968,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 41445781,
+          "tracemalloc_stage_peak_bytes": 41446976
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312123392,
+          "process_rss_delta_bytes": 4653056,
+          "tracemalloc_current_bytes": 40432657,
+          "tracemalloc_stage_peak_bytes": 82425006
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312147968,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 41439631,
+          "tracemalloc_stage_peak_bytes": 41722847
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312147968,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 41442829,
+          "tracemalloc_stage_peak_bytes": 41485277
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312143872,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 41425078,
+          "tracemalloc_stage_peak_bytes": 41428022
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 312143872,
+          "process_rss_delta_bytes": 20480,
+          "tracemalloc_current_bytes": 41415550,
+          "tracemalloc_stage_peak_bytes": 41504694
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 1,
+        "input_count": 17,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 17
+      },
+      "register": {
+        "control_points_used_for_fit": 17,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "arm_total": 2.2084120998624712,
+        "evaluate": 0.00033199996687471867,
+        "match": 1.1366846999153495,
+        "refine_points": 0.37158929998986423,
+        "register": 0.0024645000230520964,
+        "select_control_points": 0.0014313999563455582,
+        "verify_matches": 0.6959102000109851
+      },
+      "select_control_points": {
+        "control_point_count": 17,
+        "points": [
+          {
+            "reference_xy": [
+              568.0,
+              32808.0
+            ],
+            "residual": 0.338510203145445,
+            "source_xy": [
+              8812.80078125,
+              43680.0
+            ]
+          },
+          {
+            "reference_xy": [
+              1728.0001220703125,
+              45605.37890625
+            ],
+            "residual": 0.36734184103038614,
+            "source_xy": [
+              9515.337890625,
+              10351.4140625
+            ]
+          },
+          {
+            "reference_xy": [
+              3334.349365234375,
+              34504.70703125
+            ],
+            "residual": 0.7011335701461051,
+            "source_xy": [
+              1592.525146484375,
+              37304.90234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3364.20947265625,
+              39016.8671875
+            ],
+            "residual": 0.7458305409766265,
+            "source_xy": [
+              2923.87646484375,
+              25741.578125
+            ]
+          },
+          {
+            "reference_xy": [
+              1960.0,
+              31936.0
+            ],
+            "residual": 0.750950638241782,
+            "source_xy": [
+              4654.080078125,
+              44904.9609375
+            ]
+          },
+          {
+            "reference_xy": [
+              2139.95556640625,
+              44524.34375
+            ],
+            "residual": 0.8198362737219675,
+            "source_xy": [
+              8042.251953125,
+              12740.201171875
+            ]
+          },
+          {
+            "reference_xy": [
+              1433.272705078125,
+              37603.5
+            ],
+            "residual": 0.9071409206040012,
+            "source_xy": [
+              7883.0,
+              30815.36328125
+            ]
+          },
+          {
+            "reference_xy": [
+              506.8800048828125,
+              38246.40234375
+            ],
+            "residual": 1.178355932319615,
+            "source_xy": [
+              10644.4814453125,
+              29887.490234375
+            ]
+          },
+          {
+            "reference_xy": [
+              2767.012451171875,
+              36409.10546875
+            ],
+            "residual": 1.2266393886635707,
+            "source_xy": [
+              3783.840087890625,
+              32850.609375
+            ]
+          },
+          {
+            "reference_xy": [
+              264.0,
+              34512.0
+            ],
+            "residual": 1.2780415685627826,
+            "source_xy": [
+              10176.0,
+              39552.0
+            ]
+          },
+          {
+            "reference_xy": [
+              1728.0,
+              31904.0
+            ],
+            "residual": 1.461951803993974,
+            "source_xy": [
+              5299.2001953125,
+              45158.40234375
+            ]
+          },
+          {
+            "reference_xy": [
+              2627.66650390625,
+              45307.33984375
+            ],
+            "residual": 2.0857376704816954,
+            "source_xy": [
+              6937.0400390625,
+              10376.89453125
+            ]
+          },
+          {
+            "reference_xy": [
+              1285.632080078125,
+              31822.8515625
+            ],
+            "residual": 2.2418907099666385,
+            "source_xy": [
+              6502.810546875,
+              45685.5625
+            ]
+          },
+          {
+            "reference_xy": [
+              2329.068115234375,
+              33761.53515625
+            ],
+            "residual": 2.2732905991487127,
+            "source_xy": [
+              4185.15625,
+              39959.64453125
+            ]
+          },
+          {
+            "reference_xy": [
+              862.6177368164062,
+              35085.31640625
+            ],
+            "residual": 2.3480215213477975,
+            "source_xy": [
+              8695.1875,
+              37647.296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2224.0,
+              31248.0
+            ],
+            "residual": 2.6047653480278727,
+            "source_xy": [
+              3705.60009765625,
+              46483.203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2886.451904296875,
+              37882.19140625
+            ],
+            "residual": 2.6275140450143186,
+            "source_xy": [
+              3917.612060546875,
+              28999.884765625
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": 0.281076409858244,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 12,
+          "reference_occupied_fraction": 0.1875,
+          "source_occupied_cells": 15,
+          "source_occupied_fraction": 0.234375,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.025396825396825397,
+        "inlier_residual_max": 2.7285613426419815,
+        "inlier_residual_min": 0.338510203145445,
+        "inliers_above_model_minimum": 20,
+        "model_min_samples": 4,
+        "raw_match_count": 945,
+        "rejected_count": 921,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 24,
+          "raw": 0,
+          "rejected": 921
+        },
+        "verified_inlier_count": 24
+      }
+    },
+    "rift": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 0,
+        "checkpoint_matcher_ids": [
+          "orb",
+          "sift"
+        ],
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "NOT_POSSIBLE_NO_FITTED_TRANSFORM",
+        "transform_from_matcher_id": "rift",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 0,
+          "inlier_count": 0,
+          "inlier_ratio": null,
+          "rmse": null,
+          "spatial_coverage": null
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "0 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 0,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "rift",
+        "raw_match_count": 0,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "rift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 39736178,
+          "tracemalloc_stage_peak_bytes": 39737373
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 15597568,
+          "tracemalloc_current_bytes": 39730314,
+          "tracemalloc_stage_peak_bytes": 817201062
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 39732018,
+          "tracemalloc_stage_peak_bytes": 39733213
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 39733506,
+          "tracemalloc_stage_peak_bytes": 39734701
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 39731810,
+          "tracemalloc_stage_peak_bytes": 39733005
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 307470336,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 39731426,
+          "tracemalloc_stage_peak_bytes": 39732621
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 0,
+        "limitation": null,
+        "outcome": "NO_POINTS",
+        "output_count": 0
+      },
+      "register": {
+        "control_points_used_for_fit": 0,
+        "full_raster_warp_blocked": false,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": null,
+        "quality_flags": [
+          "insufficient_control_points"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": false
+      },
+      "runtime_seconds": {
+        "arm_total": 35.810393299674615,
+        "evaluate": 7.679988630115986e-05,
+        "match": 35.81003829999827,
+        "refine_points": 4.540011286735535e-05,
+        "register": 8.389982394874096e-05,
+        "select_control_points": 4.859990440309048e-05,
+        "verify_matches": 0.00010029994882643223
+      },
+      "select_control_points": {
+        "control_point_count": 0,
+        "points": [],
+        "selection_succeeded": false
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": null,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": null,
+          "reference_occupied_fraction": null,
+          "source_occupied_cells": null,
+          "source_occupied_fraction": null,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": null,
+        "inlier_residual_max": null,
+        "inlier_residual_min": null,
+        "inliers_above_model_minimum": -4,
+        "model_min_samples": 4,
+        "raw_match_count": 0,
+        "rejected_count": 0,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 0,
+          "raw": 0,
+          "rejected": 0
+        },
+        "verified_inlier_count": 0
+      }
+    },
+    "sift": {
+      "cross_matcher_validation": {
+        "checkpoint_count": 24,
+        "checkpoint_matcher_ids": [
+          "orb"
+        ],
+        "checkpoint_transfer_error_pixels": {
+          "count": 24,
+          "max": 123.03199277834419,
+          "mean": 54.03116739230745,
+          "median": 42.7725165941612,
+          "min": 10.759728133647293,
+          "rmse": 62.94521645991969
+        },
+        "design": "transform fitted by one matcher evaluated on correspondences verified by different matchers",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "transform_from_matcher_id": "sift",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "checkpoints are produced by another matcher, not by surveyed lunar control; agreement between two algorithms is consistency, not accuracy"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 25,
+        "held_out_transfer_error_pixels": {
+          "count": 25,
+          "max": 3.0980838888403253,
+          "mean": 1.7388797941585585,
+          "median": 1.7959947582848357,
+          "min": 0.34569302673882957,
+          "rmse": 1.9043709874947647
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 25,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "raw_match_count": 919,
+        "representation_id": "intensity"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 291581952,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 41182574,
+          "tracemalloc_stage_peak_bytes": 41183769
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 292380672,
+          "process_rss_delta_bytes": 6258688,
+          "tracemalloc_current_bytes": 40198096,
+          "tracemalloc_stage_peak_bytes": 85197348
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 291577856,
+          "process_rss_delta_bytes": 126976,
+          "tracemalloc_current_bytes": 41176548,
+          "tracemalloc_stage_peak_bytes": 41463749
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 291581952,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 41179574,
+          "tracemalloc_stage_peak_bytes": 41222054
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 291450880,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 41165948,
+          "tracemalloc_stage_peak_bytes": 41169260
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+          "process_rss_bytes": 291450880,
+          "process_rss_delta_bytes": -929792,
+          "tracemalloc_current_bytes": 41155828,
+          "tracemalloc_stage_peak_bytes": 41239888
+        }
+      },
+      "refine_points": {
+        "coordinates_changed_count": 2,
+        "input_count": 11,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 11
+      },
+      "register": {
+        "control_points_used_for_fit": 11,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "arm_total": 4.295998900197446,
+        "evaluate": 0.0003066000062972307,
+        "match": 2.907419200055301,
+        "refine_points": 0.6131265999283642,
+        "register": 0.0029573000501841307,
+        "select_control_points": 0.00075300014577806,
+        "verify_matches": 0.7714362000115216
+      },
+      "select_control_points": {
+        "control_point_count": 11,
+        "points": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "control_point_coverage_note": "control-point coverage is reported by the frozen evaluate() stage under 'evaluate.metrics.spatial_coverage'",
+        "verified_match_coverage": 0.5084353283845922,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 9,
+          "reference_occupied_fraction": 0.140625,
+          "source_occupied_cells": 11,
+          "source_occupied_fraction": 0.171875,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.02720348204570185,
+        "inlier_residual_max": 2.653533215225044,
+        "inlier_residual_min": 0.3047142941734978,
+        "inliers_above_model_minimum": 21,
+        "model_min_samples": 4,
+        "raw_match_count": 919,
+        "rejected_count": 894,
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 25,
+          "raw": 0,
+          "rejected": 894
+        },
+        "verified_inlier_count": 25
+      }
+    }
+  },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 246747136,
+      "process_rss_delta_bytes": 0,
+      "tracemalloc_current_bytes": 15023,
+      "tracemalloc_stage_peak_bytes": 16218
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 286121984,
+      "process_rss_delta_bytes": 39374848,
+      "tracemalloc_current_bytes": 39385670,
+      "tracemalloc_stage_peak_bytes": 81097649
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 246747136,
+      "process_rss_delta_bytes": 57344,
+      "tracemalloc_current_bytes": 11152,
+      "tracemalloc_stage_peak_bytes": 180153835
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "memory_source_note": "process RSS is the primary figure; tracemalloc sees only Python allocations and would understate OpenCV's C++ allocations",
+      "process_rss_bytes": 246747136,
+      "process_rss_delta_bytes": 0,
+      "tracemalloc_current_bytes": 16757,
+      "tracemalloc_stage_peak_bytes": 18951
+    },
+    "process_rss_bytes": 253173760,
+    "process_tracemalloc_current_bytes": 356899,
+    "process_tracemalloc_peak_bytes": 41505776
+  },
+  "pair_manifest_id": "pair_02_mid_equatorial",
+  "reproducibility": {
+    "git_commit": "779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.00016009993851184845,
+    "generate_representation": 0.5007567000575364,
+    "ingest_product": 252.9713183999993,
+    "matcher_arms": {
+      "orb": 2.2084120998624712,
+      "rift": 35.810393299674615,
+      "sift": 4.295998900197446
+    },
+    "preprocess": 0.00021750014275312424,
+    "total": 295.81890769978054
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 957360000,
+      "stage": "preprocess"
+    }
+  ],
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "illumination_note": "sun_angle_difference_degrees is None: LunarProduct carries no Sun vector and SPICE is not implemented",
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18__M1504316436RC"
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "shared_across_matchers": true,
+      "source_matching_view": {
+        "matching_shape": [
+          4987,
+          750
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          79780,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 16,
+        "x_scale": 16.0,
+        "y_scale": 16.0
+      },
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M1504316436RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 79780,
+          "pixel_count": 957360000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.28,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 957360000
+    }
+  },
+  "status": "completed",
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=957360000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
+}
