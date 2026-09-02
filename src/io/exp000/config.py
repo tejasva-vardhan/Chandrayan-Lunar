@@ -26,6 +26,13 @@ FOOTPRINT_SOURCE = "NASA PDS ODE"
 # preferred_side is an engineering window, not a scientifically validated crop.
 DIAGNOSTIC_PREFERRED_SIDE_PX = 2048
 
+# Explicit experiment-record vocabulary. These are reporting labels, not
+# frozen LunarProduct / RegistrationResult field values.
+INDEPENDENT_ACCURACY_NOT_VALIDATED = "NOT VALIDATED"
+REFINEMENT_OUTCOME_INDETERMINATE = "INDETERMINATE"
+REFINEMENT_OUTCOME_COORDINATES_UPDATED = "COORDINATES_UPDATED"
+REFINEMENT_OUTCOME_NO_POINTS = "NO_POINTS"
+
 
 def snapshot_software_configuration() -> dict[str, object]:
     """Return the exact parameter set EXP-000 will execute."""
@@ -50,6 +57,7 @@ def snapshot_software_configuration() -> dict[str, object]:
         "matching_view": {
             "max_pixels_per_image": matching_view.max_pixels_per_image,
             "downsample_method": matching_view.downsample_method,
+            "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
             "coordinate_mapping": (
                 "x_original = x_matching * x_scale; "
                 "y_original = y_matching * y_scale; "
@@ -86,5 +94,6 @@ def snapshot_software_configuration() -> dict[str, object]:
                 "reference_cp_bbox_area / reference_image_area)"
             ),
             "independent_ground_truth": False,
+            "independent_accuracy": INDEPENDENT_ACCURACY_NOT_VALIDATED,
         },
     }

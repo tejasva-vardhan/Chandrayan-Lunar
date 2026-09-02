@@ -13,6 +13,7 @@
       "strategy": "bounded_reference_window_maximum_control_point_cover"
     },
     "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
       "independent_ground_truth": false,
       "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
       "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
@@ -24,7 +25,8 @@
     "matching_view": {
       "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
       "downsample_method": "stride_decimation",
-      "max_pixels_per_image": 4194304
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
     },
     "pair_manifest_id": "pair_01_equatorial",
     "preprocessing": {
@@ -85,61 +87,61 @@
   "failed_stage": null,
   "memory": {
     "characterize_pair": {
-      "tracemalloc_current_bytes": 211622,
-      "tracemalloc_delta_bytes": 2862,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 61989,
+      "tracemalloc_delta_bytes": 2950,
+      "tracemalloc_peak_bytes": 180193918
     },
     "evaluate": {
-      "tracemalloc_current_bytes": 2298022,
-      "tracemalloc_delta_bytes": 2434,
-      "tracemalloc_peak_bytes": 2775234246
+      "tracemalloc_current_bytes": 2141814,
+      "tracemalloc_delta_bytes": 2528,
+      "tracemalloc_peak_bytes": 2775077690
     },
     "export_result": {
-      "tracemalloc_current_bytes": 2309106,
-      "tracemalloc_delta_bytes": 10862,
-      "tracemalloc_peak_bytes": 2775234246
+      "tracemalloc_current_bytes": 2153100,
+      "tracemalloc_delta_bytes": 10982,
+      "tracemalloc_peak_bytes": 2775077690
     },
     "generate_representation": {
-      "tracemalloc_current_bytes": 42819336,
-      "tracemalloc_delta_bytes": 42606509,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 42636016,
+      "tracemalloc_delta_bytes": 42572517,
+      "tracemalloc_peak_bytes": 180193918
     },
     "ingest_product": {
-      "tracemalloc_current_bytes": 205045,
-      "tracemalloc_delta_bytes": 204877,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 55838,
+      "tracemalloc_delta_bytes": 55670,
+      "tracemalloc_peak_bytes": 180193918
     },
     "match": {
-      "tracemalloc_current_bytes": 43007001,
+      "tracemalloc_current_bytes": 42824076,
       "tracemalloc_delta_bytes": 185613,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_peak_bytes": 180193918
     },
     "preprocess": {
-      "tracemalloc_current_bytes": 212827,
-      "tracemalloc_delta_bytes": 733,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 63467,
+      "tracemalloc_delta_bytes": 1006,
+      "tracemalloc_peak_bytes": 180193918
     },
-    "process_tracemalloc_current_bytes": 2310638,
-    "process_tracemalloc_peak_bytes": 2775234246,
+    "process_tracemalloc_current_bytes": 2155363,
+    "process_tracemalloc_peak_bytes": 2775077690,
     "refine_points": {
-      "tracemalloc_current_bytes": 2287266,
-      "tracemalloc_delta_bytes": 65818,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2130302,
+      "tracemalloc_delta_bytes": 91878,
+      "tracemalloc_peak_bytes": 180193918
     },
     "register": {
-      "tracemalloc_current_bytes": 2290357,
-      "tracemalloc_delta_bytes": 2275,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2133659,
+      "tracemalloc_delta_bytes": 2541,
+      "tracemalloc_peak_bytes": 180193918
     },
     "select_control_points": {
-      "tracemalloc_current_bytes": 2220296,
+      "tracemalloc_current_bytes": 2037272,
       "tracemalloc_delta_bytes": 3216,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_peak_bytes": 180193918
     },
     "verify_matches": {
-      "tracemalloc_current_bytes": 2216360,
-      "tracemalloc_delta_bytes": 719767,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2033336,
+      "tracemalloc_delta_bytes": 719668,
+      "tracemalloc_peak_bytes": 180193918
     }
   },
   "output_files": {
@@ -149,37 +151,79 @@
     "lightweight_record": "experiments/EXP-000/results/pair_01_equatorial.json"
   },
   "pair_manifest_id": "pair_01_equatorial",
-  "runtime_seconds": {
-    "characterize_pair": 0.0007488999981433153,
-    "evaluate": 0.00046280003152787685,
-    "export_result": 0.016615699976682663,
-    "generate_representation": 0.8466535999905318,
-    "ingest_product": 46.30942089995369,
-    "match": 4.536851099925116,
-    "preprocess": 0.00040300004184246063,
-    "refine_points": 0.06590580008924007,
-    "register": 0.004964299965649843,
-    "select_control_points": 0.0006559998728334904,
-    "total": 93.35133980005048,
-    "verify_matches": 0.9808185000438243
+  "reproducibility": {
+    "git_commit": "dfe240818f648ae59f2da10c5936cc78715e722b",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
   },
+  "runtime_seconds": {
+    "characterize_pair": 0.0008823000825941563,
+    "evaluate": 0.012057699961587787,
+    "export_result": 0.016980400076135993,
+    "generate_representation": 4.149957700166851,
+    "ingest_product": 52.26494810008444,
+    "match": 4.522897799964994,
+    "preprocess": 0.0028024001512676477,
+    "refine_points": 0.06781139993108809,
+    "register": 0.004274599952623248,
+    "select_control_points": 0.0010238999966531992,
+    "total": 94.20987759996206,
+    "verify_matches": 1.1452218000777066
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 938100000,
+      "stage": "preprocess"
+    },
+    {
+      "action": "full_raster_warp_blocked_diagnostic_crop_only",
+      "cap_pixels": 16777216,
+      "event": "registration_output_too_large",
+      "stage": "register"
+    },
+    {
+      "cap_pixels": 16777216,
+      "event": "diagnostic_crop_control_point_span_exceeds_capped_window",
+      "inside_count": 2,
+      "reason": "control_point_axis_aligned_span_exceeds_capped_window; selected the maximum-cardinality subset that fits",
+      "stage": "register",
+      "total_control_points": 4,
+      "window_pixel_count": 16777032
+    }
+  ],
   "scientific_interpretation": {
+    "bottleneck": [
+      "verified inliers equal the projective DLT minimum (4); near-zero fit residuals are therefore not independent accuracy",
+      "refinement outcome = INDETERMINATE",
+      "full-raster registration blocked by the existing 16,777,216-pixel cap",
+      "independent accuracy = NOT VALIDATED"
+    ],
     "control_points": 4,
     "do_not_interpret_four_point_dlt_residuals_as_accuracy": true,
-    "independent_accuracy": null,
+    "independent_accuracy": "NOT VALIDATED",
     "inlier_ratio": 0.1111111111111111,
     "limitations": [
-      "No independent lunar ground truth or held-out correspondences.",
+      "independent accuracy = NOT VALIDATED: no independent lunar ground truth or held-out correspondences.",
       "evaluate().rmse is verification inlier residual RMSE, not accuracy.",
-      "Four-point projective DLT fit residuals are not registration accuracy.",
+      "Four points are the projective DLT minimum; near-zero fitting residuals are therefore not independent evidence of registration accuracy.",
       "Full-raster registration remains blocked by the 16,777,216-pixel cap.",
       "Diagnostic crop is an engineering window, not a complete registered product.",
       "sun_angle_difference_degrees is None; SPICE is not implemented.",
       "SIFT on a stride-decimated matching view is a software baseline, not D-007."
     ],
     "raw_sift_matches": 36,
-    "recommended_exp001": "Compare illumination-robust matchers (RIFT/RIFT2 and one dense/learned candidate) on the same pair and matching-view policy, with an independent held-out correspondence set. Do not treat EXP-000 inlier ratio or four-point DLT residuals as the benchmark.",
+    "recommended_exp001": "On the same pair and matching-view policy, compare illumination-robust matchers (RIFT/RIFT2 and one dense/learned candidate) and score them with an independent held-out correspondence set. Do not treat EXP-000 inlier ratio or projective DLT fit residuals as the benchmark. This run produced exactly four verified inliers, the projective DLT minimum, so matcher yield\u2014not four-point fit residuals\u2014is the measured bottleneck to address first.",
+    "refinement_outcome": "INDETERMINATE",
+    "spatial_coverage": 0.2323628740965652,
     "verified_inliers": 4,
+    "what_did_not_succeed": [
+      "full-raster registered source is blocked by registration_output_too_large",
+      "refinement outcome = INDETERMINATE; not a successful refinement"
+    ],
     "what_did_not_succeed_as_full_registration": [
       "full-raster registered source is blocked by registration_output_too_large"
     ],
@@ -187,7 +231,8 @@
       "ingest of declared OHRC PDS4 and LROC PDS3 products",
       "pair characterization from product metadata without inventing SPICE",
       "matching-view SIFT with coordinates restored to original image space",
-      "geometric verification, control-point selection, refinement, transform fit",
+      "geometric verification and spatially distributed control-point selection",
+      "projective_2d_baseline transform fit from selected control points",
       "evaluation metrics from stored verification residuals",
       "export of lightweight match/control-point/transform/metric files"
     ]
@@ -215,8 +260,8 @@
     },
     "evaluate": {
       "control_points_used_for_fit": 4,
-      "independent_accuracy": null,
-      "independent_accuracy_note": "No independent lunar ground truth, held-out correspondences, or surveyed control exists for this pair. evaluate().rmse is the RMSE of stored verification inlier residuals.",
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_accuracy_note": "independent accuracy = NOT VALIDATED. No independent lunar ground truth, held-out correspondences, or surveyed control exists for this pair. evaluate().rmse is the RMSE of stored verification inlier residuals and is not registration accuracy.",
       "independent_ground_truth_used": false,
       "metrics": {
         "control_point_count": 4,
@@ -290,7 +335,8 @@
       "source_valid_mask_shape": [
         5212,
         800
-      ]
+      ],
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
     },
     "ingest_product": {
       "reference": {
@@ -401,7 +447,8 @@
       "coordinates_changed_count": 0,
       "coordinates_unchanged_count": 4,
       "input_count": 4,
-      "limitation": "unchanged coordinates are indeterminate: ControlPoint has no per-point refinement outcome field",
+      "limitation": "refinement outcome = INDETERMINATE: zero coordinates changed and the frozen ControlPoint contract has no per-point outcome field, so already-optimal cannot be distinguished from no measurable improvement. This is not a successful refinement.",
+      "outcome": "INDETERMINATE",
       "output_count": 4,
       "points": [
         {

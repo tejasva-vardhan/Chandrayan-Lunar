@@ -8,6 +8,9 @@ import numpy as np
 import pytest
 
 from src.io.exp000 import (
+    INDEPENDENT_ACCURACY_NOT_VALIDATED,
+    REFINEMENT_OUTCOME_COORDINATES_UPDATED,
+    REFINEMENT_OUTCOME_INDETERMINATE,
     control_point_crop_report,
     diagnostic_crop_window,
     projective_fit_residuals,
@@ -15,7 +18,7 @@ from src.io.exp000 import (
     warp_diagnostic_crop,
     window_contains_xy,
 )
-from src.io.exp000.run import _preprocess_guarded
+from src.io.exp000.run import _preprocess_guarded, _refinement_report
 from src.models import ControlPoint, LunarProduct, RegistrationPair
 from src.registration.settings import unvalidated_software_defaults
 from src.registration.warp import warp_to_grid
@@ -38,7 +41,11 @@ def test_software_configuration_records_existing_caps_and_sift_defaults() -> Non
         == "bounded_reference_window_maximum_control_point_cover"
     )
     assert config["evaluation"]["independent_ground_truth"] is False
+    assert config["evaluation"]["independent_accuracy"] == "NOT VALIDATED"
     assert "x_original = x_matching * x_scale" in config["matching_view"]["coordinate_mapping"]
+    assert config["matching_view"]["spatial_window"] == (
+        "full_image_stride_decimation_not_a_cropped_window"
+    )
 
 
 def test_diagnostic_crop_stays_within_existing_pixel_cap() -> None:
@@ -119,6 +126,35 @@ def test_four_point_projective_fit_residuals_are_numerically_tiny_and_not_accura
     assert max(residuals) < 1e-9
 
 
+def test_refinement_report_is_indeterminate_when_zero_coordinates_change() -> None:
+    points = [
+        ControlPoint(source_xy=(1.0, 2.0), reference_xy=(3.0, 4.0), residual=0.1),
+        ControlPoint(source_xy=(5.0, 6.0), reference_xy=(7.0, 8.0), residual=0.2),
+        ControlPoint(source_xy=(9.0, 10.0), reference_xy=(11.0, 12.0), residual=0.3),
+        ControlPoint(source_xy=(13.0, 14.0), reference_xy=(15.0, 16.0), residual=0.4),
+    ]
+    report = _refinement_report(points, points)
+    assert report["outcome"] == REFINEMENT_OUTCOME_INDETERMINATE
+    assert report["coordinates_changed_count"] == 0
+    assert report["coordinates_unchanged_count"] == 4
+    assert "not a successful refinement" in report["limitation"]
+
+
+def test_refinement_report_does_not_claim_success_when_coordinates_update() -> None:
+    original = [
+        ControlPoint(source_xy=(1.0, 2.0), reference_xy=(3.0, 4.0)),
+        ControlPoint(source_xy=(5.0, 6.0), reference_xy=(7.0, 8.0)),
+    ]
+    refined = [
+        original[0],
+        ControlPoint(source_xy=(5.0, 6.0), reference_xy=(7.1, 8.2)),
+    ]
+    report = _refinement_report(original, refined)
+    assert report["outcome"] == REFINEMENT_OUTCOME_COORDINATES_UPDATED
+    assert report["coordinates_changed_count"] == 1
+    assert "success" not in report["limitation"].lower()
+
+
 def test_preprocess_guard_uses_identity_when_pair_exceeds_existing_cap() -> None:
     pair = RegistrationPair(
         pair_id="oversize",
@@ -142,6 +178,10 @@ def test_preprocess_guard_uses_identity_when_pair_exceeds_existing_cap() -> None
     assert report["source_pixels"] > 16_777_216
     assert report["reference_pixels"] > 16_777_216
     assert warnings
+    assert record["safety_limit_events"]
+    assert record["safety_limit_events"][0]["event"] == (
+        "full_raster_materialization_exceeds_engineering_pixel_cap"
+    )
 
 
 def test_preprocess_guard_runs_frozen_preprocess_for_small_rasters(tmp_path: Path) -> None:
@@ -347,7 +387,21 @@ def test_exp000_from_products_runs_every_stage_on_synthetic_pair(tmp_path: Path)
     ):
         assert name in record["stages"]
     assert record["stages"]["evaluate"]["independent_ground_truth_used"] is False
-    assert record["stages"]["evaluate"]["independent_accuracy"] is None
+    assert record["stages"]["evaluate"]["independent_accuracy"] == (
+        INDEPENDENT_ACCURACY_NOT_VALIDATED
+    )
+    assert record["scientific_interpretation"]["independent_accuracy"] == (
+        INDEPENDENT_ACCURACY_NOT_VALIDATED
+    )
+    refine = record["stages"]["refine_points"]
+    assert refine["outcome"] in {
+        REFINEMENT_OUTCOME_INDETERMINATE,
+        REFINEMENT_OUTCOME_COORDINATES_UPDATED,
+    }
+    if refine["coordinates_changed_count"] == 0 and refine["output_count"] > 0:
+        assert refine["outcome"] == REFINEMENT_OUTCOME_INDETERMINATE
+        succeeded = " ".join(record["scientific_interpretation"]["what_succeeded"]).lower()
+        assert "successful refinement" not in succeeded
     # Identical textured rasters should produce raw SIFT matches after preprocess.
     assert record["stages"]["match"]["raw_match_count"] >= 4
     assert record["stages"]["ingest_product"]["source"]["illumination_metadata"][
