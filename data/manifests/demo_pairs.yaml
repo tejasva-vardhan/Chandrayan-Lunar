@@ -1,0 +1,28 @@
+demo_pairs:
+  - pair_id: pair_01_equatorial
+    ohrc_product: ch2_ohr_ncp_20210402T0546284043_d_img_d18
+    lroc_product: M150368601RC
+    local_data_root: <configured externally>
+    overlap_status: verified
+    footprint_source: NASA PDS ODE
+
+  - pair_id: pair_02_mid_equatorial
+    ohrc_product: ch2_ohr_ncp_20250612T2229094979_d_img_d18
+    lroc_product: M1504316436RC
+    local_data_root: <configured externally>
+    overlap_status: verified
+    footprint_source: NASA PDS ODE
+
+  - pair_id: pair_03_south_mid
+    ohrc_product: ch2_ohr_ncp_20230302T1959055531_d_img_n18
+    lroc_product: M106979273RC
+    local_data_root: <configured externally>
+    overlap_status: verified
+    footprint_source: NASA PDS ODE
+
+  - pair_id: pair_04_south_pole
+    ohrc_product: ch2_ohr_ncp_20260103T1005176450_d_img_d18
+    lroc_product: M175153469LC
+    local_data_root: <configured externally>
+    overlap_status: verified
+    footprint_source: NASA PDS ODE
