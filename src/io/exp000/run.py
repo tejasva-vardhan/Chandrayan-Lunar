@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import platform
+import subprocess
+import sys
 import time
 import tracemalloc
 from collections.abc import Callable
@@ -28,7 +31,11 @@ from src.io.exp000.config import (
     DIAGNOSTIC_PREFERRED_SIDE_PX,
     EXPERIMENT_ID,
     FOOTPRINT_SOURCE,
+    INDEPENDENT_ACCURACY_NOT_VALIDATED,
     PAIR_MANIFEST_ID,
+    REFINEMENT_OUTCOME_COORDINATES_UPDATED,
+    REFINEMENT_OUTCOME_INDETERMINATE,
+    REFINEMENT_OUTCOME_NO_POINTS,
     snapshot_software_configuration,
 )
 from src.io.exp000.diagnostic import (
@@ -190,8 +197,10 @@ def _prepare_record(
         },
         "stages": {},
         "warnings": [],
+        "safety_limit_events": [],
         "runtime_seconds": {},
         "memory": {},
+        "reproducibility": _reproducibility(),
     }
     return out, export_dir, lightweight, record
 
@@ -239,6 +248,7 @@ def _write_start_failure(
             "transform, or metrics were produced. Do not substitute previously "
             "observed downstream counts as this run's result."
         ],
+        "safety_limit_events": [],
         "failure": (
             f"OHRC {PAIR_01_OHRC_ID} found={ohrc_path is not None}; "
             f"LROC {PAIR_01_LROC_ID} found={lroc_path is not None}"
@@ -248,7 +258,7 @@ def _write_start_failure(
             "what_did_not_succeed": [
                 "ingest_product could not start; later frozen stages were not executed"
             ],
-            "independent_accuracy": None,
+            "independent_accuracy": INDEPENDENT_ACCURACY_NOT_VALIDATED,
             "do_not_interpret_prior_shaiz_counts_as_this_run": True,
             "limitations": [
                 "No independent lunar ground truth.",
@@ -335,6 +345,16 @@ def _execute_after_ingest(
 
         registered = _timed(record, "register", lambda: register(pair, refined, verified))
         register_report = _registration_report(registered)
+        if register_report["full_raster_warp_blocked"]:
+            _append_safety_event(
+                record,
+                stage="register",
+                event="registration_output_too_large",
+                detail={
+                    "cap_pixels": unvalidated_software_defaults().max_output_pixels,
+                    "action": "full_raster_warp_blocked_diagnostic_crop_only",
+                },
+            )
         diagnostic = _maybe_diagnostic_crop(pair, registered, refined, out, record)
         register_report["diagnostic_crop"] = diagnostic
         record["stages"]["register"] = register_report
@@ -422,6 +442,17 @@ def _preprocess_guarded(
             "intensity representation still applies 2-98 percentile stretch."
         )
         record["warnings"].append(warning)
+        _append_safety_event(
+            record,
+            stage="preprocess",
+            event="full_raster_materialization_exceeds_engineering_pixel_cap",
+            detail={
+                "cap_pixels": cap,
+                "source_pixels": source_pixels,
+                "reference_pixels": reference_pixels,
+                "action": "identity_passthrough",
+            },
+        )
         return pair, {
             "applied": "identity_passthrough",
             "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
@@ -559,6 +590,7 @@ def _matching_view_report(representation: Any) -> dict[str, Any]:
         "coordinate_mapping": (
             "x_original = x_matching * stride; y_original = y_matching * stride"
         ),
+        "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
     }
 
 
@@ -587,18 +619,39 @@ def _refinement_report(
     for before, after in zip(original, refined, strict=True):
         if before.source_xy != after.source_xy or before.reference_xy != after.reference_xy:
             changed += 1
-    return {
+    outcome = _refinement_outcome(changed, len(refined))
+    report: dict[str, Any] = {
+        "outcome": outcome,
         "input_count": len(original),
         "output_count": len(refined),
         "coordinates_changed_count": changed,
         "coordinates_unchanged_count": len(refined) - changed,
         "uncertainty_still_none": all(point.uncertainty is None for point in refined),
-        "limitation": (
-            "unchanged coordinates are indeterminate: ControlPoint has no per-point "
-            "refinement outcome field"
-        ),
         "points": [_point_dump(point) for point in refined],
     }
+    if outcome == REFINEMENT_OUTCOME_INDETERMINATE:
+        report["limitation"] = (
+            "refinement outcome = INDETERMINATE: zero coordinates changed and "
+            "the frozen ControlPoint contract has no per-point outcome field, so "
+            "already-optimal cannot be distinguished from no measurable "
+            "improvement. This is not a successful refinement."
+        )
+    elif outcome == REFINEMENT_OUTCOME_COORDINATES_UPDATED:
+        report["limitation"] = (
+            "at least one coordinate changed; this is not independently "
+            "validated sub-pixel accuracy"
+        )
+    else:
+        report["limitation"] = None
+    return report
+
+
+def _refinement_outcome(changed_count: int, output_count: int) -> str:
+    if output_count == 0:
+        return REFINEMENT_OUTCOME_NO_POINTS
+    if changed_count == 0:
+        return REFINEMENT_OUTCOME_INDETERMINATE
+    return REFINEMENT_OUTCOME_COORDINATES_UPDATED
 
 
 def _registration_report(result: RegistrationResult) -> dict[str, Any]:
@@ -686,6 +739,18 @@ def _maybe_diagnostic_crop(
                 "diagnostic crop could not include every control point: "
                 f"{inclusion['reason']}"
             )
+            _append_safety_event(
+                record,
+                stage="register",
+                event="diagnostic_crop_control_point_span_exceeds_capped_window",
+                detail={
+                    "reason": inclusion["reason"],
+                    "inside_count": inclusion["inside_count"],
+                    "total_control_points": inclusion["total_control_points"],
+                    "window_pixel_count": window.height * window.width,
+                    "cap_pixels": unvalidated_software_defaults().max_output_pixels,
+                },
+            )
         return crop_note
     except Exception as exc:
         record["warnings"].append(f"diagnostic crop failed: {type(exc).__name__}: {exc}")
@@ -714,11 +779,12 @@ def _evaluation_report(
         "metrics": None if metrics is None else metrics.model_dump(mode="json"),
         "verification_rmse_is_not_independent_accuracy": True,
         "independent_ground_truth_used": False,
-        "independent_accuracy": None,
+        "independent_accuracy": INDEPENDENT_ACCURACY_NOT_VALIDATED,
         "independent_accuracy_note": (
-            "No independent lunar ground truth, held-out correspondences, or "
-            "surveyed control exists for this pair. evaluate().rmse is the RMSE "
-            "of stored verification inlier residuals."
+            "independent accuracy = NOT VALIDATED. No independent lunar ground "
+            "truth, held-out correspondences, or surveyed control exists for "
+            "this pair. evaluate().rmse is the RMSE of stored verification "
+            "inlier residuals and is not registration accuracy."
         ),
         "projective_dlt_fit_residuals_on_control_points_pixels": fit_residuals,
         "projective_dlt_minimum_points": 4,
@@ -731,50 +797,138 @@ def _interpretation(record: dict[str, Any]) -> dict[str, Any]:
     verify_stage = record["stages"].get("verify_matches", {})
     register_stage = record["stages"].get("register", {})
     evaluate_stage = record["stages"].get("evaluate", {})
+    refine_stage = record["stages"].get("refine_points", {})
     raw = match_stage.get("raw_match_count")
     inliers = verify_stage.get("verified_inlier_count")
     ratio = verify_stage.get("inlier_ratio")
+    control_point_count = record["stages"].get("select_control_points", {}).get(
+        "control_point_count"
+    )
+    metrics = evaluate_stage.get("metrics") or {}
+    refinement_outcome = refine_stage.get("outcome")
+    succeeded = [
+        "ingest of declared OHRC PDS4 and LROC PDS3 products",
+        "pair characterization from product metadata without inventing SPICE",
+        "matching-view SIFT with coordinates restored to original image space",
+        "geometric verification and spatially distributed control-point selection",
+        "projective_2d_baseline transform fit from selected control points",
+        "evaluation metrics from stored verification residuals",
+        "export of lightweight match/control-point/transform/metric files",
+    ]
+    did_not_succeed: list[str] = []
+    if register_stage.get("full_raster_warp_blocked"):
+        did_not_succeed.append(
+            "full-raster registered source is blocked by registration_output_too_large"
+        )
+    if refinement_outcome == REFINEMENT_OUTCOME_INDETERMINATE:
+        did_not_succeed.append(
+            "refinement outcome = INDETERMINATE; not a successful refinement"
+        )
+    elif refinement_outcome == REFINEMENT_OUTCOME_COORDINATES_UPDATED:
+        succeeded.append(
+            "refinement updated at least one coordinate (not independently validated)"
+        )
     return {
-        "what_succeeded": [
-            "ingest of declared OHRC PDS4 and LROC PDS3 products",
-            "pair characterization from product metadata without inventing SPICE",
-            "matching-view SIFT with coordinates restored to original image space",
-            "geometric verification, control-point selection, refinement, transform fit",
-            "evaluation metrics from stored verification residuals",
-            "export of lightweight match/control-point/transform/metric files",
-        ],
+        "what_succeeded": succeeded,
+        "what_did_not_succeed": did_not_succeed,
         "what_did_not_succeed_as_full_registration": [
-            "full-raster registered source is blocked by registration_output_too_large",
-        ]
-        if register_stage.get("full_raster_warp_blocked")
-        else [],
+            item for item in did_not_succeed if "full-raster" in item
+        ],
         "raw_sift_matches": raw,
         "verified_inliers": inliers,
         "inlier_ratio": ratio,
-        "control_points": record["stages"].get("select_control_points", {}).get(
-            "control_point_count"
-        ),
-        "do_not_interpret_four_point_dlt_residuals_as_accuracy": len(
-            record["stages"].get("select_control_points", {}).get("points", [])
-        )
-        == 4,
-        "independent_accuracy": evaluate_stage.get("independent_accuracy"),
+        "control_points": control_point_count,
+        "spatial_coverage": metrics.get("spatial_coverage"),
+        "refinement_outcome": refinement_outcome,
+        "do_not_interpret_four_point_dlt_residuals_as_accuracy": control_point_count == 4,
+        "independent_accuracy": INDEPENDENT_ACCURACY_NOT_VALIDATED,
+        "bottleneck": _bottleneck(record),
         "limitations": [
-            "No independent lunar ground truth or held-out correspondences.",
+            "independent accuracy = NOT VALIDATED: no independent lunar ground "
+            "truth or held-out correspondences.",
             "evaluate().rmse is verification inlier residual RMSE, not accuracy.",
-            "Four-point projective DLT fit residuals are not registration accuracy.",
+            "Four points are the projective DLT minimum; near-zero fitting "
+            "residuals are therefore not independent evidence of registration accuracy.",
             "Full-raster registration remains blocked by the 16,777,216-pixel cap.",
             "Diagnostic crop is an engineering window, not a complete registered product.",
             "sun_angle_difference_degrees is None; SPICE is not implemented.",
             "SIFT on a stride-decimated matching view is a software baseline, not D-007.",
         ],
-        "recommended_exp001": (
-            "Compare illumination-robust matchers (RIFT/RIFT2 and one dense/"
-            "learned candidate) on the same pair and matching-view policy, "
-            "with an independent held-out correspondence set. Do not treat "
-            "EXP-000 inlier ratio or four-point DLT residuals as the benchmark."
-        ),
+        "recommended_exp001": _recommended_exp001(inliers),
     }
+
+
+def _recommended_exp001(verified_inliers: int | None) -> str:
+    base = (
+        "On the same pair and matching-view policy, compare illumination-robust "
+        "matchers (RIFT/RIFT2 and one dense/learned candidate) and score them "
+        "with an independent held-out correspondence set. Do not treat EXP-000 "
+        "inlier ratio or projective DLT fit residuals as the benchmark."
+    )
+    if verified_inliers == 4:
+        return (
+            base + " This run produced exactly four verified inliers, the projective "
+            "DLT minimum, so matcher yield—not four-point fit residuals—is the "
+            "measured bottleneck to address first."
+        )
+    return base
+
+
+def _bottleneck(record: dict[str, Any]) -> list[str]:
+    """Observed engineering/scientific bottlenecks. Not a redesign proposal."""
+
+    items: list[str] = []
+    verify_stage = record["stages"].get("verify_matches", {})
+    refine_stage = record["stages"].get("refine_points", {})
+    register_stage = record["stages"].get("register", {})
+    inliers = verify_stage.get("verified_inlier_count")
+    if inliers == 4:
+        items.append(
+            "verified inliers equal the projective DLT minimum (4); near-zero "
+            "fit residuals are therefore not independent accuracy"
+        )
+    if refine_stage.get("outcome") == REFINEMENT_OUTCOME_INDETERMINATE:
+        items.append("refinement outcome = INDETERMINATE")
+    if register_stage.get("full_raster_warp_blocked"):
+        items.append(
+            "full-raster registration blocked by the existing 16,777,216-pixel cap"
+        )
+    items.append("independent accuracy = NOT VALIDATED")
+    return items
+
+
+def _append_safety_event(
+    record: dict[str, Any], *, stage: str, event: str, detail: dict[str, Any]
+) -> None:
+    record.setdefault("safety_limit_events", []).append(
+        {"stage": stage, "event": event, **detail}
+    )
+
+
+def _reproducibility() -> dict[str, Any]:
+    return {
+        "git_commit": _software_commit(),
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+    }
+
+
+def _software_commit() -> str | None:
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=_REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    value = completed.stdout.strip()
+    return value or None
 
 
 def _start_memory_trace() -> None:
