@@ -1,0 +1,599 @@
+{
+  "configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "experiment_id": "EXP-000",
+    "footprint_source": "NASA PDS ODE",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304
+    },
+    "pair_manifest_id": "pair_01_equatorial",
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_provenance": "data/manifests/demo_pairs.yaml declares footprint_source=NASA PDS ODE for pair_01_equatorial; ingest does not recompute footprints",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_product_id": "M150368601RC",
+    "lroc_source_name": "M150368601RC.IMG",
+    "ohrc_product_id": "ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+  },
+  "experiment_id": "EXP-000",
+  "failed_stage": null,
+  "memory": {
+    "characterize_pair": {
+      "tracemalloc_current_bytes": 211622,
+      "tracemalloc_delta_bytes": 2862,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "evaluate": {
+      "tracemalloc_current_bytes": 2298022,
+      "tracemalloc_delta_bytes": 2434,
+      "tracemalloc_peak_bytes": 2775234246
+    },
+    "export_result": {
+      "tracemalloc_current_bytes": 2309106,
+      "tracemalloc_delta_bytes": 10862,
+      "tracemalloc_peak_bytes": 2775234246
+    },
+    "generate_representation": {
+      "tracemalloc_current_bytes": 42819336,
+      "tracemalloc_delta_bytes": 42606509,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "ingest_product": {
+      "tracemalloc_current_bytes": 205045,
+      "tracemalloc_delta_bytes": 204877,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "match": {
+      "tracemalloc_current_bytes": 43007001,
+      "tracemalloc_delta_bytes": 185613,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "preprocess": {
+      "tracemalloc_current_bytes": 212827,
+      "tracemalloc_delta_bytes": 733,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "process_tracemalloc_current_bytes": 2310638,
+    "process_tracemalloc_peak_bytes": 2775234246,
+    "refine_points": {
+      "tracemalloc_current_bytes": 2287266,
+      "tracemalloc_delta_bytes": 65818,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "register": {
+      "tracemalloc_current_bytes": 2290357,
+      "tracemalloc_delta_bytes": 2275,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "select_control_points": {
+      "tracemalloc_current_bytes": 2220296,
+      "tracemalloc_delta_bytes": 3216,
+      "tracemalloc_peak_bytes": 180188824
+    },
+    "verify_matches": {
+      "tracemalloc_current_bytes": 2216360,
+      "tracemalloc_delta_bytes": 719767,
+      "tracemalloc_peak_bytes": 180188824
+    }
+  },
+  "output_files": {
+    "diagnostic_crop": "diagnostic_registered_crop.npy",
+    "export_dir": "export",
+    "full_record": "record.json",
+    "lightweight_record": "experiments/EXP-000/results/pair_01_equatorial.json"
+  },
+  "pair_manifest_id": "pair_01_equatorial",
+  "runtime_seconds": {
+    "characterize_pair": 0.0007488999981433153,
+    "evaluate": 0.00046280003152787685,
+    "export_result": 0.016615699976682663,
+    "generate_representation": 0.8466535999905318,
+    "ingest_product": 46.30942089995369,
+    "match": 4.536851099925116,
+    "preprocess": 0.00040300004184246063,
+    "refine_points": 0.06590580008924007,
+    "register": 0.004964299965649843,
+    "select_control_points": 0.0006559998728334904,
+    "total": 93.35133980005048,
+    "verify_matches": 0.9808185000438243
+  },
+  "scientific_interpretation": {
+    "control_points": 4,
+    "do_not_interpret_four_point_dlt_residuals_as_accuracy": true,
+    "independent_accuracy": null,
+    "inlier_ratio": 0.1111111111111111,
+    "limitations": [
+      "No independent lunar ground truth or held-out correspondences.",
+      "evaluate().rmse is verification inlier residual RMSE, not accuracy.",
+      "Four-point projective DLT fit residuals are not registration accuracy.",
+      "Full-raster registration remains blocked by the 16,777,216-pixel cap.",
+      "Diagnostic crop is an engineering window, not a complete registered product.",
+      "sun_angle_difference_degrees is None; SPICE is not implemented.",
+      "SIFT on a stride-decimated matching view is a software baseline, not D-007."
+    ],
+    "raw_sift_matches": 36,
+    "recommended_exp001": "Compare illumination-robust matchers (RIFT/RIFT2 and one dense/learned candidate) on the same pair and matching-view policy, with an independent held-out correspondence set. Do not treat EXP-000 inlier ratio or four-point DLT residuals as the benchmark.",
+    "verified_inliers": 4,
+    "what_did_not_succeed_as_full_registration": [
+      "full-raster registered source is blocked by registration_output_too_large"
+    ],
+    "what_succeeded": [
+      "ingest of declared OHRC PDS4 and LROC PDS3 products",
+      "pair characterization from product metadata without inventing SPICE",
+      "matching-view SIFT with coordinates restored to original image space",
+      "geometric verification, control-point selection, refinement, transform fit",
+      "evaluation metrics from stored verification residuals",
+      "export of lightweight match/control-point/transform/metric files"
+    ]
+  },
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "acquisition_time_difference_seconds": null,
+        "difficulty": null,
+        "expected_overlap": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null,
+        "texture_contrast": null,
+        "valid_pixel_ratio": null,
+        "viewing_geometry_difference": null
+      },
+      "illumination_note": "sun_angle_difference_degrees remains None: LunarProduct has no Sun vector and SPICE is not implemented",
+      "overlap_mask_uri": null,
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18__M150368601RC"
+    },
+    "evaluate": {
+      "control_points_used_for_fit": 4,
+      "independent_accuracy": null,
+      "independent_accuracy_note": "No independent lunar ground truth, held-out correspondences, or surveyed control exists for this pair. evaluate().rmse is the RMSE of stored verification inlier residuals.",
+      "independent_ground_truth_used": false,
+      "metrics": {
+        "control_point_count": 4,
+        "inlier_count": 4,
+        "inlier_ratio": 0.1111111111111111,
+        "rmse": 4.396175201142959e-10,
+        "spatial_coverage": 0.2323628740965652
+      },
+      "projective_dlt_fit_residuals_on_control_points_pixels": [
+        3.6391154978887343e-11,
+        7.438449083241633e-10,
+        3.531838563312267e-11,
+        1.0594926253091495e-09
+      ],
+      "projective_dlt_minimum_points": 4,
+      "verification_rmse_is_not_independent_accuracy": true
+    },
+    "export_result": {
+      "export_dir": "export",
+      "files": {
+        "all_matches": "all_matches.json",
+        "control_points": "control_points.json",
+        "inliers": "inliers.json",
+        "metrics": "metrics.json",
+        "registered_source": null,
+        "registration_report": "registration_report.json",
+        "transformation": "transformation.json"
+      }
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "loader_note": "representation load_array range-normalises integer rasters, including LROC NULL (-32768); the validity mask is still passed to SIFT",
+      "lroc_invalid_mask_respected": true,
+      "reference_matching_view": {
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "reference_valid_fraction": 0.9873617693522907,
+      "reference_valid_mask_shape": [
+        6528,
+        633
+      ],
+      "representation_id": "intensity",
+      "source_matching_view": {
+        "matching_shape": [
+          5212,
+          800
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          78175,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 15,
+        "x_scale": 15.0,
+        "y_scale": 15.0
+      },
+      "source_valid_fraction": 1.0,
+      "source_valid_mask_shape": [
+        5212,
+        800
+      ]
+    },
+    "ingest_product": {
+      "reference": {
+        "acquisition_time": "2011-01-22T20:48:53.596000",
+        "coordinates": null,
+        "dimensions": {
+          "band_count": 1,
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "illumination_metadata": {
+          "emission_angle_degrees": null,
+          "incidence_angle_degrees": null,
+          "phase_angle_degrees": null,
+          "populated_from_product": false,
+          "reason": "LunarProduct has no illumination fields. Current OHRC PDS4 and LROC PDS3 ingest readers do not extract Sun geometry. SPICE is not implemented.",
+          "sub_solar_azimuth_degrees": null,
+          "sun_vector": null
+        },
+        "instrument": "LRO_NAC",
+        "mask_invalid_pixel_count": 3342336,
+        "mask_pixel_count": 264462336,
+        "mask_uri_name": "M150368601RC.lroc.mask.npy",
+        "mission": "LRO",
+        "product_id": "M150368601RC",
+        "provenance": {
+          "notes": "format=PDS3_embedded_label; image_offset_bytes=5064; sample_type=LSB_INTEGER; sample_bits=16; unit=Scaled I/F; scaling_factor=3.05185094759972e-05; null=-32768; saturation_values=[-32767, -32764, -32766, -32765]; target_name=MOON; instrument_name=LUNAR RECONNAISSANCE ORBITER CAMERA; start_time=2011-01-22T20:48:53.596000; stop_time=2011-01-22T20:49:11.306000; raster_values=raw_signed_int16_samples_saved_losslessly_in_numeric_value_space",
+          "reader": "lroc_pds3_embedded_label",
+          "source_uri": "M150368601RC.IMG"
+        },
+        "radiometric_state": null,
+        "raster_uri_name": "M150368601RC.lroc.npy",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "acquisition_time": "2021-04-02T05:46:28.404300+00:00",
+        "coordinates": {
+          "bbox": [
+            23.371989,
+            0.224735,
+            23.495434,
+            1.068878
+          ],
+          "crs": "Selenographic"
+        },
+        "dimensions": {
+          "band_count": 1,
+          "height_px": 78175,
+          "pixel_count": 938100000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.26,
+        "illumination_metadata": {
+          "emission_angle_degrees": null,
+          "incidence_angle_degrees": null,
+          "phase_angle_degrees": null,
+          "populated_from_product": false,
+          "reason": "LunarProduct has no illumination fields. Current OHRC PDS4 and LROC PDS3 ingest readers do not extract Sun geometry. SPICE is not implemented.",
+          "sub_solar_azimuth_degrees": null,
+          "sun_vector": null
+        },
+        "instrument": "OHRC",
+        "mask_uri_name": "urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_mask.npy",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18",
+        "provenance": {
+          "notes": "Successfully ingested from ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+          "reader": "pds4_stream_reader",
+          "source_uri": "ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+        },
+        "radiometric_state": "Calibrated",
+        "raster_uri_name": "urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_raster.npy",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "match": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "coordinates": "original_image_pixels_after_matching_view_scale",
+      "matcher_id": "sift",
+      "raw_match_count": 36,
+      "representation_id": "intensity",
+      "status_values": [
+        "raw"
+      ]
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 938100000
+    },
+    "refine_points": {
+      "coordinates_changed_count": 0,
+      "coordinates_unchanged_count": 4,
+      "input_count": 4,
+      "limitation": "unchanged coordinates are indeterminate: ControlPoint has no per-point refinement outcome field",
+      "output_count": 4,
+      "points": [
+        {
+          "reference_xy": [
+            2755.046630859375,
+            46909.37109375
+          ],
+          "residual": 4.547473508864641e-13,
+          "source_xy": [
+            6776.732025146484,
+            1502.691421508789
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 2.918557019457742e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            3351.7021484375,
+            46137.8828125
+          ],
+          "residual": 4.5128903485228404e-10,
+          "source_xy": [
+            2723.1930541992188,
+            50364.9462890625
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            2777.611083984375,
+            27404.564453125
+          ],
+          "residual": 6.958537960192885e-10,
+          "source_xy": [
+            8727.270812988281,
+            7150.919952392578
+          ],
+          "uncertainty": null
+        }
+      ],
+      "uncertainty_still_none": true
+    },
+    "register": {
+      "diagnostic_crop": {
+        "control_points_all_included": false,
+        "control_points_inside_count": 2,
+        "control_points_inside_indices": [
+          0,
+          2
+        ],
+        "control_points_inside_reference_xy": [
+          [
+            2755.046630859375,
+            46909.37109375
+          ],
+          [
+            3351.7021484375,
+            46137.8828125
+          ]
+        ],
+        "control_points_not_all_included_reason": "control_point_axis_aligned_span_exceeds_capped_window; selected the maximum-cardinality subset that fits",
+        "control_points_total": 4,
+        "dtype": "float64",
+        "finite_pixel_count": 12630018,
+        "finite_pixel_fraction": 0.7528159927214778,
+        "interpretation": "Diagnostic crop only. Full-raster registration remains blocked by the existing 16777216-pixel cap. Fit residuals on the same control points used to estimate projective DLT are not independent accuracy. Placement maximises control-point inclusion inside the capped window.",
+        "path_name": "diagnostic_registered_crop.npy",
+        "produced": true,
+        "projective_fit_residual_max": 1.0594926253091495e-09,
+        "projective_fit_residual_min": 3.531838563312267e-11,
+        "projective_fit_residuals_pixels": [
+          3.6391154978887343e-11,
+          7.438449083241633e-10,
+          3.531838563312267e-11,
+          1.0594926253091495e-09
+        ],
+        "window": {
+          "col": 0,
+          "height": 3313,
+          "pixel_count": 16777032,
+          "row": 44867,
+          "width": 5064
+        }
+      },
+      "full_raster_warp_blocked": true,
+      "quality_flags": [
+        "registration_output_too_large"
+      ],
+      "registered_source_uri": null,
+      "transformation": {
+        "model_name": "projective_2d_baseline",
+        "parameters": {
+          "matrix": [
+            [
+              -0.28298198376922096,
+              -0.03761121824236753,
+              2759.6012062653426
+            ],
+            [
+              -4.86561165285652,
+              -0.6506446409659564,
+              47323.27100291675
+            ],
+            [
+              -0.00010244723578370573,
+              -1.3754848458587858e-05,
+              1.0
+            ]
+          ],
+          "role": "software_baseline"
+        }
+      }
+    },
+    "select_control_points": {
+      "control_point_count": 4,
+      "points": [
+        {
+          "reference_xy": [
+            2755.046630859375,
+            46909.37109375
+          ],
+          "residual": 4.547473508864641e-13,
+          "source_xy": [
+            6776.732025146484,
+            1502.691421508789
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 2.918557019457742e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            3351.7021484375,
+            46137.8828125
+          ],
+          "residual": 4.5128903485228404e-10,
+          "source_xy": [
+            2723.1930541992188,
+            50364.9462890625
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
+            2777.611083984375,
+            27404.564453125
+          ],
+          "residual": 6.958537960192885e-10,
+          "source_xy": [
+            8727.270812988281,
+            7150.919952392578
+          ],
+          "uncertainty": null
+        }
+      ]
+    },
+    "verify_matches": {
+      "filtered_count": 0,
+      "inlier_ratio": 0.1111111111111111,
+      "inlier_residual_max": 6.958537960192885e-10,
+      "inlier_residual_min": 4.547473508864641e-13,
+      "raw_match_count": 36,
+      "rejected_count": 32,
+      "residual_meaning": "verification_image_space_transfer_error_pixels",
+      "verified_inlier_count": 4
+    }
+  },
+  "status": "completed",
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=938100000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch.",
+    "projective DLT was fit from exactly four points; near-zero fit residuals are expected and are not registration accuracy",
+    "diagnostic crop could not include every control point: control_point_axis_aligned_span_exceeds_capped_window; selected the maximum-cardinality subset that fits"
+  ]
+}

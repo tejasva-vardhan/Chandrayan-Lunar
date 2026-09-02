@@ -1,0 +1,96 @@
+# EXP-000 software-baseline configuration.
+# Copied from owning-module unvalidated defaults for reproducibility.
+# Not SIH thresholds. Not a matcher freeze (D-007). Not a lunar model freeze (D-010).
+# Do not copy these values into configs/default.yaml.
+
+experiment_id: EXP-000
+pair_manifest_id: pair_01_equatorial
+footprint_source: NASA PDS ODE
+
+products:
+  ohrc: ch2_ohr_ncp_20210402T0546284043_d_img_d18
+  lroc: M150368601RC
+  data_root_env: CHANDRAYAN_DATA_ROOT
+
+pipeline:
+  - ingest_product
+  - characterize_pair
+  - preprocess
+  - generate_representation
+  - match
+  - verify_matches
+  - select_control_points
+  - refine_points
+  - register
+  - evaluate
+  - export_result
+
+preprocessing:
+  applied_on_full_rasters: identity_passthrough_when_over_16777216_pixels
+  software_defaults_if_rasters_fit_cap:
+    enable_intensity_normalization: true
+    intensity_low_percentile: 2.0
+    intensity_high_percentile: 98.0
+    output_low: 0.0
+    output_high: 1.0
+    clip_to_output_range: false
+    enable_contrast_normalization: false
+    enable_denoise: false
+    denoise_kernel_size: 3
+    enable_scale_normalization: false
+  matching_view_intensity:
+    lo_pct: 2.0
+    hi_pct: 98.0
+
+matching_view:
+  max_pixels_per_image: 4194304
+  downsample_method: stride_decimation
+  stride_rule: ceil(sqrt(original_pixels / max_pixels_per_image))
+  coordinate_mapping: "x_original = x_matching * stride; y_original = y_matching * stride"
+
+sift:
+  nfeatures: 0
+  n_octave_layers: 3
+  contrast_threshold: 0.04
+  edge_threshold: 10.0
+  sigma: 1.6
+  ratio_threshold: 0.75
+  min_matches: 4
+
+verification:
+  model_id: projective_2d_baseline
+  estimator_id: ransac_style_baseline
+  residual_limit: 3.0
+  max_trials: 500
+  rng_seed: 0
+  confidence_min: null
+
+control_points:
+  grid_bins: 8
+  max_per_source_cell: 1
+  max_per_reference_cell: 1
+  max_points: null
+
+refinement:
+  method_id: zncc_parabolic_baseline
+  window_radius: 7
+  search_radius: 3
+  min_valid_pixel_fraction: 0.75
+  min_peak_zncc: 0.25
+  fine_half_width: 1.0
+  fine_step: 0.1
+
+registration:
+  model_id: projective_2d_baseline
+  max_output_pixels: 16777216
+  full_raster_policy: do_not_raise_cap
+  diagnostic_crop:
+    strategy: bounded_reference_window_maximum_control_point_cover
+    preferred_side_px: 2048
+    grow_to_cap: true
+
+evaluation:
+  independent_ground_truth: false
+  rmse: stored_verification_inlier_transfer_residuals
+  inlier_ratio_denominator: len_matches
+  spatial_coverage: mean_source_reference_control_point_aabb_fraction
