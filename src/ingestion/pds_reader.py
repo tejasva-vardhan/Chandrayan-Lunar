@@ -44,10 +44,35 @@ _PDS4_DTYPE_MAP: dict[str, tuple[np.dtype, int]] = {
     "sun_unsigned_integer": (np.dtype(">u2"), 2),
 }
 
-# Accepted unit strings that unambiguously mean metres
-_METRE_UNITS = frozenset({"m", "meter", "meters", "metre", "metres"})
-# Centimetre unit strings
-_CENTIMETRE_UNITS = frozenset({"cm", "centimeter", "centimeters", "centimetre", "centimetres"})
+# Accepted unit strings that unambiguously mean metres-per-pixel or metres.
+# Real OHRC PDS4 labels use  unit="m/pixel"  (confirmed across all products).
+_METRE_UNITS = frozenset(
+    {
+        "m",
+        "meter",
+        "meters",
+        "metre",
+        "metres",
+        "m/pixel",
+        "m/pix",
+        "meter/pixel",
+        "meters/pixel",
+        "metre/pixel",
+        "metres/pixel",
+    }
+)
+# Centimetre unit strings (per-pixel variants included for completeness)
+_CENTIMETRE_UNITS = frozenset(
+    {
+        "cm",
+        "centimeter",
+        "centimeters",
+        "centimetre",
+        "centimetres",
+        "cm/pixel",
+        "cm/pix",
+    }
+)
 
 
 def sanitize_filename(name: str) -> str:
@@ -621,3 +646,59 @@ def ingest_from_pds(source: Path) -> LunarProduct:
         mask_uri=str(mask_path),
         provenance=provenance,
     )
+
+
+# ── Task 5: Window / crop support ────────────────────────────────────────────
+# A window/crop is a computational selection of a contiguous row range from a
+# large OHRC raster.  It does NOT resample, rescale, or normalise the data.
+# Scale variation is an intentional scientific property of this dataset and
+# must be preserved for EXP-000.
+
+
+def window_crop_ohrc(
+    raster_uri: str,
+    mask_uri: str,
+    row_start: int,
+    row_end: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Return a row-range window of a large OHRC raster/mask without copying the
+    full array into memory.
+
+    Parameters
+    ----------
+    raster_uri : str
+        Path to the .npy raster file produced by ``ingest_from_pds``.
+    mask_uri : str
+        Path to the companion .npy mask file.
+    row_start : int
+        First row to include (0-indexed, inclusive).
+    row_end : int
+        Last row to include (0-indexed, exclusive).
+
+    Returns
+    -------
+    raster_window : np.ndarray  shape (row_end - row_start, width)
+    mask_window   : np.ndarray  shape (row_end - row_start, width), dtype bool
+
+    Notes
+    -----
+    * Uses ``np.load(..., mmap_mode='r')`` so only the requested rows are
+      paged into memory.
+    * Does NOT resize, resample, or otherwise alter spatial resolution.
+    * ``row_start`` and ``row_end`` are clipped to valid array bounds.
+    """
+    raster = np.load(raster_uri, mmap_mode="r")
+    mask = np.load(mask_uri, mmap_mode="r")
+
+    total_rows = raster.shape[0]
+    row_start = max(0, row_start)
+    row_end = min(total_rows, row_end)
+
+    if row_start >= row_end:
+        raise ValueError(
+            f"window_crop_ohrc: empty window after clipping "
+            f"[{row_start}, {row_end}) for raster with {total_rows} rows."
+        )
+
+    return np.array(raster[row_start:row_end]), np.array(mask[row_start:row_end])

@@ -1,0 +1,64 @@
+{
+  "schema_version": "haruto-real-data-v1",
+  "pair_id": "pair_01_equatorial",
+  "note": "Metadata extracted from official PDS4/PDS3 labels. No scientific overlap assessment has been performed.",
+  "ohrc": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "acquisition_time": "2021-04-02T05:46:28.4043Z",
+    "radiometric_state": "Calibrated",
+    "data_type_pds4": "UnsignedByte",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 78175,
+      "band_count": 1
+    },
+    "gsd_meters": 0.26,
+    "gsd_unit_in_label": "m/pixel",
+    "coordinates": {
+      "crs": "Selenographic",
+      "bbox_lonlat": [
+        23.371989,
+        0.224735,
+        23.495434,
+        1.068878
+      ]
+    },
+    "area": "Equatorial",
+    "orbit_number": 7150,
+    "spacecraft_altitude_km": 102.71,
+    "file_size_bytes": 938100000,
+    "md5_checksum": "c4d89f11e9f6660c345349e453f6a0f4",
+    "nodata_declared": false,
+    "source_type": "PDS4_directory",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_01_equatorial/ohrc/ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+  },
+  "lroc": {
+    "product_id": "M150368601RC",
+    "instrument": "LUNAR RECONNAISSANCE ORBITER CAMERA",
+    "mission": "LUNAR RECONNAISSANCE ORBITER",
+    "acquisition_time": "2011-01-22T20:48:53.596Z",
+    "radiometric_state": "CDR",
+    "data_type_pds3": "LSB_INTEGER",
+    "sample_bits": 16,
+    "dimensions": {
+      "width_px": 5064,
+      "height_px": 52224,
+      "band_count": 1
+    },
+    "gsd_meters": null,
+    "gsd_note": "GSD not present in embedded PDS3 label; not populated to avoid invention.",
+    "coordinates": null,
+    "coordinates_note": "No footprint in embedded PDS3 label; not populated.",
+    "scaling_factor": 3.05185094759972e-05,
+    "null_value": -32768,
+    "unit": "Scaled I/F",
+    "source_type": "PDS3_IMG",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_01_equatorial/lroc/M150368601RC.IMG",
+    "derived_npy": "pair_01_equatorial/lroc/M150368601RC.lroc.npy",
+    "derived_mask_npy": "pair_01_equatorial/lroc/M150368601RC.lroc.mask.npy"
+  }
+}
