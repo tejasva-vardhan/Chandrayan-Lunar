@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
+from src.ingestion._derived import derived_output_path
 from src.models.common import ImageDimensions, Provenance
 from src.models.lunar_product import LunarProduct
 from src.preprocessing.raster import save_software_raster
@@ -200,7 +201,7 @@ def load_lroc_pds3_raster(
 
 
 def _derived_uri(source: Path, suffix: str) -> str:
-    return str(source.with_name(f"{source.stem}{suffix}"))
+    return str(derived_output_path(source, suffix))
 
 
 def _read_text_prefix(path: Path, byte_count: int) -> str:

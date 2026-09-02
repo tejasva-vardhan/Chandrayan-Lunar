@@ -15,8 +15,14 @@ import pytest
 from src.models import LunarProduct, RegistrationPair
 from src.models.common import ImageDimensions
 from src.models.registration_pair import PairCharacterization
-from src.representation import RepresentationResult, generate_representation
-from src.representation._loader import load_array
+from src.representation import (
+    MatchingViewSettings,
+    RepresentationResult,
+    generate_representation,
+    generate_representation_with_settings,
+)
+from src.representation._loader import inspect_array_shape, load_array
+from src.representation._matching_view import stride_for_shape
 from src.representation.gradient import build_gradient
 from src.representation.intensity import build_intensity
 from src.representation.structural import build_structural
@@ -91,6 +97,23 @@ class TestLoader:
             loaded = load_array(path)
         assert loaded.ndim == 2
         assert loaded.shape == (32, 48)
+
+    def test_load_npy_with_stride_decimation(self) -> None:
+        arr = np.arange(64, dtype=np.uint16).reshape(8, 8)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "img.npy")
+            np.save(path, arr)
+            loaded = load_array(path, stride=2)
+        assert loaded.shape == (4, 4)
+        assert loaded.dtype == np.float32
+
+    def test_inspect_array_shape_for_npy(self) -> None:
+        arr = np.zeros((11, 13), dtype=np.uint8)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "img.npy")
+            np.save(path, arr)
+            shape = inspect_array_shape(path)
+        assert shape == (11, 13)
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +244,158 @@ class TestGenerateRepresentation:
             result = generate_representation(pair)
         assert result.representation_id == "intensity"
 
+    def test_small_images_preserve_full_resolution_behavior(self) -> None:
+        arr = _simple_image(32, 40)
+        with tempfile.TemporaryDirectory() as tmp:
+            src_path = os.path.join(tmp, "src.png")
+            ref_path = os.path.join(tmp, "ref.png")
+            _write_png(arr, src_path)
+            _write_png(arr, ref_path)
+            pair = _pair_with_uris(src_path, ref_path)
+            result = generate_representation_with_settings(
+                pair,
+                MatchingViewSettings(max_pixels_per_image=10_000),
+            )
+        source_view = result.metadata["source_matching_view"]
+        reference_view = result.metadata["reference_matching_view"]
+        assert isinstance(source_view, dict)
+        assert isinstance(reference_view, dict)
+        assert source_view["policy"] == "full_resolution"
+        assert reference_view["policy"] == "full_resolution"
+        assert source_view["stride"] == 1
+        assert reference_view["stride"] == 1
+        assert result.array.shape == (32, 40)
+        assert result.metadata["reference_array"].shape == (32, 40)
+
+    def test_large_images_use_deterministic_matching_view(self) -> None:
+        arr = np.arange(96 * 96, dtype=np.uint16).reshape(96, 96)
+        with tempfile.TemporaryDirectory() as tmp:
+            src_path = os.path.join(tmp, "src.npy")
+            ref_path = os.path.join(tmp, "ref.npy")
+            np.save(src_path, arr)
+            np.save(ref_path, arr)
+            dims = ImageDimensions(width_px=96, height_px=96)
+            pair = RegistrationPair(
+                pair_id="large-view",
+                source=LunarProduct(
+                    product_id="src",
+                    instrument="OHRC",
+                    dimensions=dims,
+                    raster_uri=src_path,
+                ),
+                reference=LunarProduct(
+                    product_id="ref",
+                    instrument="LRO_NAC",
+                    dimensions=dims,
+                    raster_uri=ref_path,
+                ),
+            )
+            result = generate_representation_with_settings(
+                pair,
+                MatchingViewSettings(max_pixels_per_image=1_024),
+            )
+        source_view = result.metadata["source_matching_view"]
+        assert isinstance(source_view, dict)
+        assert source_view["policy"] == "stride_decimation"
+        assert source_view["stride"] == 3
+        assert source_view["matching_shape"] == [32, 32]
+        assert result.array.shape == (32, 32)
+
+    def test_representation_does_not_overwrite_original_raster(self) -> None:
+        arr = np.arange(128 * 128, dtype=np.uint16).reshape(128, 128)
+        with tempfile.TemporaryDirectory() as tmp:
+            src_path = os.path.join(tmp, "src.npy")
+            ref_path = os.path.join(tmp, "ref.npy")
+            np.save(src_path, arr)
+            np.save(ref_path, arr)
+            before = open(src_path, "rb").read()
+            dims = ImageDimensions(width_px=128, height_px=128)
+            pair = RegistrationPair(
+                pair_id="preserve-raster",
+                source=LunarProduct(
+                    product_id="src",
+                    instrument="OHRC",
+                    dimensions=dims,
+                    raster_uri=src_path,
+                ),
+                reference=LunarProduct(
+                    product_id="ref",
+                    instrument="LRO_NAC",
+                    dimensions=dims,
+                    raster_uri=ref_path,
+                ),
+            )
+            generate_representation_with_settings(
+                pair,
+                MatchingViewSettings(max_pixels_per_image=1_024),
+            )
+            after = open(src_path, "rb").read()
+        assert after == before
+
+    def test_matching_view_decimates_product_valid_mask(self) -> None:
+        arr = np.arange(96 * 96, dtype=np.uint16).reshape(96, 96)
+        valid_mask = np.ones((96, 96), dtype=np.uint8)
+        valid_mask[::3, ::3] = 0
+        with tempfile.TemporaryDirectory() as tmp:
+            src_path = os.path.join(tmp, "src.npy")
+            ref_path = os.path.join(tmp, "ref.npy")
+            src_mask_path = os.path.join(tmp, "src-mask.npy")
+            ref_mask_path = os.path.join(tmp, "ref-mask.npy")
+            np.save(src_path, arr)
+            np.save(ref_path, arr)
+            np.save(src_mask_path, valid_mask)
+            np.save(ref_mask_path, valid_mask)
+            dims = ImageDimensions(width_px=96, height_px=96)
+            pair = RegistrationPair(
+                pair_id="masked-view",
+                source=LunarProduct(
+                    product_id="src",
+                    instrument="OHRC",
+                    dimensions=dims,
+                    raster_uri=src_path,
+                    mask_uri=src_mask_path,
+                ),
+                reference=LunarProduct(
+                    product_id="ref",
+                    instrument="LRO_NAC",
+                    dimensions=dims,
+                    raster_uri=ref_path,
+                    mask_uri=ref_mask_path,
+                ),
+            )
+            result = generate_representation_with_settings(
+                pair,
+                MatchingViewSettings(max_pixels_per_image=1_024),
+            )
+
+        source_mask = result.metadata["source_valid_mask"]
+        assert isinstance(source_mask, np.ndarray)
+        assert source_mask.shape == (32, 32)
+        assert not source_mask.any()
+
+    def test_large_non_npy_raster_fails_closed(self) -> None:
+        arr = _simple_image(96, 96)
+        with tempfile.TemporaryDirectory() as tmp:
+            src_path = os.path.join(tmp, "src.png")
+            ref_path = os.path.join(tmp, "ref.png")
+            _write_png(arr, src_path)
+            _write_png(arr, ref_path)
+            dims = ImageDimensions(width_px=96, height_px=96)
+            pair = RegistrationPair(
+                pair_id="unsafe-large-view",
+                source=LunarProduct(
+                    product_id="src", instrument="OHRC", dimensions=dims, raster_uri=src_path
+                ),
+                reference=LunarProduct(
+                    product_id="ref", instrument="LRO_NAC", dimensions=dims, raster_uri=ref_path
+                ),
+            )
+            with pytest.raises(ValueError, match="memory-mapped .npy"):
+                generate_representation_with_settings(
+                    pair,
+                    MatchingViewSettings(max_pixels_per_image=1_024),
+                )
+
 
 # ---------------------------------------------------------------------------
 # Routing tests
@@ -260,3 +435,11 @@ class TestRouting:
             assert select_matcher_id(pair) == "sift", (
                 f"Expected 'sift' for difficulty={difficulty}"
             )
+
+
+class TestMatchingViewPolicy:
+    def test_stride_policy_preserves_small_images(self) -> None:
+        assert stride_for_shape(512, 512, 4_194_304) == 1
+
+    def test_stride_policy_scales_large_images_by_pixel_budget(self) -> None:
+        assert stride_for_shape(52_224, 5_064, 4_194_304) == 8
