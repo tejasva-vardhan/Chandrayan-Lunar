@@ -44,8 +44,22 @@ _PDS4_DTYPE_MAP: dict[str, tuple[np.dtype, int]] = {
     "sun_unsigned_integer": (np.dtype(">u2"), 2),
 }
 
-# Accepted unit strings that unambiguously mean metres
-_METRE_UNITS = frozenset({"m", "meter", "meters", "metre", "metres"})
+# Accepted unit strings that unambiguously mean metres (including per-pixel GSD)
+_METRE_UNITS = frozenset(
+    {
+        "m",
+        "meter",
+        "meters",
+        "metre",
+        "metres",
+        "m/pixel",
+        "m/pix",
+        "meter/pixel",
+        "meters/pixel",
+        "metre/pixel",
+        "metres/pixel",
+    }
+)
 # Centimetre unit strings
 _CENTIMETRE_UNITS = frozenset({"cm", "centimeter", "centimeters", "centimetre", "centimetres"})
 
