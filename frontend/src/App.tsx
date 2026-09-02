@@ -38,12 +38,14 @@ function App() {
   const activeStage = Math.min(stages.length - 1, Math.floor(progress * stages.length));
 
   return (
-    <main>
+    <main className="app-shell">
+      <div className="ambient-stars" aria-hidden="true" />
       <section className="hero" id="mission">
         <MoonScene progress={progress} reducedMotion={reducedMotion} />
         <nav className="top-nav" aria-label="Primary navigation">
           <a className="brand" href="#mission">field<span>SPACE</span></a>
           <div><a href="#results">EXP-000</a><a href="#quality">Quality</a><a href="#report">Report</a></div>
+          <span className="nav-status">BASELINE REPLAY</span>
         </nav>
         <div className="orbital-path" aria-hidden="true"><span className="satellite">✦</span><b /></div>
         <div className="hero-copy">
@@ -64,7 +66,7 @@ function App() {
       <section className="bridge" aria-label="Scientific workflow">
         <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
         <div className="workflow">
-          {['OHRC observation', 'LRO reference', 'Feature correspondences', 'Geometric verification', 'Registration quality'].map((item, index) => <div key={item}><b>0{index + 1}</b><span>{item}</span></div>)}
+          {["OHRC observation", "LRO reference", "Feature correspondences", "Geometric verification", "Registration quality"].map((item, index) => <div key={item}><b>0{index + 1}</b><span>{item}</span></div>)}
         </div>
       </section>
 
@@ -89,7 +91,7 @@ function App() {
         </div>
         <div className="explorer-controls">
           <div><b>Correspondence explorer</b><span>These correspondences survived the geometric consistency check.</span></div>
-          <button className={showRejected ? "active" : ""} onClick={() => setShowRejected((value) => !value)}>{showRejected ? 'Hide' : 'Show'} {exp000.rejected} rejected</button>
+          <button className={showRejected ? "active" : ""} onClick={() => setShowRejected((value) => !value)}>{showRejected ? "Hide" : "Show"} {exp000.rejected} rejected</button>
         </div>
         {showRejected && <div className="rejected-note">Rejected correspondences are retained for inspection but are not control points and do not enter registration.</div>}
       </section>

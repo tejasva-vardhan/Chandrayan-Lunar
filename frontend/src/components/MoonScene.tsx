@@ -21,6 +21,10 @@ float noise(vec2 p) {
   f = f*f*(3.0-2.0*f);
   return mix(mix(hash(i), hash(i+vec2(1.,0.)), f.x), mix(hash(i+vec2(0.,1.)), hash(i+vec2(1.,1.)), f.x), f.y);
 }
+mat2 rotate(float angle) {
+  float s = sin(angle), c = cos(angle);
+  return mat2(c, -s, s, c);
+}
 void main() {
   vec2 uv = v_uv;
   vec2 p = (uv - .5) * vec2(u_resolution.x/u_resolution.y, 1.);
@@ -37,8 +41,10 @@ void main() {
     vec3 normal = normalize(vec3(q.x, q.y, z));
     vec3 light = normalize(vec3(-.65, .35, .7));
     float lit = max(0.08, dot(normal, light));
-    float detail = noise(q * 38. + u_time*.012) * .18 + noise(q * 105.) * .07;
-    float crater = smoothstep(.24, .0, abs(noise(q * 12.) - .48)) * .1;
+    // Rotate the terrain texture while keeping the moon's lighting stable.
+    vec2 terrain = rotate(u_time * .055) * q;
+    float detail = noise(terrain * 38.) * .18 + noise(terrain * 105.) * .07;
+    float crater = smoothstep(.24, .0, abs(noise(terrain * 12.) - .48)) * .1;
     vec3 moon = vec3(.38, .43, .44) * (lit + detail - crater);
     float rim = smoothstep(.52, .43, r);
     moon += rim * vec3(.05, .11, .12);
