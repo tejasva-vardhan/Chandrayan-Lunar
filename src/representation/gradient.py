@@ -19,6 +19,11 @@ from src.representation._loader import load_array
 
 
 def build_gradient(raster_uri: str, *, ksize: int = 3) -> np.ndarray:
+    """Load image and return normalised Sobel gradient magnitude."""
+    return build_gradient_array(load_array(raster_uri), ksize=ksize)
+
+
+def build_gradient_array(img: np.ndarray, *, ksize: int = 3) -> np.ndarray:
     """Load image and return normalised Sobel gradient magnitude (float32, [0, 1]).
 
     Parameters
@@ -35,8 +40,6 @@ def build_gradient(raster_uri: str, *, ksize: int = 3) -> np.ndarray:
     np.ndarray
         float32 array, shape (H, W), values in [0, 1].
     """
-    img = load_array(raster_uri)  # float32, [0, 1]
-
     # Convert to uint8 for OpenCV Sobel (OpenCV Sobel on float32 works but
     # uint8 avoids precision-dependent edge cases on border pixels).
     img_u8 = (img * 255.0).clip(0, 255).astype(np.uint8)
