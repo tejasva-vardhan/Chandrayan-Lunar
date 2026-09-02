@@ -38,7 +38,12 @@ def test_export_writes_observed_result_data_and_limitation(tmp_path) -> None:
             pair_id=pair.pair_id, matcher_id="sift", matches=[inlier]
         ),
         inliers=[inlier],
-        control_points=[ControlPoint(source_xy=(1.0, 2.0), reference_xy=(3.0, 4.0))],
+        control_points=[
+            ControlPoint(source_xy=(1.0, 2.0), reference_xy=(3.0, 4.0)),
+            ControlPoint(source_xy=(2.0, 2.0), reference_xy=(4.0, 4.0)),
+            ControlPoint(source_xy=(1.0, 3.0), reference_xy=(3.0, 5.0)),
+            ControlPoint(source_xy=(2.0, 3.0), reference_xy=(4.0, 5.0)),
+        ],
         transformation=TransformationModel(model_name="projective_2d_baseline"),
         metrics=RegistrationMetrics(inlier_count=1, inlier_ratio=1.0, rmse=0.5),
     )
@@ -54,6 +59,11 @@ def test_export_writes_observed_result_data_and_limitation(tmp_path) -> None:
     assert manifest.registration_report is not None
     report = json.loads((tmp_path / "registration_report.json").read_text(encoding="utf-8"))
     assert "not an independent registration-accuracy metric" in report["evaluation_limitation"]
+    assert "exactly its four-point minimum" in report["projective_fit_limitation"]
+    assert report["independent_ground_truth_used"] is False
+    assert "0.5 * (source_bbox_area" in report["spatial_coverage_definition"]
+    assert "does not create correspondences" in report["control_point_selection_note"]
+    assert "indeterminate" in report["refinement_outcome_note"]
     assert report["raw_correspondence_count"] == 1
 
 
