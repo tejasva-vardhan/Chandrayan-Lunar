@@ -5,6 +5,14 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
+from src.ingestion.data_root import (
+    DATA_ROOT_ENV,
+    PAIR_01_LROC_ID,
+    PAIR_01_OHRC_ID,
+    DataRootError,
+    configured_data_root,
+    find_product,
+)
 from src.ingestion.lroc_pds3 import (
     LrocPds3Error,
     LrocPds3Label,
@@ -14,6 +22,11 @@ from src.ingestion.lroc_pds3 import (
 )
 from src.ingestion.manifest import save_manifest
 from src.ingestion.pds_reader import ingest_from_pds, parse_metadata_from_xml
+from src.ingestion.windows import (
+    mmap_product_array,
+    read_lunar_product_window,
+    read_product_window,
+)
 from src.models.lunar_product import LunarProduct
 
 
@@ -94,10 +107,19 @@ def _find_pds4_label(path: Path) -> bytes | None:
 
 
 __all__ = [
+    "DATA_ROOT_ENV",
+    "DataRootError",
     "LrocPds3Error",
     "LrocPds3Label",
+    "PAIR_01_LROC_ID",
+    "PAIR_01_OHRC_ID",
+    "configured_data_root",
+    "find_product",
     "ingest_lroc_pds3_product",
     "ingest_product",
     "load_lroc_pds3_raster",
+    "mmap_product_array",
     "read_lroc_pds3_label",
+    "read_lunar_product_window",
+    "read_product_window",
 ]

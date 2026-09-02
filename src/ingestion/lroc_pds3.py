@@ -17,7 +17,6 @@ import numpy as np
 from src.ingestion._derived import derived_output_path
 from src.models.common import ImageDimensions, Provenance
 from src.models.lunar_product import LunarProduct
-from src.preprocessing.raster import save_software_raster
 
 _READER_ID = "lroc_pds3_embedded_label"
 _REQUIRED_KEYS = (
@@ -41,10 +40,13 @@ _SUPPORTED_SAMPLE_TYPE = "LSB_INTEGER"
 _SATURATION_KEYS = (
     "LOW_REPR_SATURATION",
     "HIGH_REPR_SATURATION",
+    "LOW_INSTR_SATURATION",
+    "HIGH_INSTR_SATURATION",
     "CORE_LOW_REPR_SATURATION",
     "CORE_HIGH_REPR_SATURATION",
     "SATURATION_VALUE",
 )
+_MATERIALIZE_CHUNK_ROWS = 1024
 
 
 class LrocPds3Error(ValueError):
@@ -78,16 +80,9 @@ def ingest_lroc_pds3_product(path: Path) -> LunarProduct:
 
     source = Path(path)
     label = read_lroc_pds3_label(source)
-    raster, valid_mask = load_lroc_pds3_raster(source, label)
-
     raster_uri = _derived_uri(source, ".lroc.npy")
     mask_uri = _derived_uri(source, ".lroc.mask.npy")
-    written_raster = save_software_raster(raster_uri, raster)
-    written_mask = save_software_raster(mask_uri, valid_mask.astype(np.uint8))
-    if written_raster is None or written_mask is None:
-        raise LrocPds3Error(f"could not materialize derived raster handles for {source}")
-
-    valid_ratio = float(valid_mask.mean()) if valid_mask.size else None
+    valid_ratio = _materialize_lroc_handles(source, label, raster_uri, mask_uri)
     acquisition_time = label.start_time if label.start_time is not None else label.stop_time
     notes = (
         f"format=PDS3_embedded_label; "
@@ -115,10 +110,10 @@ def ingest_lroc_pds3_product(path: Path) -> LunarProduct:
         ),
         acquisition_time=acquisition_time,
         valid_pixel_ratio=valid_ratio,
-        raster_uri=written_raster,
-        mask_uri=written_mask,
+        raster_uri=raster_uri,
+        mask_uri=mask_uri,
         provenance=Provenance(
-            source_uri=str(source),
+            source_uri=source.name,
             reader=_READER_ID,
             notes=notes,
         ),
@@ -183,21 +178,67 @@ def load_lroc_pds3_raster(
 
     source = Path(path)
     parsed = label or read_lroc_pds3_label(source)
-    shape = (parsed.lines, parsed.line_samples)
-    raster = np.memmap(
+    mmap_raster = _open_source_memmap(source, parsed)
+    try:
+        values = np.asarray(mmap_raster)
+        valid_mask = _valid_mask_for_chunk(values, parsed)
+        return values.copy(), valid_mask
+    finally:
+        del mmap_raster
+
+
+def _materialize_lroc_handles(
+    source: Path,
+    label: LrocPds3Label,
+    raster_uri: str,
+    mask_uri: str,
+) -> float:
+    """Write derived raster/mask handles in row chunks without a full RAM copy."""
+
+    shape = (label.lines, label.line_samples)
+    total = label.lines * label.line_samples
+    if total <= 0:
+        raise LrocPds3Error(f"invalid LROC image shape {shape}")
+
+    mmap_raster = _open_source_memmap(source, label)
+    out_raster = np.lib.format.open_memmap(
+        raster_uri, mode="w+", dtype=np.dtype("<i2"), shape=shape
+    )
+    out_mask = np.lib.format.open_memmap(mask_uri, mode="w+", dtype=bool, shape=shape)
+    valid_pixels = 0
+    try:
+        for row in range(0, label.lines, _MATERIALIZE_CHUNK_ROWS):
+            end = min(row + _MATERIALIZE_CHUNK_ROWS, label.lines)
+            chunk = np.asarray(mmap_raster[row:end])
+            mask_chunk = _valid_mask_for_chunk(chunk, label)
+            out_raster[row:end] = chunk
+            out_mask[row:end] = mask_chunk
+            valid_pixels += int(mask_chunk.sum())
+        out_raster.flush()
+        out_mask.flush()
+    finally:
+        del out_raster
+        del out_mask
+        del mmap_raster
+    return float(valid_pixels) / float(total)
+
+
+def _open_source_memmap(source: Path, label: LrocPds3Label) -> np.memmap:
+    return np.memmap(
         source,
         dtype="<i2",
         mode="r",
-        offset=parsed.image_offset_bytes,
-        shape=shape,
+        offset=label.image_offset_bytes,
+        shape=(label.lines, label.line_samples),
         order="C",
     )
-    values = np.asarray(raster)
-    invalid = values == parsed.null_value
-    for saturation in parsed.saturation_values:
-        invalid |= values == saturation
-    valid_mask = ~invalid
-    return values.copy(), valid_mask
+
+
+def _valid_mask_for_chunk(chunk: np.ndarray, label: LrocPds3Label) -> np.ndarray:
+    invalid = chunk == label.null_value
+    for saturation in label.saturation_values:
+        invalid |= chunk == saturation
+    return ~invalid
 
 
 def _derived_uri(source: Path, suffix: str) -> str:

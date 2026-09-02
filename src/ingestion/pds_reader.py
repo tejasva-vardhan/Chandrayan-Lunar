@@ -213,6 +213,20 @@ def _parse_special_constants(array_node: ET.Element) -> set[float] | None:
     return nodata_values if nodata_values else None
 
 
+def _parse_byte_offset(array_node: ET.Element) -> tuple[int | None, str | None]:
+    """Read the declared Array_2D_Image byte offset without assuming a unit."""
+
+    offset_node = array_node.find("pds:offset", _NAMESPACES)
+    if offset_node is None or not offset_node.text:
+        return None, None
+    try:
+        value = int(offset_node.text.strip())
+    except ValueError:
+        return None, "invalid"
+    unit = offset_node.get("unit")
+    return value, unit
+
+
 def parse_metadata_from_xml(xml_content: bytes) -> dict:
     """Parse metadata from PDS4 XML label bytes."""
     root = ET.fromstring(xml_content)
@@ -262,6 +276,8 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
     height = None
     dtype_info: tuple[np.dtype, int] | None = None
     nodata_values: set[float] | None = None
+    byte_offset: int | None = None
+    offset_unit: str | None = None
 
     array_node = root.find(".//pds:Array_2D_Image", _NAMESPACES)
     if array_node is not None:
@@ -270,6 +286,7 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
 
         # ── FIX 2: parse NoData constants from PDS4 Special_Constants ──────
         nodata_values = _parse_special_constants(array_node)
+        byte_offset, offset_unit = _parse_byte_offset(array_node)
 
         axis_arrays = array_node.findall("pds:Axis_Array", _NAMESPACES)
         for axis in axis_arrays:
@@ -327,6 +344,8 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
         # carry through for use by the streaming writer
         "dtype_info": dtype_info,
         "nodata_values": nodata_values,
+        "byte_offset": byte_offset,
+        "offset_unit": offset_unit,
     }
 
 
@@ -505,6 +524,11 @@ def ingest_from_pds(source: Path) -> LunarProduct:
     # nodata_values == set() → (shouldn't happen after our parser, but defensive)
     # nodata_values == {v,…} → those specific values are invalid
 
+    byte_offset = _resolve_byte_offset(
+        metadata.get("byte_offset"),
+        metadata.get("offset_unit"),
+    )
+
     # Build output paths
     product_id = metadata["product_id"]
     sanitized_id = sanitize_filename(product_id)
@@ -533,6 +557,14 @@ def ingest_from_pds(source: Path) -> LunarProduct:
     md5_hash = hashlib.md5()
 
     with img_stream_factory() as stream:
+        if byte_offset:
+            header = stream.read(byte_offset)
+            if len(header) < byte_offset:
+                raise ValueError(
+                    f"Unexpected End of File while skipping declared offset: "
+                    f"read {len(header)} bytes, expected {byte_offset}"
+                )
+            md5_hash.update(header)
         for i in range(0, height, chunk_rows):
             actual_chunk_height = min(chunk_rows, height - i)
             bytes_to_read = actual_chunk_height * width * bytes_per_pixel
@@ -621,3 +653,28 @@ def ingest_from_pds(source: Path) -> LunarProduct:
         mask_uri=str(mask_path),
         provenance=provenance,
     )
+
+
+def _resolve_byte_offset(raw_offset: object, raw_unit: object) -> int:
+    """Return the declared image-data offset in bytes, or 0 when absent."""
+
+    if raw_offset is None:
+        return 0
+    if raw_unit == "invalid":
+        raise ValueError("Array_2D_Image offset is not an integer")
+    try:
+        offset = int(raw_offset)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Array_2D_Image offset is not an integer") from exc
+    if offset < 0:
+        raise ValueError("Array_2D_Image offset must be non-negative")
+    unit = str(raw_unit or "").strip().lower()
+    if not unit:
+        raise ValueError(
+            "Array_2D_Image offset has no unit attribute; refusing to guess"
+        )
+    if unit not in {"byte", "bytes"}:
+        raise ValueError(
+            f"unsupported Array_2D_Image offset unit {unit!r}; refusing to guess"
+        )
+    return offset

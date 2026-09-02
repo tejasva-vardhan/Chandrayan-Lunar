@@ -631,3 +631,42 @@ def test_gsd_missing_node_is_none(tmp_path: Path) -> None:
 
     product = ingest_product(product_dir)
     assert product.gsd_meters is None
+
+
+def test_declared_byte_offset_is_skipped(tmp_path: Path) -> None:
+    """PDS4 Array_2D_Image offset is applied; the header is not treated as pixels."""
+    product_dir = tmp_path / "ch2_offset"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    img_data = np.arange(64, dtype=np.uint8).reshape(8, 8)
+    header = b"\xff" * 16
+    xml_content = _make_mock_xml(img_filename="mock.img").replace(
+        '<offset unit="byte">0</offset>',
+        '<offset unit="byte">16</offset>',
+    )
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(header + img_data.tobytes())
+
+    product = ingest_product(product_dir)
+    raster = np.load(product.raster_uri)
+    assert np.array_equal(raster, img_data)
+
+
+def test_offset_without_unit_is_rejected(tmp_path: Path) -> None:
+    """An offset value without a unit must not be assumed to be bytes."""
+    product_dir = tmp_path / "ch2_offset_nounit"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    xml_content = _make_mock_xml(img_filename="mock.img").replace(
+        '<offset unit="byte">0</offset>',
+        "<offset>16</offset>",
+    )
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(b"\x00" * 80)
+
+    with pytest.raises(ValueError, match="offset has no unit"):
+        ingest_product(product_dir)
