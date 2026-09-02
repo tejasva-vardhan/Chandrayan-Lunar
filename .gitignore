@@ -45,3 +45,6 @@ configs/local.yaml
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local Codex tool workspace
+.codex-tmp/
