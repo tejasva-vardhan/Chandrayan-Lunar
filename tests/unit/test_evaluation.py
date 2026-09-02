@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from src.evaluation import evaluate
+from src.evaluation import EvaluationCheckpoint, evaluate, evaluate_with_checkpoints
 from src.evaluation.metrics import (
     count_inliers,
     inlier_ratio_from_matches,
@@ -134,7 +134,8 @@ def test_zero_error_correspondences() -> None:
     ]
     evaluated = evaluate(_result(pair, matches=matches), pair)
     assert evaluated.metrics is not None
-    assert evaluated.metrics.rmse == 0.0
+    assert evaluated.metrics.rmse is None
+    assert "evaluation_unavailable" in evaluated.quality_flags
     assert evaluated.metrics.inlier_count == 3
     assert evaluated.metrics.inlier_ratio == 1.0
 
@@ -147,8 +148,7 @@ def test_known_nonzero_residuals() -> None:
     ]
     evaluated = evaluate(_result(pair, matches=matches), pair)
     assert evaluated.metrics is not None
-    # sqrt((9 + 16) / 2) = sqrt(12.5)
-    assert evaluated.metrics.rmse == pytest.approx(math.sqrt(12.5))
+    assert evaluated.metrics.rmse is None
 
 
 def test_rmse_uses_only_inlier_stored_residuals() -> None:
@@ -161,7 +161,7 @@ def test_rmse_uses_only_inlier_stored_residuals() -> None:
     ]
     evaluated = evaluate(_result(pair, matches=matches), pair)
     assert evaluated.metrics is not None
-    assert evaluated.metrics.rmse == 0.0
+    assert evaluated.metrics.rmse is None
     assert evaluated.metrics.inlier_count == 1
 
 
@@ -174,7 +174,7 @@ def test_rmse_is_not_taken_from_control_points() -> None:
     ]
     evaluated = evaluate(_result(pair, matches=[inlier], control_points=points), pair)
     assert evaluated.metrics is not None
-    assert evaluated.metrics.rmse == 0.0
+    assert evaluated.metrics.rmse is None
     assert evaluated.metrics.control_point_count == 2
 
 
@@ -385,7 +385,7 @@ def test_partial_missing_residuals_use_finite_subset() -> None:
     evaluated = evaluate(_result(pair, matches=matches), pair)
     assert evaluated.metrics is not None
     assert evaluated.metrics.inlier_count == 4
-    assert evaluated.metrics.rmse == pytest.approx(2.0)
+    assert evaluated.metrics.rmse is None
 
 
 def test_negative_residual_is_omitted_from_rmse() -> None:
@@ -396,8 +396,7 @@ def test_negative_residual_is_omitted_from_rmse() -> None:
     ]
     evaluated = evaluate(_result(pair, matches=matches), pair)
     assert evaluated.metrics is not None
-    assert evaluated.metrics.rmse == pytest.approx(6.0)
-    assert evaluated.metrics.rmse >= 0.0
+    assert evaluated.metrics.rmse is None
 
 
 def test_metric_bounds() -> None:
@@ -416,7 +415,7 @@ def test_metric_bounds() -> None:
     assert metrics is not None
     assert metrics.inlier_count is not None and 0 <= metrics.inlier_count <= len(matches)
     assert metrics.inlier_ratio is not None and 0.0 <= metrics.inlier_ratio <= 1.0
-    assert metrics.rmse is not None and metrics.rmse >= 0.0
+    assert metrics.rmse is None
     assert metrics.spatial_coverage is not None and 0.0 <= metrics.spatial_coverage <= 1.0
     assert metrics.control_point_count >= 0
 
@@ -467,7 +466,7 @@ def test_preserves_non_metric_fields() -> None:
     )
     evaluated = evaluate(result, pair)
     assert evaluated.transformation == transformation
-    assert evaluated.quality_flags == ["source_raster_unavailable"]
+    assert evaluated.quality_flags == ["source_raster_unavailable", "evaluation_unavailable"]
     assert evaluated.confidence_class is None
     assert evaluated.provenance is None
     assert evaluated.pair_id == result.pair_id
@@ -486,3 +485,43 @@ def test_helper_unavailable_paths() -> None:
     assert count_inliers(None) is None
     assert rmse_from_inlier_residuals(None) is None
     assert count_inliers(CorrespondenceSet(pair_id="p", matcher_id="m")) == 0
+
+
+def test_independent_checkpoints_produce_rmse_without_reusing_fit_data() -> None:
+    pair = _pair()
+    result = _result(
+        pair,
+        transformation=TransformationModel(
+            model_name="projective_2d_baseline",
+            parameters={"matrix": [[1.0, 0.0, 2.0], [0.0, 1.0, 3.0], [0.0, 0.0, 1.0]]},
+        ),
+        matches=[_match((0.0, 0.0), (2.0, 3.0), status="inlier", residual=99.0)],
+    )
+    checkpoints = [
+        EvaluationCheckpoint("held-out-1", (4.0, 5.0), (6.0, 8.0)),
+        EvaluationCheckpoint("held-out-2", (8.0, 1.0), (11.0, 4.0)),
+    ]
+    evaluated = evaluate_with_checkpoints(result, pair, checkpoints)
+    assert evaluated.metrics is not None
+    assert evaluated.metrics.rmse == pytest.approx(1.0 / math.sqrt(2.0))
+    assert "evaluation_unavailable" not in evaluated.quality_flags
+
+
+def test_checkpoint_overlapping_fit_population_fails_closed() -> None:
+    pair = _pair()
+    result = _result(
+        pair,
+        transformation=TransformationModel(
+            model_name="projective_2d_baseline",
+            parameters={"matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
+        ),
+        matches=[_match((1.0, 1.0), (1.0, 1.0), status="inlier", residual=0.0)],
+    )
+    evaluated = evaluate_with_checkpoints(
+        result,
+        pair,
+        [EvaluationCheckpoint("not-held-out", (1.0, 1.0), (1.0, 1.0))],
+    )
+    assert evaluated.metrics is not None
+    assert evaluated.metrics.rmse is None
+    assert "evaluation_unavailable" in evaluated.quality_flags

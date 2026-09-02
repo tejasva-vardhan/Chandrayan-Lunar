@@ -12,6 +12,7 @@ They are not official SIH evaluator definitions and are not lunar accuracy
 claims (D-011).
 """
 
-from src.evaluation.evaluate import evaluate
+from src.evaluation.checkpoints import EvaluationCheckpoint
+from src.evaluation.evaluate import evaluate, evaluate_with_checkpoints
 
-__all__ = ["evaluate"]
+__all__ = ["EvaluationCheckpoint", "evaluate", "evaluate_with_checkpoints"]
