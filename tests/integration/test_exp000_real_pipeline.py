@@ -18,7 +18,11 @@ from src.ingestion import (
     configured_data_root,
     find_product,
 )
-from src.io.exp000 import run_exp000
+from src.io.exp000 import (
+    INDEPENDENT_ACCURACY_NOT_VALIDATED,
+    REFINEMENT_OUTCOME_INDETERMINATE,
+    run_exp000,
+)
 from src.io.exp000.run import Exp000Error
 from src.registration.result import FLAG_OUTPUT_TOO_LARGE
 
@@ -109,16 +113,23 @@ def test_exp000_real_pair_runs_every_frozen_stage(tmp_path: Path) -> None:
 
     evaluate = stages["evaluate"]
     assert evaluate["independent_ground_truth_used"] is False
-    assert evaluate["independent_accuracy"] is None
+    assert evaluate["independent_accuracy"] == INDEPENDENT_ACCURACY_NOT_VALIDATED
     if stages["select_control_points"]["control_point_count"] == 4:
         residuals = evaluate["projective_dlt_fit_residuals_on_control_points_pixels"]
         assert residuals
         assert max(residuals) < 1e-6
         assert any("four points" in warning.lower() for warning in record["warnings"])
 
+    refine = stages["refine_points"]
+    if refine["coordinates_changed_count"] == 0 and refine["output_count"] > 0:
+        assert refine["outcome"] == REFINEMENT_OUTCOME_INDETERMINATE
+        assert "not a successful refinement" in refine["limitation"]
+
     assert record_path.is_file()
     assert (output_dir / "export" / "registration_report.json").is_file()
-    assert record["scientific_interpretation"]["independent_accuracy"] is None
+    assert record["scientific_interpretation"]["independent_accuracy"] == (
+        INDEPENDENT_ACCURACY_NOT_VALIDATED
+    )
 
 
 def test_run_exp000_fails_closed_without_data_root(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -137,4 +148,6 @@ def test_run_exp000_fails_when_pair_products_are_missing(tmp_path: Path) -> None
     assert payload["status"] == "could_not_start"
     assert payload["failed_stage"] == "ingest_product"
     assert payload["dataset"]["ohrc_found"] is False
-    assert payload["scientific_interpretation"]["independent_accuracy"] is None
+    assert payload["scientific_interpretation"]["independent_accuracy"] == (
+        INDEPENDENT_ACCURACY_NOT_VALIDATED
+    )
