@@ -1,0 +1,185 @@
+# EXP-001 exact configuration.
+#
+# Copied from the owning modules' unvalidated software defaults, which are
+# themselves inherited from EXP-000 so the comparison is controlled.
+# These are NOT SIH thresholds, NOT a matcher freeze (D-007), and NOT a
+# selected lunar transform (D-010).
+# Do not copy these values into configs/default.yaml.
+#
+# Authoritative source: src/io/exp001/config.py. tests/unit/test_exp001_config.py
+# asserts that the fixed block below is identical to the EXP-000 snapshot.
+
+experiment_id: EXP-001
+inherits_fixed_configuration_from: EXP-000
+independent_variable: matcher_id
+
+hypothesis: >
+  H1: On Chandrayaan-2 OHRC <-> LROC NAC pairs, replacing the SIFT baseline
+  with an illumination/appearance-robust matcher materially increases the
+  number of geometrically verified correspondences beyond the four-point
+  projective DLT minimum, holding every other stage constant.
+  H0: matcher choice does not move verified yield above that minimum, which
+  would mean the correspondence bottleneck lies elsewhere.
+
+decision_rule: >
+  A matcher counts as improving verified yield only if it produces strictly
+  more verified inliers than the geometric model's minimum sample size (4 for
+  projective_2d_baseline). A verified count of exactly 4 means RANSAC's
+  consensus set is the minimal sample itself, no correspondence corroborated
+  the fit, and the near-zero fit residual is an algebraic identity.
+
+# ---------------------------------------------------------------------------
+# Held constant across every matcher
+# ---------------------------------------------------------------------------
+fixed:
+  pairs_source: data/manifests/demo_pairs.yaml
+  dataset_root_env: CHANDRAYAN_DATA_ROOT
+
+  preprocessing:
+    applied_to_full_rasters: false
+    reason: full-raster float64 materialisation exceeds the 16777216-pixel cap
+    action: identity_passthrough
+    matching_view_stretch_still_applies: true
+
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    stride_rule: stride = ceil(sqrt(pixels / 4194304))
+    spatial_window: full_image_stride_decimation_not_a_cropped_window
+    coordinate_mapping: >
+      x_original = x_matching * x_scale; y_original = y_matching * y_scale;
+      x_scale = y_scale = stride
+    generated_once_per_pair_and_shared_by_every_matcher: true
+
+  representation:
+    routing: difficulty None/easy -> intensity
+    intensity: 2-98 percentile stretch
+
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+    confidence_min: null
+
+  control_points:
+    grid_bins: 8
+    max_per_source_cell: 1
+    max_per_reference_cell: 1
+    max_points: null
+
+  refinement:
+    method_id: zncc_parabolic_baseline
+    window_radius: 7
+    search_radius: 3
+    min_valid_pixel_fraction: 0.75
+    min_peak_zncc: 0.25
+    fine_half_width: 1.0
+    fine_step: 0.1
+
+  registration:
+    model_id: projective_2d_baseline
+    max_output_pixels: 16777216   # NOT raised by this experiment
+    diagnostic_crops_written: false
+
+  evaluation:
+    rmse: sqrt(mean(stored inlier verification residuals^2)); not accuracy
+    inlier_ratio_denominator: len(CorrespondenceSet.matches)
+    spatial_coverage: >
+      0.5 * (source_bbox_area / source_image_area +
+      reference_bbox_area / reference_image_area)
+    independent_ground_truth: false
+    independent_accuracy: NOT VALIDATED
+
+  held_out_validation:
+    design: k-fold split of verified correspondences
+    folds: 5
+    rng_seed: 0
+    minimum_verified_required: 5   # model min_samples + 1
+    independent_accuracy: NOT VALIDATED
+
+  # Protocol parameters, not matcher parameters. Identical in every adapter so
+  # the yields are comparable.
+  shared_matcher_protocol:
+    ratio_threshold: 0.75
+    min_matches: 4
+    distance_metric: native to each descriptor (L2 for float, Hamming for binary)
+    confidence_normalisation: 1 - distance / max_distance, clipped to [0, 1]
+
+# ---------------------------------------------------------------------------
+# The independent variable: matcher-native parameters
+# All fixed before the first real-data run and not revisited afterwards.
+# ---------------------------------------------------------------------------
+matchers:
+  sift:
+    nfeatures: 0            # unlimited
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  rift:
+    implementation: in-repository over numpy + scipy (no new dependency)
+    log_gabor:
+      n_scale: 4
+      n_orient: 6
+      min_wavelength: 3.0
+      mult: 1.6
+      sigma_on_f: 0.75
+      k_noise: 2.0
+      cut_off: 0.5
+      gain: 10.0
+      low_pass_cutoff: 0.45
+      low_pass_order: 15
+    fast_threshold: 10
+    max_keypoints: 20000
+    patch_size: 96
+    descriptor_grid: 6
+    descriptor_length: 216    # 6 * 6 * 6
+    rotation_handling: cyclic permutation of the MIM channel axis, best of 6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  orb:
+    nfeatures: 20000        # raised from OpenCV's 500 for parity with SIFT's unlimited
+    scale_factor: 1.2
+    n_levels: 8
+    edge_threshold: 31
+    wta_k: 2
+    patch_size: 31
+    fast_threshold: 20
+    ratio_threshold: 0.75
+    min_matches: 4
+
+# ---------------------------------------------------------------------------
+# Candidates considered and rejected, with reasons
+# ---------------------------------------------------------------------------
+excluded:
+  rift_package:
+    status: no reliable dependency; implemented in-repository instead
+    detail: >
+      No maintained PyPI distribution of the RIFT image matcher exists. The
+      PyPI project named 'rift' is LIGO gravitational-wave parameter
+      estimation software; 'rift2' does not exist; 'phasepack' is an
+      unmaintained phase-congruency port.
+
+  loftr_lightglue:
+    status: blocked; not run, not simulated
+    detail: >
+      (1) kornia downloads pretrained weights at first use, so runs are not
+      hermetic and weights are not version-pinned. (2) Both target inputs of
+      roughly 640 px per side and LoFTR attention cost is quadratic in pixel
+      count; the matching views here are 5212x800 and 6528x633, so running
+      them would require changing the matching-view stride for one matcher
+      only, which is the exact confound this experiment excludes.
+      (3) torch + kornia is a multi-gigabyte addition to a four-package
+      dependency set.
+
+  akaze_kaze_brisk:
+    status: unavailable in the installed OpenCV build
+    detail: >
+      opencv-python-headless 5.0.0.93 exposes SIFT, ORB, FAST, GFTT and MSER
+      only; AKAZE, KAZE and BRISK are absent from the cv2 namespace.
