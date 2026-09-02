@@ -30,11 +30,8 @@ import numpy as np
 import pytest
 
 from src.matching import match
-from src.matching.sift_adapter import (
-    SiftSettings,
-    _map_point_to_original,
-    run_sift,
-)
+from src.matching.shared import map_point_to_original
+from src.matching.sift_adapter import SiftSettings, run_sift
 from src.models import CorrespondenceSet, LunarProduct, RegistrationPair
 from src.models.common import ImageDimensions
 from src.representation._types import RepresentationResult
@@ -207,7 +204,7 @@ def test_sift_coordinates_are_within_image_bounds() -> None:
 
 
 def test_matching_view_coordinate_mapping_is_deterministic() -> None:
-    assert _map_point_to_original((10.5, 4.25), (8.0, 8.0)) == (84.0, 34.0)
+    assert map_point_to_original((10.5, 4.25), (8.0, 8.0)) == (84.0, 34.0)
 
 
 def test_sift_outputs_original_coordinate_system_for_scaled_views() -> None:
