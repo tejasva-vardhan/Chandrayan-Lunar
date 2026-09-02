@@ -9,6 +9,7 @@ import pytest
 from src.ingestion import (
     LrocPds3Error,
     ingest_lroc_pds3_product,
+    ingest_product,
     load_lroc_pds3_raster,
     read_lroc_pds3_label,
 )
@@ -151,6 +152,25 @@ def test_ingest_materializes_lunar_product_and_preserves_metadata(tmp_path: Path
     assert product.provenance.reader == "lroc_pds3_embedded_label"
     assert product.provenance.notes is not None
     assert "instrument_name=LUNAR RECONNAISSANCE ORBITER CAMERA" in product.provenance.notes
+
+
+def test_dispatches_lroc_from_embedded_label_not_filename(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The public dispatcher accepts the declared PDS3 identity, not its name."""
+    monkeypatch.setenv("LUNAR_MANIFEST_DIR", str(tmp_path / "manifests"))
+    path = _write_synthetic_pds3(
+        tmp_path / "arbitrary-name.IMG",
+        np.arange(8, dtype=np.int16).reshape(2, 4),
+        record_bytes=512,
+        label_records=1,
+    )
+
+    product = ingest_product(path)
+
+    assert product.product_id == "arbitrary-name"
+    assert product.provenance is not None
+    assert product.provenance.reader == "lroc_pds3_embedded_label"
 
 
 def test_zero_is_not_treated_as_invalid(tmp_path: Path) -> None:

@@ -20,6 +20,11 @@ from src.representation._loader import load_array
 
 
 def build_structural(raster_uri: str, *, ksize: int = 3) -> np.ndarray:
+    """Load image and return log-gradient structural representation."""
+    return build_structural_array(load_array(raster_uri), ksize=ksize)
+
+
+def build_structural_array(img: np.ndarray, *, ksize: int = 3) -> np.ndarray:
     """Load image and return log-gradient structural representation (float32, [0, 1]).
 
     Parameters
@@ -34,8 +39,6 @@ def build_structural(raster_uri: str, *, ksize: int = 3) -> np.ndarray:
     np.ndarray
         float32 array, shape (H, W), values in [0, 1].
     """
-    img = load_array(raster_uri)
-
     img_u8 = (img * 255.0).clip(0, 255).astype(np.uint8)
     gx = cv2.Sobel(img_u8, cv2.CV_32F, 1, 0, ksize=ksize)
     gy = cv2.Sobel(img_u8, cv2.CV_32F, 0, 1, ksize=ksize)

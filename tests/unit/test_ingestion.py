@@ -59,7 +59,8 @@ def _make_mock_xml(
                 <type>Instrument</type>
             </Observing_System_Component>"""
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:isda="https://isda.issdc.gov.in/pds4/isda/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1">
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+    xmlns:isda="https://isda.issdc.gov.in/pds4/isda/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1">
     <Identification_Area>
         <logical_identifier>{product_id}</logical_identifier>
         <version_id>1.0</version_id>
@@ -85,7 +86,8 @@ def _make_mock_xml(
         </Observing_System>
         <Mission_Area>
             <isda:Product_Parameters>
-                <isda:pixel_resolution unit="{pixel_resolution_unit}">{pixel_resolution}</isda:pixel_resolution>
+                <isda:pixel_resolution unit="{pixel_resolution_unit}">
+                    {pixel_resolution}</isda:pixel_resolution>
                 <isda:projection>{projection}</isda:projection>
             </isda:Product_Parameters>
             <isda:Geometry_Parameters>
