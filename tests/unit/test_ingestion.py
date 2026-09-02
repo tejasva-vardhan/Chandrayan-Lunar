@@ -562,6 +562,21 @@ def test_gsd_metres_unit(tmp_path: Path) -> None:
     assert product.gsd_meters == pytest.approx(0.25)
 
 
+def test_gsd_metres_per_pixel_unit(tmp_path: Path) -> None:
+    """Real OHRC labels declare GSD as unit='m/pixel'; store metres, do not drop it."""
+    product_dir = tmp_path / "ch2_gsd_mpixel"
+    product_dir.mkdir()
+    data_dir = product_dir / "data" / "calibrated"
+    data_dir.mkdir(parents=True)
+
+    xml_content = _make_mock_xml(pixel_resolution="0.26", pixel_resolution_unit="m/pixel")
+    (data_dir / "mock.xml").write_text(xml_content, encoding="utf-8")
+    (data_dir / "mock.img").write_bytes(bytes([1] * 64))
+
+    product = ingest_product(product_dir)
+    assert product.gsd_meters == pytest.approx(0.26)
+
+
 def test_gsd_centimetres_unit(tmp_path: Path) -> None:
     """GSD with unit='cm' → converted to metres (÷100) in gsd_meters."""
     product_dir = tmp_path / "ch2_gsd_cm"
