@@ -13,7 +13,7 @@ from src.ingestion.lroc_pds3 import (
     read_lroc_pds3_label,
 )
 from src.ingestion.manifest import save_manifest
-from src.ingestion.pds_reader import ingest_from_pds, parse_metadata_from_xml
+from src.ingestion.pds_reader import ingest_from_pds, parse_metadata_from_xml, window_crop_ohrc
 from src.models.lunar_product import LunarProduct
 
 
@@ -100,4 +100,5 @@ __all__ = [
     "ingest_product",
     "load_lroc_pds3_raster",
     "read_lroc_pds3_label",
+    "window_crop_ohrc",
 ]

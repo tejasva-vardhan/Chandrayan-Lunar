@@ -1,0 +1,58 @@
+{
+  "schema_version": "haruto-real-data-v1",
+  "pair_id": "pair_04_south_pole",
+  "note": "Metadata extracted from official PDS4/PDS3 labels. No scientific overlap assessment has been performed.",
+  "ohrc": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20260103t1005176450_d_img_d18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "acquisition_time": "2026-01-03T10:05:17.645Z",
+    "radiometric_state": "Calibrated",
+    "data_type_pds4": "UnsignedByte",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 101075,
+      "band_count": 1
+    },
+    "gsd_meters": 0.25,
+    "gsd_unit_in_label": "m/pixel",
+    "coordinates": {
+      "crs": "Polar stereographic",
+      "bbox_lonlat": [
+        22.79426,
+        -85.325413,
+        27.751481,
+        -84.522148
+      ]
+    },
+    "area": "South Pole",
+    "orbit_number": 28372,
+    "spacecraft_altitude_km": 100.31,
+    "file_size_bytes": 1212900000,
+    "md5_checksum": "40347cb3a97e4fce72e04526643098e1",
+    "nodata_declared": false,
+    "source_type": "PDS4_directory",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_04_south_pole/ohrc/ch2_ohr_ncp_20260103T1005176450_d_img_d18"
+  },
+  "lroc": {
+    "product_id": "M175153469LC",
+    "instrument": "LUNAR RECONNAISSANCE ORBITER CAMERA",
+    "mission": "LUNAR RECONNAISSANCE ORBITER",
+    "acquisition_time": null,
+    "acquisition_time_note": "START_TIME from PDS3 label not yet extracted for this product.",
+    "radiometric_state": "CDR",
+    "data_type_pds3": "LSB_INTEGER",
+    "sample_bits": 16,
+    "dimensions": null,
+    "dimensions_note": "Not extracted in this manifest; ingest LROC product to obtain.",
+    "gsd_meters": null,
+    "gsd_note": "GSD not present in embedded PDS3 label; not populated to avoid invention.",
+    "coordinates": null,
+    "source_type": "PDS3_IMG",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_04_south_pole/lroc/M175153469LC.IMG",
+    "derived_npy": "pair_04_south_pole/lroc/M175153469LC.lroc.npy",
+    "derived_mask_npy": "pair_04_south_pole/lroc/M175153469LC.lroc.mask.npy"
+  }
+}

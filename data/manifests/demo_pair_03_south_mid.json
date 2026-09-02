@@ -1,0 +1,58 @@
+{
+  "schema_version": "haruto-real-data-v1",
+  "pair_id": "pair_03_south_mid",
+  "note": "Metadata extracted from official PDS4/PDS3 labels. No scientific overlap assessment has been performed.",
+  "ohrc": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20230302t1959055531_d_img_n18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "acquisition_time": "2023-03-02T19:59:05.5531Z",
+    "radiometric_state": "Calibrated",
+    "data_type_pds4": "UnsignedByte",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 93692,
+      "band_count": 1
+    },
+    "gsd_meters": 0.25,
+    "gsd_unit_in_label": "m/pixel",
+    "coordinates": {
+      "crs": "Selenographic",
+      "bbox_lonlat": [
+        342.781284,
+        -69.628632,
+        343.116106,
+        -68.785694
+      ]
+    },
+    "area": "Equatorial",
+    "orbit_number": 15672,
+    "spacecraft_altitude_km": 97.38,
+    "file_size_bytes": 1124304000,
+    "md5_checksum": "7deaa5543d05ede2061e09a9963c0e80",
+    "nodata_declared": false,
+    "source_type": "PDS4_directory",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_03_south_mid/ohrc/ch2_ohr_ncp_20230302T1959055531_d_img_n18"
+  },
+  "lroc": {
+    "product_id": "M106979273RC",
+    "instrument": "LUNAR RECONNAISSANCE ORBITER CAMERA",
+    "mission": "LUNAR RECONNAISSANCE ORBITER",
+    "acquisition_time": null,
+    "acquisition_time_note": "START_TIME from PDS3 label not yet extracted for this product.",
+    "radiometric_state": "CDR",
+    "data_type_pds3": "LSB_INTEGER",
+    "sample_bits": 16,
+    "dimensions": null,
+    "dimensions_note": "Not extracted in this manifest; ingest LROC product to obtain.",
+    "gsd_meters": null,
+    "gsd_note": "GSD not present in embedded PDS3 label; not populated to avoid invention.",
+    "coordinates": null,
+    "source_type": "PDS3_IMG",
+    "data_root_env": "LUNAR_DEMO_DIR",
+    "relative_path": "pair_03_south_mid/lroc/M106979273RC.IMG",
+    "derived_npy": "pair_03_south_mid/lroc/M106979273RC.lroc.npy",
+    "derived_mask_npy": "pair_03_south_mid/lroc/M106979273RC.lroc.mask.npy"
+  }
+}
