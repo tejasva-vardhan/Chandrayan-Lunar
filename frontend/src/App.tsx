@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { MoonScene } from "./components/MoonScene";
 import { exp000 } from "./data/exp000";
 
@@ -22,6 +23,30 @@ function Raster({ label, reference = false }: { label: string; reference?: boole
   );
 }
 
+function ScrollSatellite({ reducedMotion }: { reducedMotion: boolean }) {
+  const { scrollY } = useScroll();
+  // The craft stays in the right-side orbit corridor, away from readable content.
+  const x = useTransform(scrollY, [0, 520, 1050], ["0vw", "8vw", "22vw"]);
+  const y = useTransform(scrollY, [0, 520, 1050], ["0vh", "24vh", "57vh"]);
+  const rotate = useTransform(scrollY, [0, 1050], [-18, 27]);
+  const scale = useTransform(scrollY, [0, 660, 1050], [1, 0.86, 0.35]);
+  const opacity = useTransform(scrollY, [0, 760, 1050], [1, 1, 0]);
+
+  return (
+    <motion.div
+      className="scroll-satellite"
+      aria-hidden="true"
+      style={reducedMotion ? undefined : { x, y, rotate, scale, opacity }}
+    >
+      <span className="satellite-trail" />
+      <span className="satellite-panel panel-left" />
+      <span className="satellite-body"><i /></span>
+      <span className="satellite-panel panel-right" />
+      <span className="satellite-dish" />
+    </motion.div>
+  );
+}
+
 function App() {
   const [progress, setProgress] = useState(0.22);
   const [showRejected, setShowRejected] = useState(false);
@@ -40,6 +65,7 @@ function App() {
   return (
     <main className="app-shell">
       <div className="ambient-stars" aria-hidden="true" />
+      <ScrollSatellite reducedMotion={reducedMotion} />
       <section className="hero" id="mission">
         <MoonScene progress={progress} reducedMotion={reducedMotion} />
         <nav className="top-nav" aria-label="Primary navigation">

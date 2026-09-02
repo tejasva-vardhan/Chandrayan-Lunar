@@ -21,6 +21,16 @@ float noise(vec2 p) {
   f = f*f*(3.0-2.0*f);
   return mix(mix(hash(i), hash(i+vec2(1.,0.)), f.x), mix(hash(i+vec2(0.,1.)), hash(i+vec2(1.,1.)), f.x), f.y);
 }
+float fbm(vec2 p) {
+  float value = 0.;
+  float amplitude = .5;
+  for (int i = 0; i < 4; i++) {
+    value += amplitude * noise(p);
+    p = p * 2.03 + vec2(17.2, 9.5);
+    amplitude *= .5;
+  }
+  return value;
+}
 mat2 rotate(float angle) {
   float s = sin(angle), c = cos(angle);
   return mat2(c, -s, s, c);
@@ -43,9 +53,10 @@ void main() {
     float lit = max(0.08, dot(normal, light));
     // Rotate the terrain texture while keeping the moon's lighting stable.
     vec2 terrain = rotate(u_time * .055) * q;
-    float detail = noise(terrain * 38.) * .18 + noise(terrain * 105.) * .07;
-    float crater = smoothstep(.24, .0, abs(noise(terrain * 12.) - .48)) * .1;
-    vec3 moon = vec3(.38, .43, .44) * (lit + detail - crater);
+    float broadDetail = fbm(terrain * 13.) * .2;
+    float fineDetail = noise(terrain * 150.) * .055;
+    float crater = smoothstep(.15, .0, abs(noise(terrain * 18.) - .48)) * .12;
+    vec3 moon = vec3(.38, .43, .44) * (lit + broadDetail + fineDetail - crater);
     float rim = smoothstep(.52, .43, r);
     moon += rim * vec3(.05, .11, .12);
     gl_FragColor = vec4(moon, 1.);
@@ -84,7 +95,8 @@ export function MoonScene({ progress, reducedMotion }: MoonSceneProps) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
     let frame = 0;
     const render = (now: number) => {
-      const ratio = Math.min(window.devicePixelRatio, 1.75);
+      // Preserve detail on high-density displays without letting the hero dominate GPU memory.
+      const ratio = Math.min(window.devicePixelRatio, 2.5);
       const width = Math.floor(canvas.clientWidth * ratio);
       const height = Math.floor(canvas.clientHeight * ratio);
       if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
