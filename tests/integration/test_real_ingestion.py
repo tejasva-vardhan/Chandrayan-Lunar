@@ -1,11 +1,8 @@
 """Integration test for real Chandrayaan-2 OHRC data ingestion.
 
 This test is OPTIONAL and requires a locally downloaded OHRC product.
-Configure the data directory via the environment variable LUNAR_DATA_DIR
-(e.g. set LUNAR_DATA_DIR=D:\\mydata before running pytest).
-
-The test skips cleanly if the configured directory does not exist or contains
-no recognised OHRC products.  It does NOT fall back to any hard-coded path.
+Configure the data directory via ``CHANDRAYAN_DATA_ROOT`` (LUNAR_DATA_DIR remains
+an alias). The test does NOT fall back to any hard-coded path.
 
 Never commit the raw OHRC datasets into the repository.
 """
@@ -18,13 +15,24 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.ingestion import ingest_product
+from src.ingestion import (
+    DATA_ROOT_ENV,
+    ingest_product,
+)
 from src.models import LunarProduct
+
+
+@pytest.fixture(autouse=True)
+def _redirect_derived_outputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUNAR_MANIFEST_DIR", str(tmp_path / "manifests"))
+    monkeypatch.setenv("LUNAR_OUTPUT_DIR", str(tmp_path / "processed"))
 
 
 def _get_data_dir() -> Path | None:
     """Return the configured external OHRC data directory, or None."""
-    raw = os.environ.get("LUNAR_DATA_DIR") or os.environ.get("SIH_DATA_DIR")
+    raw = os.environ.get(DATA_ROOT_ENV) or os.environ.get("LUNAR_DATA_DIR") or os.environ.get(
+        "SIH_DATA_DIR"
+    )
     if not raw:
         return None
     p = Path(raw)
@@ -50,9 +58,8 @@ def test_real_ohrc_ingestion() -> None:
     data_dir = _get_data_dir()
     if data_dir is None:
         pytest.skip(
-            "Real OHRC dataset not configured. "
-            "Set the LUNAR_DATA_DIR environment variable to a directory "
-            "containing ch2_ohr_ncp_* products to enable this test."
+            f"Real OHRC dataset not configured. "
+            f"Set {DATA_ROOT_ENV} to a directory containing ch2_ohr_ncp_* products."
         )
 
     products = find_real_products(data_dir)

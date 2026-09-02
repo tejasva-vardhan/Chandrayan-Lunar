@@ -2,9 +2,13 @@
 
 This directory stores repository-side metadata for local lunar demo datasets.
 
-The demo dataset referenced by this repo is currently available at:
+Raw products are kept outside the repository. Set `CHANDRAYAN_DATA_ROOT` to the
+folder that contains the local demo dataset. Do not commit raw PDS files into Git.
 
-`Set CHANDRAYAN_DATA_ROOT to the folder containing the local demo dataset.`
+See [`manifests/demo_pairs.yaml`](manifests/demo_pairs.yaml) for the expected pair
+structure and product IDs.
 
-Raw files are kept outside the repository and should be configured externally.
-See [demo_pairs.yaml](C:\Users\acer\Desktop\My Projects\SIH 26'\Chandrayan-Lunar\data\manifests\demo_pairs.yaml) for the expected pair structure and product IDs.
+The initial EXP-000 pair is:
+
+- OHRC: `ch2_ohr_ncp_20210402T0546284043_d_img_d18`
+- LROC: `M150368601RC`
