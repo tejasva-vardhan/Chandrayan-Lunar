@@ -36,7 +36,7 @@ from src.pipeline.operations import (
 )
 
 
-def test_unimplemented_scientific_operations_fail_closed(
+def test_export_is_implemented_without_fabricating_result_fields(
     tmp_path: Path,
     registration_pair: RegistrationPair,
 ) -> None:
@@ -53,10 +53,10 @@ def test_unimplemented_scientific_operations_fail_closed(
     # match is implemented: returns a CorrespondenceSet (no raster_uri → empty set)
     result_cs = match(registration_pair)
     assert isinstance(result_cs, CorrespondenceSet)
-    with pytest.raises(NotImplementedError):
-        export_result(result, registration_pair, tmp_path)
-    with pytest.raises(NotImplementedError):
-        io_export_result(result, registration_pair, tmp_path)
+    manifest = export_result(result, registration_pair, tmp_path)
+    owning_manifest = io_export_result(result, registration_pair, tmp_path)
+    assert manifest.registration_report is not None
+    assert owning_manifest.registration_report is not None
 
 
 def test_characterize_pair_is_implemented_and_does_not_invent_values(
@@ -201,5 +201,5 @@ def test_owning_modules_fail_closed_with_the_same_callables(
     assert evaluated.metrics.rmse is None
     assert evaluated.metrics.inlier_count is None
     assert evaluated.metrics.inlier_ratio is None
-    with pytest.raises(NotImplementedError):
-        io_exports.export_result(result, registration_pair, tmp_path)
+    manifest = io_exports.export_result(result, registration_pair, tmp_path)
+    assert manifest.registration_report is not None

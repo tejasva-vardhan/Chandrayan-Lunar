@@ -27,6 +27,7 @@ from src.registration import (
 from src.registration.result import (
     FLAG_DEGENERATE_CONTROL_POINTS,
     FLAG_INSUFFICIENT_CONTROL_POINTS,
+    FLAG_OUTPUT_TOO_LARGE,
     FLAG_SOURCE_RASTER_UNAVAILABLE,
     FLAG_UNSUPPORTED_RASTER,
 )
@@ -191,6 +192,27 @@ def test_output_image_dimensions(tmp_path: Path) -> None:
     assert result.registered_source_uri is not None
     warped = np.load(result.registered_source_uri)
     assert warped.shape == (12, 14)
+
+
+def test_oversized_output_fails_before_loading_or_warping_source() -> None:
+    pair = RegistrationPair(
+        pair_id="pair-reg",
+        source=LunarProduct(product_id="src", instrument="OHRC", raster_uri="missing.npy"),
+        reference=LunarProduct(
+            product_id="ref",
+            instrument="LRO_NAC",
+            dimensions={"width_px": 1000, "height_px": 1000},
+        ),
+    )
+    result = register_with_settings(
+        pair,
+        _identity_corners(8, 8),
+        _correspondences(pair),
+        RegistrationSettings(model_id="projective_2d_baseline", max_output_pixels=1_000),
+    )
+    assert result.transformation is not None
+    assert result.registered_source_uri is None
+    assert result.quality_flags == [FLAG_OUTPUT_TOO_LARGE]
 
 
 def test_transformation_parameter_serialization(registration_pair: RegistrationPair) -> None:
