@@ -37,6 +37,22 @@ button, input { font: inherit; color: inherit; }
 
 .app-shell { position: relative; overflow: hidden; isolation: isolate; }
 
+.scroll-satellite {
+  position: fixed; z-index: 10; top: 19vh; right: 7vw; width: 126px; height: 60px;
+  pointer-events: none; transform-origin: center; filter: drop-shadow(0 0 10px rgba(116,226,230,.48));
+}
+.satellite-body {
+  position: absolute; top: 19px; left: 49px; width: 28px; height: 22px; border: 1px solid #b9e7e3;
+  border-radius: 3px; background: linear-gradient(135deg, #d4f4eb, #477e87 70%);
+}
+.satellite-body::before, .satellite-body::after { content: ""; position: absolute; width: 6px; height: 6px; border: 1px solid var(--signal); border-radius: 50%; }
+.satellite-body::before { top: 7px; left: -5px; }.satellite-body::after { top: 7px; right: -5px; }
+.satellite-body i { position: absolute; inset: 5px 7px; border: 1px solid rgba(3, 20, 31, .7); background: #6bbbc0; }
+.satellite-panel { position: absolute; top: 22px; width: 38px; height: 15px; border: 1px solid #75c8d2; background: repeating-linear-gradient(90deg, #1d5569 0 7px, #5eb6c7 8px 9px); }
+.panel-left { left: 9px; transform: skewY(-17deg); }.panel-right { right: 9px; transform: skewY(17deg); }
+.satellite-dish { position: absolute; top: 9px; left: 58px; width: 13px; height: 10px; border: 2px solid var(--signal); border-bottom: 0; border-radius: 50% 50% 0 0; transform: rotate(-12deg); }
+.satellite-trail { position: absolute; right: -82px; top: 30px; width: 72px; height: 1px; background: linear-gradient(90deg, rgba(116,226,230,.7), transparent); }
+
 /* ---------- global texture ---------- */
 .ambient-stars {
   position: fixed; z-index: -5; inset: 0; pointer-events: none; opacity: .5;
@@ -242,6 +258,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   .correspondence-rail span { width: 48px; }
 }
 @media (max-width: 760px) {
+  .scroll-satellite { top: 16vh; right: 4vw; transform: scale(.65); transform-origin: top right; }
   .top-nav { display: flex; padding: 20px 22px; }
   .top-nav > div { display: none; }
   .nav-status { display: block; }
