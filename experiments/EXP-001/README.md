@@ -104,6 +104,31 @@ Both are still matcher-derived. They are **not** independent accuracy.
 
 Do not read verification residuals, four-point DLT fit residuals, or held-out transfer error as registration accuracy.
 
+### Held-out k-fold transfer error
+
+Possible only where verified count ≥ 5, which is why ten of twelve arms report `NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES`.
+
+| Pair | Matcher | Held-out points | RMSE | Median | Max |
+|---|---|---|---|---|---|
+| pair_02_mid_equatorial | SIFT | 25 | 1.904 px | 1.796 px | 3.098 px |
+| pair_02_mid_equatorial | ORB | 24 | 2.222 px | 2.004 px | 3.966 px |
+
+### Cross-matcher checkpoints
+
+Each fitted transform scored against correspondences a *different* matcher found and verified. These checkpoints come from an independent detector and descriptor, so they sit outside the consensus set that produced the transform.
+
+| Pair | Transform from | Checkpoints | RMSE | Median |
+|---|---|---|---|---|
+| pair_01_equatorial | SIFT | 4 (ORB) | **35,694.96 px** | 34,577.37 px |
+| pair_02_mid_equatorial | SIFT | 24 (ORB) | 62.95 px | 42.77 px |
+| pair_02_mid_equatorial | ORB | 25 (SIFT) | 61.32 px | 58.74 px |
+| pair_04_south_pole | SIFT | 4 (ORB) | **60,414.88 px** | 20,779.10 px |
+| pair_04_south_pole | ORB | 4 (SIFT) | **20,782.68 px** | 18,511.65 px |
+
+**This is the most important measurement in the experiment.** On pair 01 both SIFT and ORB reported verification residuals of order 1e-10 px, yet their two transforms disagree by **35,695 pixels**. Two "perfect" four-point fits of the same scene are mutually inconsistent by tens of thousands of pixels. The near-zero residual EXP-000 reported carries no information about correctness.
+
+Even where the pipeline genuinely works, the gap is instructive: on pair 02 within-matcher held-out error is ~2 px while cross-matcher error is ~62 px. The more independent the checkpoint, the worse the error looks — and neither number is accuracy.
+
 ## Comparison table
 
 Matcher | Pair | Raw | Verified | Inlier Ratio | Coverage | CPs | Transform | Refinement | Runtime (match) | Validation
@@ -122,7 +147,13 @@ SIFT | pair_04_south_pole | 13 | 4 | 30.77% | 0.21176 | 4 | fitted | COORDINATES
 RIFT | pair_04_south_pole | 0 | 0 | — | — | 0 | no | NO_POINTS | 34.34 s | NOT_POSSIBLE
 ORB | pair_04_south_pole | 14 | 4 | 28.57% | 0.26815 | 4 | fitted | COORDINATES_UPDATED | 1.12 s | NOT_POSSIBLE (4 inliers)
 
-Coverage is verified-match bounding-box area fraction, not control-point coverage. Memory: match-stage process RSS was recorded (psutil); OpenCV C++ allocations would be invisible to tracemalloc alone. Full-raster registration remained blocked by the existing 16,777,216-pixel cap whenever a transform was fitted.
+Coverage is verified-match bounding-box area fraction, not control-point coverage. Full-raster registration remained blocked by the existing 16,777,216-pixel cap whenever a transform was fitted.
+
+**Memory.** Match-stage process RSS delta was −1.9 to +8.5 MB for SIFT and ORB and −3.5 to +15.6 MB for RIFT; peak process RSS was 117–253 MB per pair. RSS is the primary figure because `tracemalloc` sees only Python allocations and would systematically understate OpenCV's C++ work relative to RIFT's numpy work. The deltas are allocator-noisy and occasionally negative, so they bound the matchers' working set rather than measuring it precisely. No matcher was close to a memory limit; memory is not the constraint here.
+
+**Inlier ratio ranks these pairs backwards and should not be read as a quality score.** SIFT on pair 04 has the highest ratio in the table (30.77%) and is worthless — 4 inliers at the algebraic minimum. SIFT on pair 02 has the *lowest* (2.72%) and is the only arm that produced real corroborated correspondence. A high ratio here means a small denominator, not a good match. The count above the model minimum is the meaningful quantity.
+
+**Near-zero residuals are themselves a degeneracy signal.** Every minimal-sample arm shows verified-inlier residuals of 1e-13 to 1e-10 px. The two genuine arms on pair 02 show 0.30–2.73 px. An all-but-zero residual set is the signature of an unfalsifiable fit and is cheap to detect.
 
 The EXP-001 SIFT arm on pair 01 reproduced the EXP-000 counts exactly (36 raw → 4 verified, coverage 0.23236). That is the control check that the baseline arm is the EXP-000 code path.
 
@@ -152,8 +183,12 @@ The in-repository RIFT implementation is not a failed install: on synthetic cont
 - Matching-view stride is per image, so residual scale remains between OHRC and LROC views. RIFT cannot absorb that; SIFT can.
 - LoFTR / LightGlue were not run. Changing the matching-view stride for one matcher only was refused as a confound.
 - `sun_angle_difference_degrees` is None. SPICE is not implemented.
+- **LROC ground sample distance is `None` on all four pairs**, so the OHRC↔LROC scale ratio — the confounder that most plausibly explains RIFT's zero — cannot be measured from the ingested products, only named. The NAC CDR labels carry `LINE_EXPOSURE_DURATION` but no resolution, altitude, or pointing geometry.
+- **Overlap is never recomputed from the data.** `demo_pairs.yaml` declares `overlap_status: verified` from NASA PDS ODE footprints, but ingestion does not recompute footprints and `expected_overlap` stays `None`. A pair with little true overlap and a pair with a genuinely hard matching problem are indistinguishable in these records.
+- **Stride decimation is aggressive.** Matching runs at strides of 15–18 (OHRC) and 6–8 (LROC), i.e. on 4.2 M pixels of a 0.94–1.2 G pixel product. Fine texture that any matcher would need is discarded before matching begins.
+- **Control-point selection interacts with yield and is part of the outcome.** ORB on pair 01 had 4 verified inliers but only 3 control points, because two fell in the same 8×8 grid cell; that alone blocked its transform fit. Selection is not a neutral pass-through.
 - Full-raster registration remains blocked by the 16,777,216-pixel cap.
-- Four pairs cannot freeze a matcher (D-007).
+- Four pairs, one scene each, no repeated measurement and no error bars. `characterize_pair` leaves `difficulty`, `gsd_ratio`, and `sun_angle_difference_degrees` unset, so pairs cannot be stratified by difficulty. Four pairs cannot freeze a matcher (D-007).
 
 ## Conclusion
 
@@ -161,9 +196,22 @@ On the EXP-000 pair, matcher choice among {SIFT, this RIFT, ORB} did **not** mov
 
 On one of three generalisation pairs, SIFT and ORB both exceeded the floor with nearly equal yield. The effect is pair-dependent, not a ranking of algorithms.
 
+The decisive comparison is between the two sources of variation. SIFT's verified count across pairs is 4, **25**, 0, 4. The spread *between matchers within* any one pair is at most 1 (25 vs 24 on pair 02) or a tie at the meaningless minimum. The spread *between pairs for a single matcher* is 0 to 25. Between-pair variation exceeds between-matcher variation by more than an order of magnitude, so **H0 is not rejected**: the correspondence bottleneck for this data lies in pair-level geometry and overlap, not in the detector/descriptor.
+
+That the same frozen stages yield 4 inliers on pair 01 and 25 on pair 02 also rules out the harness as the explanation. The pipeline is capable; the pairing is the constraint.
+
 ## Recommended EXP-002
 
-Hold the SIFT baseline constant and isolate the matching-view scale policy on pair 01: replace per-image stride with a common-scale (or GSD-normalised) matching view, keep every other EXP-000 setting, and test whether verified yield moves above the four-inlier floor. Do not introduce another matcher family until that confounder has been measured.
+The evidence points at the pair, not the matcher, so EXP-002 should stop varying the matcher and start measuring the thing that varied by an order of magnitude.
+
+**Primary — quantify and control overlap and relative scale before matching.** Compute each pair's actual footprint intersection from the products' own geometry rather than trusting the manifest's declared `overlap_status`, and populate `gsd_ratio` so the OHRC/LROC scale difference becomes a measured quantity instead of an unknown. The testable prediction is that verified yield tracks true overlap area and inverse scale ratio, which pair 02's isolated success already suggests.
+
+Two supporting arms follow directly from measurements above, and both are cheap:
+
+- **Hold SIFT constant and isolate the matching-view scale policy on pair 01.** Replace per-image stride with a common-scale (GSD-normalised) matching view, keep every other EXP-000 setting, and test whether verified yield moves above the four-inlier floor. This deliberately changes the stride, which is exactly why it belongs in a new experiment with its own control rather than inside EXP-001. It also converts RIFT's uninterpretable zero into an actual test of radiation-robust matching.
+- **Adopt `verified > min_samples` as a hard gate and cross-matcher disagreement as a standing diagnostic.** A 35,695-pixel disagreement between two "perfect" near-zero-residual fits should never have been reportable as success. Any future result whose transform is fitted from exactly `min_samples` points should be rejected automatically.
+
+What EXP-002 should **not** do: add more matchers. Three structurally unrelated detector/descriptor families already gave the same answer on the same data.
 
 ## Distinctions this experiment must keep
 
