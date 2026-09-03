@@ -1,6 +1,6 @@
 # EXP-000 — SIFT sanity baseline on real lunar pair 01
 
-Branch: `feature/tejas-exp000-integration` (from `main` at PR #13 / `18dbc50`).
+Branch: `feature/tejas-exp000-integration` (from latest `main` at PR #14 / `dfe2408`).
 
 This is a **software baseline**, not official SIH evidence (D-011), not a matcher freeze (D-007), and not a selected lunar transform (D-010).
 
@@ -71,7 +71,7 @@ LROC invalid-pixel mask is stride-decimated with the matching view and passed to
 4. **Refined points** — ZNCC parabolic baseline; failure preserves original coordinates.
 5. **Fitted transformation** — `projective_2d_baseline` DLT on selected/refined points.
 6. **Registration output** — full raster blocked by the existing 16,777,216-pixel cap; diagnostic crop only.
-7. **Evaluation metrics** — verification residuals vs independent accuracy (none).
+7. **Evaluation metrics** — verification residuals vs independent accuracy (`NOT VALIDATED`).
 
 Projective DLT residuals on **exactly four** control points are the DLT minimum and **must not** be read as registration accuracy.
 
@@ -107,14 +107,14 @@ Lightweight record: `experiments/EXP-000/results/pair_01_equatorial.json` (writt
 | SIFT | 36 raw correspondences |
 | Verify | 4 inliers / 32 rejected; inlier ratio 0.1111111111111111 |
 | Control points | 4; spatial coverage 0.2323628740965652 |
-| Refinement | 0 of 4 coordinates changed → **indeterminate** (no per-point outcome field) |
+| Refinement | 0 of 4 coordinates changed → **INDETERMINATE** (frozen ControlPoint has no per-point outcome field; not a successful refinement) |
 | Register | `registration_output_too_large`; transform `projective_2d_baseline` fitted |
 | Diagnostic crop | 3313×5064 at row=44867, col=0 (16,777,032 px ≤ cap); **2 of 4** control points inside (maximum that fit); finite pixel fraction ≈ 0.753 |
-| Evaluate | RMSE 4.40e-10 of **stored verification inlier residuals**, not independent accuracy |
+| Evaluate | RMSE 4.40e-10 of **stored verification inlier residuals**; independent accuracy = **NOT VALIDATED** |
 | Export | lightweight JSON package; `registered_source` is null |
-| Runtime | ≈ 93.4 s total (ingest ≈ 46.3 s) |
+| Runtime | ≈ 94.2 s total (ingest ≈ 52.3 s) |
 
-Do **not** read the four-point DLT residuals or `evaluate().rmse` as registration accuracy. There is no independent ground truth and no held-out correspondence set.
+Do **not** read the four-point DLT residuals or `evaluate().rmse` as registration accuracy. Independent accuracy = **NOT VALIDATED**. There is no independent ground truth and no held-out correspondence set.
 
 The diagnostic crop is bounded engineering output for inspecting selected control-point alignment. The four control points span ~19,505 LROC rows, which exceeds the 3,313-row cap-limited window, so all four cannot appear in one crop. The window contains the two-point cluster that fits (indices 0 and 2). This is not a complete registered product.
 
@@ -122,4 +122,4 @@ This experiment is a SIFT software-baseline sanity check on real pair 01. It is 
 
 ## Recommended EXP-001
 
-Compare illumination-robust matchers (RIFT/RIFT2 and one dense/learned candidate) on the **same pair and matching-view policy**, with an independent held-out correspondence set. Do not treat EXP-000 inlier ratio or four-point DLT residuals as the benchmark.
+On the **same pair and matching-view policy**, compare illumination-robust matchers (RIFT/RIFT2 and one dense/learned candidate) and score them with an independent held-out correspondence set. This run produced exactly four verified inliers, the projective DLT minimum, so matcher yield—not four-point fit residuals—is the measured bottleneck to address first. Do not treat EXP-000 inlier ratio or four-point DLT residuals as the benchmark.

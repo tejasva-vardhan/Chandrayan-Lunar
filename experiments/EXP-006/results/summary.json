@@ -1,0 +1,239 @@
+{
+  "decision_rule": "The independent variable is valid only if variant A is the frozen match() one-way SIFT + Lowe-ratio path and variant B is the same SIFT detector/descriptor/Lowe-ratio with reciprocal nearest-neighbour validation, on the same RepresentationResult. B is SUPPORTED only if all of the following hold: (1) verified inliers strictly increase, (2) inlier ratio does not decrease, (3) source and reference 8x8 occupied-cell counts are each >= A's (spatial distribution maintained or improved), (4) both variants fit a transform from more than the projective DLT minimum of 4 verified inliers, (5) B match-stage runtime is at most 5x A's. Raw match count alone is not success. Occupied-cell count is the spatial gate; bounding-box coverage and Clark-Evans R are reported but not gated. Matcher-derived held-out RMSE is reported and is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If the hypothesis fails, report NOT SUPPORTED and do not retune.",
+  "experiment_id": "EXP-006",
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_01_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "experiment_id": "EXP-006",
+    "follow_up_pair_manifest_id": "pair_01_equatorial",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest for a given pair",
+      "matcher_id sift and all SiftSettings (EXP-001 SIFT arm)",
+      "SIFT detector and descriptor (nfeatures=0, nOctaveLayers=3, contrast=0.04, edge=10, sigma=1.6)",
+      "Lowe ratio threshold 0.75 and min_matches 4",
+      "matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
+      "intensity representation routing",
+      "coordinate mapping back to original image pixels",
+      "geometric model projective_2d_baseline",
+      "robust estimator ransac_style_baseline",
+      "verification residual_limit 3.0",
+      "RANSAC max_trials 500",
+      "rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap",
+      "evaluation metric definitions"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences per variant",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; checkpoints are matcher-derived and there is no surveyed lunar control",
+      "rng_seed": 0
+    },
+    "independent_variable": "correspondence_validation_protocol",
+    "inherited_from": "EXP-000",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "matching_view_held_fixed": true,
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 5.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "sift_baseline_experiment_id": "EXP-001",
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "same_grid_as_control_point_selection": true,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "follow_up_ran": false,
+  "hypothesis": "H1: On pair_02_mid_equatorial, adding reciprocal (mutual nearest-neighbour) validation to the EXP-001 SIFT baseline, holding detector, descriptor, Lowe ratio, matching view, representation, and geometric verification fixed, produces a meaningful improvement in verified correspondence quality while maintaining or improving spatial distribution of those verified correspondences. H0: reciprocal validation does not improve verified quality, or any quality gain comes with worse spatial distribution or an unstable transform.",
+  "inherited_from": "EXP-000",
+  "pair_ids": [
+    "pair_02_mid_equatorial"
+  ],
+  "pairs": {
+    "pair_02_mid_equatorial": {
+      "comparison": {
+        "rows": [
+          {
+            "control_point_count": 11,
+            "deterministic": true,
+            "held_out_rmse": 1.9043709874947647,
+            "inlier_ratio": 0.02720348204570185,
+            "match_rss_delta_bytes": 49438720,
+            "match_runtime_seconds": 4.343693000031635,
+            "protocol_id": "sift_lowe_ratio_one_way",
+            "raw_matches": 919,
+            "reference_clark_evans_r": 0.3663076308719734,
+            "reference_concentration": 0.28,
+            "reference_max_matches_per_cell": 7,
+            "reference_occupied_cells": 9,
+            "reference_occupied_fraction": 0.140625,
+            "require_reciprocal": false,
+            "residual_max": 2.653533215225044,
+            "residual_median": 1.686909606565198,
+            "residual_rmse": 1.686182317045492,
+            "source_clark_evans_r": 0.5057745168489801,
+            "source_concentration": 0.28,
+            "source_max_matches_per_cell": 7,
+            "source_occupied_cells": 11,
+            "source_occupied_fraction": 0.171875,
+            "spans_usable_overlap_proxy": true,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "unselected_checkpoint_rmse": 2.220870473622833,
+            "variant": "A",
+            "variant_runtime_seconds": 8.574199700029567,
+            "verified_inliers": 25,
+            "verified_match_coverage": 0.5084353283845922
+          },
+          {
+            "control_point_count": 15,
+            "deterministic": true,
+            "held_out_rmse": 2.2123991384387924,
+            "inlier_ratio": 0.031725888324873094,
+            "match_rss_delta_bytes": 2945024,
+            "match_runtime_seconds": 3.914751600008458,
+            "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+            "raw_matches": 788,
+            "reference_clark_evans_r": 0.24780926364644665,
+            "reference_concentration": 0.32,
+            "reference_max_matches_per_cell": 8,
+            "reference_occupied_cells": 10,
+            "reference_occupied_fraction": 0.15625,
+            "require_reciprocal": true,
+            "residual_max": 2.86306810859656,
+            "residual_median": 1.3471672761182092,
+            "residual_rmse": 1.7420416346240013,
+            "source_clark_evans_r": 0.3472238467649975,
+            "source_concentration": 0.36,
+            "source_max_matches_per_cell": 9,
+            "source_occupied_cells": 10,
+            "source_occupied_fraction": 0.15625,
+            "spans_usable_overlap_proxy": true,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "unselected_checkpoint_rmse": 1.9589692093809212,
+            "variant": "B",
+            "variant_runtime_seconds": 9.130105999764055,
+            "verified_inliers": 25,
+            "verified_match_coverage": 0.18878399592725875
+          }
+        ]
+      },
+      "decision": "NOT SUPPORTED",
+      "hypothesis_supported": false,
+      "pair_manifest_id": "pair_02_mid_equatorial",
+      "quality_improved": false,
+      "spatial_maintained_or_improved": false,
+      "status": "completed",
+      "transform_stable": true
+    }
+  },
+  "primary_decision": "NOT SUPPORTED",
+  "reproducibility": {
+    "git_commit": "96adc974047206b09964a47bf978184e070cb62c",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "sift_baseline_experiment_id": "EXP-001",
+  "variant_configuration": {
+    "A": {
+      "callable": "match(pair, representation)",
+      "label": "exp001_sift_one_way_lowe_ratio",
+      "notes": "Frozen pipeline match() path. One-way BFMatcher knn (k=2) plus Lowe ratio 0.75. This is the EXP-001 SIFT control.",
+      "protocol_id": "sift_lowe_ratio_one_way",
+      "require_reciprocal": false,
+      "role": "control_existing_sift_baseline"
+    },
+    "B": {
+      "callable": "run_sift(..., require_reciprocal=True)",
+      "label": "sift_lowe_ratio_reciprocal_nn",
+      "notes": "Same SIFT keypoints and descriptors as A. A match is kept only if it survives Lowe's ratio test in both directions and the two keypoints are mutual nearest neighbours. Not a new detector or descriptor.",
+      "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+      "require_reciprocal": true,
+      "role": "correspondence_quality_intervention"
+    }
+  }
+}

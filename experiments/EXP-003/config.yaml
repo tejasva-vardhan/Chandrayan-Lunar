@@ -1,0 +1,144 @@
+# EXP-003 exact configuration.
+#
+# Copied from the owning modules' unvalidated software defaults, which are
+# themselves inherited from EXP-000 so the comparison is controlled.
+# These are NOT SIH thresholds, NOT a matcher freeze (D-007), and NOT a
+# selected lunar transform (D-010).
+# Do not copy these values into configs/default.yaml.
+#
+# Authoritative source: src/io/exp003/config.py.
+
+experiment_id: EXP-003
+inherits_fixed_configuration_from: EXP-000
+independent_variable: lroc_matching_view_relative_stride_factor
+ohrc_held_fixed: true
+pair_manifest_id: pair_01_equatorial
+
+hypothesis: >
+  H1: On pair_01_equatorial, the existing SIFT correspondence pipeline is
+  scale-robust: after approximately 2x additional LROC matching-view
+  downscaling and approximately 2x finer LROC sampling, with OHRC held at
+  the EXP-000 stride, verified inlier counts remain equal to the EXP-000
+  baseline.
+  H0: those relative LROC scale changes materially affect verified
+  correspondence yield on this pair.
+
+decision_rule: >
+  The independent variable is valid only if LROC matching-view strides
+  actually differ across A/B/C while the OHRC stride stays at the EXP-000
+  baseline. Scale robustness is supported only if verified inlier counts
+  for B and C both equal A. Any difference in verified inliers is a
+  material effect and rejects scale robustness on this pair. Four-point
+  DLT residuals are not accuracy. Independent accuracy remains NOT
+  VALIDATED. One pair cannot establish general SIFT scale invariance.
+
+# ---------------------------------------------------------------------------
+# Held constant across every variant
+# ---------------------------------------------------------------------------
+fixed:
+  pairs_source: data/manifests/demo_pairs.yaml
+  dataset_root_env: CHANDRAYAN_DATA_ROOT
+  matcher_id: sift
+
+  preprocessing:
+    applied_to_full_rasters: false
+    reason: full-raster float64 materialisation exceeds the 16777216-pixel cap
+    action: identity_passthrough
+    matching_view_stretch_still_applies: true
+
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    spatial_window: full_image_stride_decimation_not_a_cropped_window
+    coordinate_mapping: >
+      x_original = x_matching * x_scale; y_original = y_matching * y_scale;
+      x_scale = y_scale = stride
+
+  representation:
+    routing: difficulty None/easy -> intensity
+    intensity: 2-98 percentile stretch
+
+  sift:
+    nfeatures: 0
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+    confidence_min: null
+
+  control_points:
+    grid_bins: 8
+    max_per_source_cell: 1
+    max_per_reference_cell: 1
+    max_points: null
+
+  refinement:
+    method_id: zncc_parabolic_baseline
+    window_radius: 7
+    search_radius: 3
+    min_valid_pixel_fraction: 0.75
+    min_peak_zncc: 0.25
+    fine_half_width: 1.0
+    fine_step: 0.1
+
+  registration:
+    model_id: projective_2d_baseline
+    max_output_pixels: 16777216   # NOT raised by this experiment
+    diagnostic_crops_written: false
+
+  evaluation:
+    rmse: sqrt(mean(stored inlier verification residuals^2)); not accuracy
+    inlier_ratio_denominator: len(CorrespondenceSet.matches)
+    spatial_coverage: >
+      0.5 * (source_bbox_area / source_image_area +
+      reference_bbox_area / reference_image_area)
+    independent_ground_truth: false
+    independent_accuracy: NOT VALIDATED
+
+# ---------------------------------------------------------------------------
+# The independent variable: LROC matching-view relative stride
+# Fixed before the first real-data run and not revisited afterwards.
+# ---------------------------------------------------------------------------
+variants:
+  A:
+    label: exp000_baseline_matching_view
+    relative_lroc_stride_factor: 1.0
+    stride_rule: stride = ceil(sqrt(pixels / 4194304)) independently per image
+    expected_pair_01_strides:
+      ohrc: 15
+      lroc: 8
+    representation_callable: generate_representation(pair)
+
+  B:
+    label: lroc_downscaled_2x_relative_to_baseline
+    relative_lroc_stride_factor: 2.0
+    stride_rule: >
+      LROC stride = max(1, round(pixel_budget_stride * 2.0));
+      OHRC stride unchanged
+    expected_pair_01_strides:
+      ohrc: 15
+      lroc: 16
+    representation_callable: generate_representation_with_settings
+
+  C:
+    label: lroc_upsampled_2x_relative_to_baseline
+    relative_lroc_stride_factor: 0.5
+    stride_rule: >
+      LROC stride = max(1, round(pixel_budget_stride * 0.5));
+      OHRC stride unchanged. Pair-01 LROC stride 4 exceeds the 4,194,304-pixel
+      matching-view budget so SIFT actually sees a finer raster; the
+      registration output cap is not raised.
+    expected_pair_01_strides:
+      ohrc: 15
+      lroc: 4
+    representation_callable: generate_representation_with_settings
+    may_exceed_matching_view_pixel_budget: true

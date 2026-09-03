@@ -1,0 +1,1505 @@
+{
+  "comparison": {
+    "rows": [
+      {
+        "control_point_count": 11,
+        "deterministic": true,
+        "held_out_rmse": 1.9043709874947647,
+        "inlier_ratio": 0.02720348204570185,
+        "match_rss_delta_bytes": 49438720,
+        "match_runtime_seconds": 4.343693000031635,
+        "protocol_id": "sift_lowe_ratio_one_way",
+        "raw_matches": 919,
+        "reference_clark_evans_r": 0.3663076308719734,
+        "reference_concentration": 0.28,
+        "reference_max_matches_per_cell": 7,
+        "reference_occupied_cells": 9,
+        "reference_occupied_fraction": 0.140625,
+        "require_reciprocal": false,
+        "residual_max": 2.653533215225044,
+        "residual_median": 1.686909606565198,
+        "residual_rmse": 1.686182317045492,
+        "source_clark_evans_r": 0.5057745168489801,
+        "source_concentration": 0.28,
+        "source_max_matches_per_cell": 7,
+        "source_occupied_cells": 11,
+        "source_occupied_fraction": 0.171875,
+        "spans_usable_overlap_proxy": true,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "unselected_checkpoint_rmse": 2.220870473622833,
+        "variant": "A",
+        "variant_runtime_seconds": 8.574199700029567,
+        "verified_inliers": 25,
+        "verified_match_coverage": 0.5084353283845922
+      },
+      {
+        "control_point_count": 15,
+        "deterministic": true,
+        "held_out_rmse": 2.2123991384387924,
+        "inlier_ratio": 0.031725888324873094,
+        "match_rss_delta_bytes": 2945024,
+        "match_runtime_seconds": 3.914751600008458,
+        "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+        "raw_matches": 788,
+        "reference_clark_evans_r": 0.24780926364644665,
+        "reference_concentration": 0.32,
+        "reference_max_matches_per_cell": 8,
+        "reference_occupied_cells": 10,
+        "reference_occupied_fraction": 0.15625,
+        "require_reciprocal": true,
+        "residual_max": 2.86306810859656,
+        "residual_median": 1.3471672761182092,
+        "residual_rmse": 1.7420416346240013,
+        "source_clark_evans_r": 0.3472238467649975,
+        "source_concentration": 0.36,
+        "source_max_matches_per_cell": 9,
+        "source_occupied_cells": 10,
+        "source_occupied_fraction": 0.15625,
+        "spans_usable_overlap_proxy": true,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "unselected_checkpoint_rmse": 1.9589692093809212,
+        "variant": "B",
+        "variant_runtime_seconds": 9.130105999764055,
+        "verified_inliers": 25,
+        "verified_match_coverage": 0.18878399592725875
+      }
+    ]
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M1504316436RC",
+    "lroc_source_name": "M1504316436RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18"
+  },
+  "decision_rule": "The independent variable is valid only if variant A is the frozen match() one-way SIFT + Lowe-ratio path and variant B is the same SIFT detector/descriptor/Lowe-ratio with reciprocal nearest-neighbour validation, on the same RepresentationResult. B is SUPPORTED only if all of the following hold: (1) verified inliers strictly increase, (2) inlier ratio does not decrease, (3) source and reference 8x8 occupied-cell counts are each >= A's (spatial distribution maintained or improved), (4) both variants fit a transform from more than the projective DLT minimum of 4 verified inliers, (5) B match-stage runtime is at most 5x A's. Raw match count alone is not success. Occupied-cell count is the spatial gate; bounding-box coverage and Clark-Evans R are reported but not gated. Matcher-derived held-out RMSE is reported and is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If the hypothesis fails, report NOT SUPPORTED and do not retune.",
+  "experiment_id": "EXP-006",
+  "failed_stage": null,
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_01_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "experiment_id": "EXP-006",
+    "follow_up_pair_manifest_id": "pair_01_equatorial",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest for a given pair",
+      "matcher_id sift and all SiftSettings (EXP-001 SIFT arm)",
+      "SIFT detector and descriptor (nfeatures=0, nOctaveLayers=3, contrast=0.04, edge=10, sigma=1.6)",
+      "Lowe ratio threshold 0.75 and min_matches 4",
+      "matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
+      "intensity representation routing",
+      "coordinate mapping back to original image pixels",
+      "geometric model projective_2d_baseline",
+      "robust estimator ransac_style_baseline",
+      "verification residual_limit 3.0",
+      "RANSAC max_trials 500",
+      "rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap",
+      "evaluation metric definitions"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences per variant",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; checkpoints are matcher-derived and there is no surveyed lunar control",
+      "rng_seed": 0
+    },
+    "independent_variable": "correspondence_validation_protocol",
+    "inherited_from": "EXP-000",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "matching_view_held_fixed": true,
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 5.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "sift_baseline_experiment_id": "EXP-001",
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "same_grid_as_control_point_selection": true,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "hypothesis": "H1: On pair_02_mid_equatorial, adding reciprocal (mutual nearest-neighbour) validation to the EXP-001 SIFT baseline, holding detector, descriptor, Lowe ratio, matching view, representation, and geometric verification fixed, produces a meaningful improvement in verified correspondence quality while maintaining or improving spatial distribution of those verified correspondences. H0: reciprocal validation does not improve verified quality, or any quality gain comes with worse spatial distribution or an unstable transform.",
+  "inherited_from": "EXP-000",
+  "interpretation": {
+    "critical_measurements_missing": false,
+    "decision": "NOT SUPPORTED",
+    "decision_reason": "verified inliers did not increase (25 <= 25); occupied cells decreased (source 11 -> 10, reference 9 -> 10)",
+    "decision_rule": "The independent variable is valid only if variant A is the frozen match() one-way SIFT + Lowe-ratio path and variant B is the same SIFT detector/descriptor/Lowe-ratio with reciprocal nearest-neighbour validation, on the same RepresentationResult. B is SUPPORTED only if all of the following hold: (1) verified inliers strictly increase, (2) inlier ratio does not decrease, (3) source and reference 8x8 occupied-cell counts are each >= A's (spatial distribution maintained or improved), (4) both variants fit a transform from more than the projective DLT minimum of 4 verified inliers, (5) B match-stage runtime is at most 5x A's. Raw match count alone is not success. Occupied-cell count is the spatial gate; bounding-box coverage and Clark-Evans R are reported but not gated. Matcher-derived held-out RMSE is reported and is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If the hypothesis fails, report NOT SUPPORTED and do not retune.",
+    "expected_protocols": {
+      "A": "sift_lowe_ratio_one_way",
+      "B": "sift_lowe_ratio_reciprocal_nn"
+    },
+    "expected_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "four_point_dlt_residuals_are_not_accuracy": true,
+    "hypothesis_supported": false,
+    "independent_accuracy": "NOT VALIDATED",
+    "independent_validation_status": "NOT VALIDATED",
+    "independent_variable_applied": true,
+    "inlier_ratio_by_variant": {
+      "A": 0.02720348204570185,
+      "B": 0.031725888324873094
+    },
+    "limitations": [
+      "Independent accuracy is NOT VALIDATED. There is no surveyed lunar control.",
+      "Matcher-derived held-out points are not ground truth.",
+      "Raw match count is not a success criterion.",
+      "Occupied-cell ratio and Clark-Evans R are experiment diagnostics, not a frozen SIH uniformity score.",
+      "evaluate().rmse is stored verification-inlier residual RMSE.",
+      "Overlap is not recomputed from the products. The manifest declares overlap_status=verified from NASA PDS ODE footprints.",
+      "Full-raster registration remains blocked by the existing 16,777,216-pixel cap.",
+      "This experiment does not introduce a new detector or descriptor.",
+      "If H1 is not supported, parameters are not retuned to force a pass."
+    ],
+    "matcher_derived_held_out_is_not_ground_truth": true,
+    "model_min_samples": 4,
+    "observed_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "primary_metric": "verified_inliers_strictly_increase_and_spatial_occupancy_maintained",
+    "protocol_ids_by_variant": {
+      "A": "sift_lowe_ratio_one_way",
+      "B": "sift_lowe_ratio_reciprocal_nn"
+    },
+    "quality_improved": false,
+    "quality_reason": "verified inliers did not increase (25 <= 25)",
+    "raw_match_count_is_not_success": true,
+    "reference_occupied_cells_by_variant": {
+      "A": 9,
+      "B": 10
+    },
+    "runtime_acceptable": true,
+    "runtime_reason": "B match runtime 3.915s is within 5x A (4.344s)",
+    "source_occupied_cells_by_variant": {
+      "A": 11,
+      "B": 10
+    },
+    "spatial_maintained_or_improved": false,
+    "spatial_reason": "occupied cells decreased (source 11 -> 10, reference 9 -> 10)",
+    "transform_reason": "both variants fitted a transform from more than 4 verified inliers",
+    "transform_stable": true,
+    "verified_inliers_by_variant": {
+      "A": 25,
+      "B": 25
+    }
+  },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 42242048,
+      "process_rss_delta_bytes": 217088,
+      "tracemalloc_current_bytes": 676753,
+      "tracemalloc_stage_peak_bytes": 677996
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 84103168,
+      "process_rss_delta_bytes": 41205760,
+      "tracemalloc_current_bytes": 40049155,
+      "tracemalloc_stage_peak_bytes": 81760929
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 41897984,
+      "process_rss_delta_bytes": -38621184,
+      "tracemalloc_current_bytes": 673010,
+      "tracemalloc_stage_peak_bytes": 180810759
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 42885120,
+      "process_rss_delta_bytes": 606208,
+      "tracemalloc_current_bytes": 678303,
+      "tracemalloc_stage_peak_bytes": 680553
+    },
+    "process_rss_bytes": 95010816,
+    "process_tracemalloc_current_bytes": 1016222,
+    "process_tracemalloc_peak_bytes": 67267530
+  },
+  "pair_manifest_id": "pair_02_mid_equatorial",
+  "reproducibility": {
+    "git_commit": "96adc974047206b09964a47bf978184e070cb62c",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.018767999950796366,
+    "generate_representation": 4.256138699827716,
+    "ingest_product": 44.99388299998827,
+    "preprocess": 0.002481600036844611,
+    "total": 67.14545890013687
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 957360000,
+      "stage": "preprocess"
+    }
+  ],
+  "sift_baseline_experiment_id": "EXP-001",
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "gsd_ratio_note": "characterize_pair leaves gsd_ratio None when either product lacks ingested gsd_meters; EXP-006 does not invent that pair scalar",
+      "illumination_note": "sun_angle_difference_degrees is None: LunarProduct carries no Sun vector and SPICE is not implemented",
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18__M1504316436RC",
+      "representation_note": "characterize_pair leaves difficulty unset, so frozen generate_representation selects intensity, matching the EXP-001 SIFT arm."
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "ingested_gsd_meters": null,
+        "matching_pixel_count": 4132224,
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "resampling": "stride_decimation",
+      "shared_across_variants": true,
+      "source_matching_view": {
+        "ingested_gsd_meters": 0.28,
+        "matching_pixel_count": 3740250,
+        "matching_shape": [
+          4987,
+          750
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          79780,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 16,
+        "x_scale": 16.0,
+        "y_scale": 16.0
+      },
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M1504316436RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 79780,
+          "pixel_count": 957360000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.28,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 957360000
+    }
+  },
+  "status": "completed",
+  "variant_configuration": {
+    "A": {
+      "callable": "match(pair, representation)",
+      "label": "exp001_sift_one_way_lowe_ratio",
+      "notes": "Frozen pipeline match() path. One-way BFMatcher knn (k=2) plus Lowe ratio 0.75. This is the EXP-001 SIFT control.",
+      "protocol_id": "sift_lowe_ratio_one_way",
+      "require_reciprocal": false,
+      "role": "control_existing_sift_baseline"
+    },
+    "B": {
+      "callable": "run_sift(..., require_reciprocal=True)",
+      "label": "sift_lowe_ratio_reciprocal_nn",
+      "notes": "Same SIFT keypoints and descriptors as A. A match is kept only if it survives Lowe's ratio test in both directions and the two keypoints are mutual nearest neighbours. Not a new detector or descriptor.",
+      "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+      "require_reciprocal": true,
+      "role": "correspondence_quality_intervention"
+    }
+  },
+  "variants": {
+    "A": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "protocol_id": "sift_lowe_ratio_one_way",
+        "raw_match_count": 919,
+        "raw_spatial_distribution": {
+          "note": "raw-match occupancy is diagnostic only; the decision rule uses verified occupancy",
+          "point_count": 919,
+          "reference_max_matches_per_cell": 56,
+          "reference_occupied_cells": 41,
+          "source_max_matches_per_cell": 42,
+          "source_occupied_cells": 56
+        },
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 919,
+          "raw_match_count_second": 919,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity",
+        "require_reciprocal": false
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 25,
+        "held_out_transfer_error_pixels": {
+          "count": 25,
+          "max": 3.0980838888403253,
+          "mean": 1.7388797941585585,
+          "median": 1.7959947582848357,
+          "min": 0.34569302673882957,
+          "rmse": 1.9043709874947647
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 25,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 138698752,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42540654,
+          "tracemalloc_stage_peak_bytes": 42541849
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 133804032,
+          "process_rss_delta_bytes": 49438720,
+          "tracemalloc_current_bytes": 40849170,
+          "tracemalloc_stage_peak_bytes": 85005036
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 137396224,
+          "process_rss_delta_bytes": 3592192,
+          "tracemalloc_current_bytes": 41541554,
+          "tracemalloc_stage_peak_bytes": 85694942
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 138674176,
+          "process_rss_delta_bytes": 483328,
+          "tracemalloc_current_bytes": 42534746,
+          "tracemalloc_stage_peak_bytes": 42814967
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 138698752,
+          "process_rss_delta_bytes": 24576,
+          "tracemalloc_current_bytes": 42537782,
+          "tracemalloc_stage_peak_bytes": 42580078
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 138190848,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 42510409,
+          "tracemalloc_stage_peak_bytes": 42513721
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 138186752,
+          "process_rss_delta_bytes": 790528,
+          "tracemalloc_current_bytes": 42499521,
+          "tracemalloc_stage_peak_bytes": 42584405
+        }
+      },
+      "protocol_id": "sift_lowe_ratio_one_way",
+      "refine_points": {
+        "coordinates_changed_count": 2,
+        "input_count": 11,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 11
+      },
+      "register": {
+        "control_points_used_for_fit": 11,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "require_reciprocal": false,
+      "runtime_seconds": {
+        "evaluate": 0.00037800008431077003,
+        "match": 4.343693000031635,
+        "match_repeat": 2.691439599962905,
+        "refine_points": 0.7484716000035405,
+        "register": 0.003470499999821186,
+        "select_control_points": 0.0012811999768018723,
+        "variant_total": 8.574199700029567,
+        "verify_matches": 0.7854657999705523
+      },
+      "select_control_points": {
+        "control_point_count": 11,
+        "points": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 25,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7,
+            0,
+            2,
+            4,
+            2,
+            0,
+            2,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.3663076308719734,
+          "concentration": 0.28,
+          "max_matches_per_cell": 7,
+          "mean_nearest_neighbour_px": 595.700385020198,
+          "occupied_cells": 9,
+          "occupied_cols": 6,
+          "occupied_fraction": 0.140625,
+          "occupied_rows": 4,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            7,
+            2,
+            3,
+            2,
+            0,
+            1,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.5057745168489801,
+          "concentration": 0.28,
+          "max_matches_per_cell": 7,
+          "mean_nearest_neighbour_px": 1564.9287992195261,
+          "occupied_cells": 11,
+          "occupied_cols": 7,
+          "occupied_fraction": 0.171875,
+          "occupied_rows": 4,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.5084353283845922,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 9,
+          "reference_occupied_fraction": 0.140625,
+          "source_occupied_cells": 11,
+          "source_occupied_fraction": 0.171875,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 14,
+        "checkpoint_transfer_error_pixels": {
+          "count": 14,
+          "max": 3.6091282975499652,
+          "mean": 2.0035371279772978,
+          "median": 2.04142745181857,
+          "min": 0.3478417094703969,
+          "rmse": 2.220870473622833
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 14,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": true,
+      "uses_shared_representation": true,
+      "variant_id": "A",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.02720348204570185,
+        "inlier_residual_max": 2.653533215225044,
+        "inlier_residual_min": 0.3047142941734978,
+        "inliers_above_model_minimum": 21,
+        "model_min_samples": 4,
+        "raw_match_count": 919,
+        "rejected_count": 894,
+        "residual_distribution": {
+          "count": 25,
+          "max": 2.653533215225044,
+          "mean": 1.5175025188362667,
+          "median": 1.686909606565198,
+          "min": 0.3047142941734978,
+          "not_accuracy": true,
+          "p95": 2.529884846524513,
+          "rmse": 1.686182317045492,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 25,
+          "raw": 0,
+          "rejected": 894
+        },
+        "verified_inlier_count": 25
+      }
+    },
+    "B": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 15,
+          "inlier_count": 25,
+          "inlier_ratio": 0.031725888324873094,
+          "rmse": 1.7420416346240013,
+          "spatial_coverage": 0.1698252287173218
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "match": {
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+        "raw_match_count": 788,
+        "raw_spatial_distribution": {
+          "note": "raw-match occupancy is diagnostic only; the decision rule uses verified occupancy",
+          "point_count": 788,
+          "reference_max_matches_per_cell": 50,
+          "reference_occupied_cells": 39,
+          "source_max_matches_per_cell": 37,
+          "source_occupied_cells": 54
+        },
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 788,
+          "raw_match_count_second": 788,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity",
+        "require_reciprocal": true
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 25,
+        "held_out_transfer_error_pixels": {
+          "count": 25,
+          "max": 4.798621727849489,
+          "mean": 1.9371731930545308,
+          "median": 1.7429933545729277,
+          "min": 0.17165409477411456,
+          "rmse": 2.2123991384387924
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 25,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144183296,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42379778,
+          "tracemalloc_stage_peak_bytes": 42380973
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 140283904,
+          "process_rss_delta_bytes": 2945024,
+          "tracemalloc_current_bytes": 40940732,
+          "tracemalloc_stage_peak_bytes": 85513064
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 143728640,
+          "process_rss_delta_bytes": 3444736,
+          "tracemalloc_current_bytes": 41532916,
+          "tracemalloc_stage_peak_bytes": 86091848
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144171008,
+          "process_rss_delta_bytes": 344064,
+          "tracemalloc_current_bytes": 42373856,
+          "tracemalloc_stage_peak_bytes": 42657645
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144183296,
+          "process_rss_delta_bytes": 12288,
+          "tracemalloc_current_bytes": 42376930,
+          "tracemalloc_stage_peak_bytes": 42419250
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 143826944,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42359732,
+          "tracemalloc_stage_peak_bytes": 42362804
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 143826944,
+          "process_rss_delta_bytes": 98304,
+          "tracemalloc_current_bytes": 42351100,
+          "tracemalloc_stage_peak_bytes": 42422361
+        }
+      },
+      "protocol_id": "sift_lowe_ratio_reciprocal_nn",
+      "refine_points": {
+        "coordinates_changed_count": 1,
+        "input_count": 15,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 15
+      },
+      "register": {
+        "control_points_used_for_fit": 15,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "require_reciprocal": true,
+      "runtime_seconds": {
+        "evaluate": 0.00031340005807578564,
+        "match": 3.914751600008458,
+        "match_repeat": 4.025568200042471,
+        "refine_points": 0.40744620002806187,
+        "register": 0.0022068999242037535,
+        "select_control_points": 0.0007153998594731092,
+        "variant_total": 9.130105999764055,
+        "verify_matches": 0.7791042998433113
+      },
+      "select_control_points": {
+        "control_point_count": 15,
+        "points": [
+          {
+            "reference_xy": [
+              2247.914794921875,
+              45478.73046875
+            ],
+            "residual": 0.3458367502886477,
+            "source_xy": [
+              8079.53515625,
+              10286.58203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2095.291748046875,
+              47091.046875
+            ],
+            "residual": 0.4034011047271809,
+            "source_xy": [
+              9015.771484375,
+              6279.61962890625
+            ]
+          },
+          {
+            "reference_xy": [
+              1849.3472900390625,
+              42180.28515625
+            ],
+            "residual": 0.42184795386038393,
+            "source_xy": [
+              8167.2841796875,
+              18970.109375
+            ]
+          },
+          {
+            "reference_xy": [
+              1600.62451171875,
+              47411.71484375
+            ],
+            "residual": 0.6494690904807644,
+            "source_xy": [
+              10513.1064453125,
+              5819.228515625
+            ]
+          },
+          {
+            "reference_xy": [
+              4177.70947265625,
+              40207.36328125
+            ],
+            "residual": 0.7094702631150909,
+            "source_xy": [
+              1068.985107421875,
+              22193.748046875
+            ]
+          },
+          {
+            "reference_xy": [
+              4325.60302734375,
+              47100.91015625
+            ],
+            "residual": 0.8613225779906113,
+            "source_xy": [
+              2757.555908203125,
+              4618.13623046875
+            ]
+          },
+          {
+            "reference_xy": [
+              3419.24462890625,
+              46567.125
+            ],
+            "residual": 0.8970104665669052,
+            "source_xy": [
+              5128.9443359375,
+              6646.7607421875
+            ]
+          },
+          {
+            "reference_xy": [
+              2646.04931640625,
+              45281.37890625
+            ],
+            "residual": 1.3132560646327043,
+            "source_xy": [
+              6896.70068359375,
+              10493.8017578125
+            ]
+          },
+          {
+            "reference_xy": [
+              1095.0928955078125,
+              38717.875
+            ],
+            "residual": 1.3471672761182092,
+            "source_xy": [
+              9202.3818359375,
+              28283.380859375
+            ]
+          },
+          {
+            "reference_xy": [
+              3809.223388671875,
+              46749.87109375
+            ],
+            "residual": 1.4839890872373909,
+            "source_xy": [
+              4089.652099609375,
+              5889.013671875
+            ]
+          },
+          {
+            "reference_xy": [
+              2237.755126953125,
+              44233.87109375
+            ],
+            "residual": 2.349112455818495,
+            "source_xy": [
+              7717.82373046875,
+              13471.9013671875
+            ]
+          },
+          {
+            "reference_xy": [
+              3896.668701171875,
+              46293.39453125
+            ],
+            "residual": 2.6623420842598873,
+            "source_xy": [
+              3715.07666015625,
+              6991.93798828125
+            ]
+          },
+          {
+            "reference_xy": [
+              1964.1187744140625,
+              43964.88671875
+            ],
+            "residual": 2.704075036945245,
+            "source_xy": [
+              8396.64453125,
+              14355.6787109375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 2.857476919490079,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              2881.4619140625,
+              45963.23828125
+            ],
+            "residual": 2.86306810859656,
+            "source_xy": [
+              6451.38720703125,
+              8574.8779296875
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 25,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            8,
+            2,
+            0,
+            1,
+            0,
+            0,
+            0,
+            3,
+            1,
+            1,
+            1,
+            5,
+            0
+          ],
+          "clark_evans_r": 0.24780926364644665,
+          "concentration": 0.32,
+          "max_matches_per_cell": 8,
+          "mean_nearest_neighbour_px": 402.99480907443643,
+          "occupied_cells": 10,
+          "occupied_cols": 6,
+          "occupied_fraction": 0.15625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            2,
+            3,
+            1,
+            1,
+            0,
+            2,
+            2,
+            0,
+            0,
+            0,
+            0,
+            2,
+            9,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.3472238467649975,
+          "concentration": 0.36,
+          "max_matches_per_cell": 9,
+          "mean_nearest_neighbour_px": 1074.3534509481447,
+          "occupied_cells": 10,
+          "occupied_cols": 8,
+          "occupied_fraction": 0.15625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.18878399592725875,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 10,
+          "reference_occupied_fraction": 0.15625,
+          "source_occupied_cells": 10,
+          "source_occupied_fraction": 0.15625,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 10,
+        "checkpoint_transfer_error_pixels": {
+          "count": 10,
+          "max": 3.05124572593119,
+          "mean": 1.8703019117192774,
+          "median": 1.5886215854003907,
+          "min": 1.2822575850255553,
+          "rmse": 1.9589692093809212
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 10,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": false,
+      "uses_shared_representation": true,
+      "variant_id": "B",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.031725888324873094,
+        "inlier_residual_max": 2.86306810859656,
+        "inlier_residual_min": 0.3458367502886477,
+        "inliers_above_model_minimum": 21,
+        "model_min_samples": 4,
+        "raw_match_count": 788,
+        "rejected_count": 763,
+        "residual_distribution": {
+          "count": 25,
+          "max": 2.86306810859656,
+          "mean": 1.531552237637175,
+          "median": 1.3471672761182092,
+          "min": 0.3458367502886477,
+          "not_accuracy": true,
+          "p95": 2.8267965429811115,
+          "rmse": 1.7420416346240013,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 25,
+          "raw": 0,
+          "rejected": 763
+        },
+        "verified_inlier_count": 25
+      }
+    }
+  },
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=957360000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
+}

@@ -52,6 +52,23 @@ def load_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
     ValueError
         If the URI is empty, the file does not exist, or OpenCV cannot decode it.
     """
+    img = _read_strided_raster(raster_uri, stride=stride)
+    return _to_unit_interval(img)
+
+
+def load_numeric_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
+    """Load a raster as float64 without min-max or percentile stretch.
+
+    Non-finite samples stay non-finite. Spatial size changes only when the
+    caller passes an explicit stride (matching-view decimation). This is not
+    radiometric calibration.
+    """
+    img = _read_strided_raster(raster_uri, stride=stride)
+    return np.asarray(img, dtype=np.float64)
+
+
+def _read_strided_raster(raster_uri: str, *, stride: int) -> np.ndarray:
+    """Load one 2-D raster, applying only explicit stride decimation."""
     if stride <= 0:
         raise ValueError("stride must be positive")
 
@@ -64,34 +81,58 @@ def load_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
             raise ValueError(f"NumPy could not load raster at: {path}") from exc
         if img_npy.ndim != 2:
             raise ValueError(f".npy raster must be 2D for representation loading: {path}")
-        img = np.asarray(img_npy[::stride, ::stride])
-    else:
-        # Load as grayscale. IMREAD_ANYDEPTH preserves 16-bit images (e.g. OHRC).
-        try:
-            import cv2
-        except ImportError as exc:
-            raise ImportError(
-                "opencv-python-headless is required to load non-.npy image rasters."
-            ) from exc
-        img = cv2.imread(str(path), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            raise ValueError(f"OpenCV could not decode image at: {path}")
-        if stride > 1:
-            img = img[::stride, ::stride]
+        return np.asarray(img_npy[::stride, ::stride])
 
-    # Normalise to float32 [0, 1] based on dtype range.
-    img_f = img.astype(np.float32)
-    if img.dtype == np.uint8:
-        img_f /= 255.0
-    elif img.dtype == np.uint16:
-        img_f /= 65535.0
-    else:
-        # For float images or unusual dtypes: range-normalise.
-        min_v, max_v = float(img_f.min()), float(img_f.max())
-        if max_v > min_v:
-            img_f = (img_f - min_v) / (max_v - min_v)
+    try:
+        import cv2
+    except ImportError as exc:
+        raise ImportError(
+            "opencv-python-headless is required to load non-.npy image rasters."
+        ) from exc
+    img = cv2.imread(str(path), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise ValueError(f"OpenCV could not decode image at: {path}")
+    if stride > 1:
+        img = img[::stride, ::stride]
+    return img
 
-    return img_f.astype(np.float32)
+
+def load_strided_window(
+    raster_uri: str,
+    *,
+    row: int,
+    col: int,
+    height: int,
+    width: int,
+    stride: int,
+) -> np.ndarray:
+    """Load one stride-decimated window as float32 in [0, 1].
+
+    Only ``.npy`` handles are accepted so a large raster is never decoded
+    just to crop a tile. Original rasters are not modified.
+    """
+
+    window, dtype = _strided_npy_window(
+        raster_uri, row=row, col=col, height=height, width=width, stride=stride
+    )
+    return _to_unit_interval(window, source_dtype=dtype)
+
+
+def load_strided_mask_window(
+    mask_uri: str,
+    *,
+    row: int,
+    col: int,
+    height: int,
+    width: int,
+    stride: int,
+) -> np.ndarray:
+    """Load one stride-decimated validity window as a boolean array."""
+
+    window, _dtype = _strided_npy_window(
+        mask_uri, row=row, col=col, height=height, width=width, stride=stride
+    )
+    return np.isfinite(window) & (window != 0)
 
 
 def load_valid_mask(mask_uri: str, *, stride: int = 1) -> np.ndarray:
@@ -126,6 +167,64 @@ def load_valid_mask(mask_uri: str, *, stride: int = 1) -> np.ndarray:
             mask = mask[::stride, ::stride]
 
     return np.isfinite(mask) & (mask != 0)
+
+
+def _strided_npy_window(
+    raster_uri: str,
+    *,
+    row: int,
+    col: int,
+    height: int,
+    width: int,
+    stride: int,
+) -> tuple[np.ndarray, np.dtype]:
+    if stride <= 0:
+        raise ValueError("stride must be positive")
+    if height <= 0 or width <= 0:
+        raise ValueError("window height and width must be positive")
+    if row < 0 or col < 0:
+        raise ValueError("window origin must be non-negative")
+
+    path = _resolve_raster_path(raster_uri)
+    if path.suffix.lower() != ".npy":
+        raise ValueError(
+            "strided window load requires a memory-mapped .npy raster handle; "
+            f"cannot safely crop {raster_uri!r}"
+        )
+    try:
+        array = np.load(path, mmap_mode="r")
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"NumPy could not load raster at: {path}") from exc
+    if array.ndim != 2:
+        raise ValueError(f".npy raster must be 2D for window loading: {path}")
+
+    row_end = row + height
+    col_end = col + width
+    if row_end > array.shape[0] or col_end > array.shape[1]:
+        raise ValueError(
+            "window exceeds raster bounds: "
+            f"requested=({row}:{row_end}, {col}:{col_end}) shape={array.shape}"
+        )
+    window = np.asarray(array[row:row_end:stride, col:col_end:stride])
+    return window, array.dtype
+
+
+def _to_unit_interval(
+    img: np.ndarray, *, source_dtype: np.dtype | None = None
+) -> np.ndarray:
+    """Convert a raster window to float32 [0, 1] using the original dtype range."""
+
+    dtype = img.dtype if source_dtype is None else source_dtype
+    img_f = img.astype(np.float32)
+    if dtype == np.uint8:
+        img_f /= 255.0
+    elif dtype == np.uint16:
+        img_f /= 65535.0
+    else:
+        min_v, max_v = float(img_f.min()), float(img_f.max())
+        if max_v > min_v:
+            img_f = (img_f - min_v) / (max_v - min_v)
+    return img_f.astype(np.float32)
 
 
 def _resolve_raster_path(raster_uri: str) -> Path:

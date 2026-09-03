@@ -1,0 +1,381 @@
+{
+  "correspondence_baseline_record_id": "PS-CORRESPONDENCE",
+  "cross_sensor_decision": "SUPPORTED",
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "correspondence_baseline_record_id": "PS-CORRESPONDENCE",
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "experiment_id": "EXP-000",
+    "footprint_source": "NASA PDS ODE",
+    "gsd_sources": {
+      "lroc": "catalog fallback 0.5 m/px (Robinson et al. 2010 / LROC SIS) used only when ingested gsd_meters is missing; not written onto LunarProduct; not SPICE-derived",
+      "ohrc": "ingested LunarProduct.gsd_meters when present",
+      "pair_02_expected": {
+        "lroc_gsd_meters": 0.5,
+        "native_gsd_ratio_source_over_reference": 0.56,
+        "ohrc_gsd_meters": 0.28
+      }
+    },
+    "held_constant": [
+      "input products and pair manifest",
+      "coarse-to-fine tiled multi-scale SIFT correspondence path",
+      "SIFT detector/descriptor and Lowe ratio 0.75",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "downstream geometric model projective_2d_baseline",
+      "downstream estimator ransac_style_baseline",
+      "verification residual_limit 3.0, max_trials 500, rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap"
+    ],
+    "independent_variables": [
+      "matching_view_scale_policy",
+      "cross_sensor_intensity_representation"
+    ],
+    "inherited_from": "EXP-000",
+    "maintain_fraction": 0.5,
+    "matcher_family": "sift_coarse_to_fine",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "modality_scope": {
+      "available_instruments_in_demo_dataset": [
+        "OHRC",
+        "LRO_NAC"
+      ],
+      "claim": "cross-instrument optical correspondence (OHRC <-> LROC NAC), not full OHRC/TMC/IIRS multi-modal validation",
+      "iirs_available": false,
+      "tmc_available": false
+    },
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "record_id": "PS-SCALE-MULTIMODAL",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 12.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "inherited_from": "EXP-000",
+  "modality_scope": {
+    "available_in_demo_dataset": [
+      "OHRC",
+      "LRO_NAC"
+    ],
+    "claim": "cross-instrument optical correspondence; not full OHRC/TMC/IIRS multi-modal validation",
+    "iirs_available": false,
+    "tmc_available": false
+  },
+  "multimodal_decision_rule": "Cross-sensor is SUPPORTED only if: (1) C uses representation_id 'cross_sensor' while A uses intensity; (2) A and C each produce verified inliers strictly above the projective DLT minimum; (3) C verified inliers and source/reference occupied cells are each at least 0.5 of A's; (4) both transforms fit from more than 4 inliers. This is cross-instrument optical robustness, not full multi-modal OHRC/TMC/IIRS validation. Independent accuracy remains NOT VALIDATED. Do not retune.",
+  "multimodal_hypothesis": "H1-cross-sensor: On the same pair, CLAHE cross-sensor intensity (C) maintains a useful verified correspondence set under OHRC-calibrated vs LROC Scaled-I/F appearance differences without spatial collapse or unstable geometry relative to intensity baseline A. H0-cross-sensor: the appearance adaptation collapses verified quality or spatial distribution. This tests cross-instrument optical appearance, not OHRC/TMC/IIRS multi-modal products (those are not in the current demo dataset).",
+  "pair_ids": [
+    "pair_02_mid_equatorial"
+  ],
+  "pairs": {
+    "pair_02_mid_equatorial": {
+      "comparison": {
+        "rows": [
+          {
+            "control_point_count": 23,
+            "deterministic": true,
+            "effective_gsd_reference": null,
+            "effective_gsd_source": 4.48,
+            "held_out_rmse": 2.086068243667503,
+            "inlier_ratio": 0.044171779141104296,
+            "match_rss_delta_bytes": 40026112,
+            "match_runtime_seconds": 28.284130499931052,
+            "matcher_id": "sift_coarse_to_fine",
+            "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+            "raw_matches": 1630,
+            "reference_occupied_cells": 14,
+            "representation_id": "intensity",
+            "residual_max": 2.9998847466001095,
+            "residual_median": 2.0795200094551447,
+            "residual_rmse": 2.0805026673513356,
+            "scale_policy": "per_image_pixel_budget",
+            "source_concentration": 0.1527777777777778,
+            "source_max_matches_per_cell": 11,
+            "source_occupied_cells": 23,
+            "stride_reference": 8,
+            "stride_source": 16,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "A",
+            "variant_runtime_seconds": 54.773639399791136,
+            "verified_inliers": 72,
+            "verified_match_coverage": 0.4072370354719722
+          },
+          {
+            "control_point_count": 25,
+            "deterministic": true,
+            "effective_gsd_reference": 4.5,
+            "effective_gsd_source": 4.48,
+            "held_out_rmse": 2.0184413111246964,
+            "inlier_ratio": 0.0625,
+            "match_rss_delta_bytes": 10772480,
+            "match_runtime_seconds": 30.15411049989052,
+            "matcher_id": "sift_coarse_to_fine",
+            "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+            "raw_matches": 1584,
+            "reference_occupied_cells": 10,
+            "representation_id": "intensity",
+            "residual_max": 2.9843927614539054,
+            "residual_median": 1.8448766244206551,
+            "residual_rmse": 1.9729396100209449,
+            "scale_policy": "common_physical_gsd",
+            "source_concentration": 0.21212121212121213,
+            "source_max_matches_per_cell": 21,
+            "source_occupied_cells": 15,
+            "stride_reference": 9,
+            "stride_source": 16,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "B",
+            "variant_runtime_seconds": 81.98713769996539,
+            "verified_inliers": 99,
+            "verified_match_coverage": 0.21978034019705756
+          },
+          {
+            "control_point_count": 16,
+            "deterministic": true,
+            "effective_gsd_reference": null,
+            "effective_gsd_source": 4.48,
+            "held_out_rmse": 1.9315412481337215,
+            "inlier_ratio": 0.03590078328981723,
+            "match_rss_delta_bytes": -47882240,
+            "match_runtime_seconds": 81.94820380001329,
+            "matcher_id": "sift_coarse_to_fine",
+            "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+            "raw_matches": 1532,
+            "reference_occupied_cells": 17,
+            "representation_id": "cross_sensor",
+            "residual_max": 2.949539509050017,
+            "residual_median": 1.4813954143611427,
+            "residual_rmse": 1.769672875753948,
+            "scale_policy": "per_image_pixel_budget",
+            "source_concentration": 0.21818181818181817,
+            "source_max_matches_per_cell": 12,
+            "source_occupied_cells": 21,
+            "stride_reference": 8,
+            "stride_source": 16,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "C",
+            "variant_runtime_seconds": 146.47791790007614,
+            "verified_inliers": 55,
+            "verified_match_coverage": 0.6311044861161136
+          }
+        ]
+      },
+      "cross_sensor_decision": "SUPPORTED",
+      "gsd_scale_context": {
+        "ingested_reference_gsd_meters": null,
+        "ingested_source_gsd_meters": 0.28,
+        "lroc_catalog_gsd_meters_when_missing": 0.5,
+        "native_gsd_ratio_source_over_reference": 0.56,
+        "note": "Native GSD ratio uses ingested OHRC gsd_meters and LROC catalog 0.5 m/px when LROC ingested gsd_meters is null. This is the real cross-sensor scale gap on the overlapping pair, not a synthetic resampling factor.",
+        "reference_gsd_meters": 0.5,
+        "reference_gsd_origin": "catalog_gsd_meters_by_instrument",
+        "reference_instrument": "LRO_NAC",
+        "source_gsd_meters": 0.28,
+        "source_gsd_origin": "ingested_lunar_product_gsd_meters",
+        "source_instrument": "OHRC"
+      },
+      "pair_manifest_id": "pair_02_mid_equatorial",
+      "scale_decision": "SUPPORTED",
+      "status": "completed"
+    }
+  },
+  "record_id": "PS-SCALE-MULTIMODAL",
+  "reproducibility": {
+    "git_commit": "b79bc2378caf6def7fe0fa3abf4cffa72c9b9d14",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "scale_decision": "SUPPORTED",
+  "scale_decision_rule": "Scale is SUPPORTED only if: (1) a finite native GSD ratio is reported from ingested OHRC gsd_meters and LROC catalog fallback 0.5 m/px and differs from 1 by more than 5%; (2) A and B each produce verified inliers strictly above the projective DLT minimum; (3) B verified inliers and source/reference occupied cells are each at least 0.5 of A's; (4) both transforms fit from more than 4 inliers; (5) B's scale_policy is common_physical_gsd and observed strides differ from A's or effective GSDs are recorded. Raw match count is not success. Independent accuracy remains NOT VALIDATED. Do not retune.",
+  "scale_hypothesis": "H1-scale: On pair_02_mid_equatorial, the production coarse-to-fine intensity path maintains a useful verified correspondence set across the real OHRC/LROC native GSD difference, and applying common_physical_gsd matching views (B) does not collapse verified yield, 8x8 occupancy, or transform stability relative to A. H0-scale: the native GSD gap or GSD-normalised views cause collapse or unstable geometry.",
+  "variant_configuration": {
+    "A": {
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "expected_pair_02_strides": {
+        "lroc": 8,
+        "ohrc": 16
+      },
+      "label": "production_coarse_to_fine_intensity",
+      "matching_view": {
+        "downsample_method": "stride_decimation",
+        "max_pixels_per_image": 4194304,
+        "scale_policy": "per_image_pixel_budget"
+      },
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "representation_id": "intensity",
+      "role": "control_production_candidate",
+      "scale_policy": "per_image_pixel_budget"
+    },
+    "B": {
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "expected_pair_02_strides": {
+        "lroc": 9,
+        "ohrc": 16
+      },
+      "label": "coarse_to_fine_common_physical_gsd",
+      "matching_view": {
+        "catalog_gsd_meters_by_instrument": [
+          {
+            "gsd_meters": 0.5,
+            "instrument": "LRO_NAC",
+            "spice_used": false,
+            "used_only_when_ingested_gsd_missing": true,
+            "written_onto_lunar_product": false
+          }
+        ],
+        "downsample_method": "stride_decimation",
+        "max_pixels_per_image": 4194304,
+        "scale_policy": "common_physical_gsd"
+      },
+      "note": "Uses known OHRC ingested GSD and LROC catalog GSD; does not invent a scale factor. Still stride_decimation.",
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "representation_id": "intensity",
+      "role": "scale_mechanism",
+      "scale_policy": "common_physical_gsd"
+    },
+    "C": {
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "cross_sensor": {
+        "clahe_clip_limit": 2.0,
+        "clahe_tile_grid": [
+          8,
+          8
+        ],
+        "method": "percentile_stretch_then_clahe",
+        "not_tested": [
+          "TMC",
+          "IIRS"
+        ],
+        "sensors_tested": [
+          "OHRC",
+          "LRO_NAC"
+        ]
+      },
+      "expected_pair_02_strides": {
+        "lroc": 8,
+        "ohrc": 16
+      },
+      "label": "coarse_to_fine_cross_sensor_clahe",
+      "matching_view": {
+        "downsample_method": "stride_decimation",
+        "max_pixels_per_image": 4194304,
+        "scale_policy": "per_image_pixel_budget"
+      },
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "representation_id": "cross_sensor",
+      "role": "cross_sensor_appearance_mechanism",
+      "scale_policy": "per_image_pixel_budget"
+    }
+  }
+}
