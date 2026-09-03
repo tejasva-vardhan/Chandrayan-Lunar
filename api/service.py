@@ -19,6 +19,7 @@ from api.schemas import (
     ProductSummary,
     ProductUploadResponse,
     RegistrationResultDTO,
+    VisualizationResponse,
 )
 from api.serialization import result_to_dto
 from src.io.exports import ExportManifest
@@ -205,6 +206,30 @@ class RegistrationService:
             )
         return metrics.model_dump(mode="json")
 
+    def get_visualization(self, job_id: str) -> VisualizationResponse:
+        record = self._require_job(job_id)
+        if record.status != "completed" or record.result is None:
+            raise ApiError(
+                code="result_unavailable",
+                message=f"Visualization unavailable for job {job_id}.",
+                status_code=404,
+                details=record.error,
+            )
+        
+        # Reference URL needs to be served from the API. We'll map to the original file
+        # or assuming the frontend can download it via a known route. 
+        # For this API, we will just return the URLs to the artifacts endpoint.
+        # But wait, does reference image have an artifact name? 
+        # Actually, we can return the local path as the URL for now, or a synthetic endpoint.
+        # Let's use `/registration/jobs/{job_id}/artifacts/reference` if we want to serve it.
+        # Wait, resolve_artifact looks at manifest.
+        # Let's just return standard relative URLs for the API server.
+        
+        return VisualizationResponse(
+            reference_url=f"/registration/jobs/{job_id}/artifacts/reference",
+            registered_source_url=f"/registration/jobs/{job_id}/artifacts/registered_source",
+        )
+
     def resolve_artifact(self, job_id: str, name: str) -> Path:
         record = self._require_job(job_id)
         if record.status != "completed" or record.result is None:
@@ -218,6 +243,8 @@ class RegistrationService:
         if record.manifest is not None:
             mapping.update(record.manifest.model_dump(mode="json"))
         mapping["registered_source"] = record.result.registered_source_uri
+        if record.pair and record.pair.reference:
+            mapping["reference"] = str(record.pair.reference.path)
         uri = mapping.get(name)
         if not uri:
             raise ApiError(

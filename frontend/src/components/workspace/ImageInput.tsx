@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 
 export type ImageState = "empty" | "selected" | "loading" | "invalid";
 
@@ -9,7 +9,7 @@ interface ImageInputProps {
   filename?: string;
   dimensions?: string;
   sensor?: string;
-  onSelect: () => void;
+  onSelect: (file: File) => void;
   onClear: () => void;
 }
 
@@ -23,6 +23,15 @@ export function ImageInput({
   onSelect,
   onClear,
 }: ImageInputProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onSelect(file);
+    }
+  };
+
   return (
     <div className={`workspace-card image-input-card state-${state}`}>
       <div className="card-header">
@@ -36,11 +45,21 @@ export function ImageInput({
       <p className="card-desc">{description}</p>
 
       <div className="input-dropzone">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: "none" }} 
+          onChange={handleFileChange} 
+          accept="image/*,.img,.tif,.tiff" 
+        />
+        
         {state === "empty" && (
           <div className="empty-state">
             <span className="state-icon">⏏</span>
             <p>No product selected</p>
-            <button className="secondary-button" onClick={onSelect}>Select Product</button>
+            <button className="secondary-button" onClick={() => fileInputRef.current?.click()}>
+              Select Product
+            </button>
           </div>
         )}
 

@@ -1,18 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ImageInput, ImageState } from "./ImageInput";
 import { PairConfiguration } from "./PairConfiguration";
 import { PipelineVisualization, PipelineStageName } from "./PipelineVisualization";
 import { RunAction, RunState } from "./RunAction";
+import { api as client } from "../../api/client";
+import { ApiClientError } from "../../api/types";
+import { ResultsViewModel, fromRegistrationResult } from "../../api/resultsView";
 
 interface RegistrationWorkspaceProps {
-  onComplete: () => void;
+  onResults: (results: ResultsViewModel) => void;
 }
 
-export function RegistrationWorkspace({ onComplete }: RegistrationWorkspaceProps) {
+export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps) {
   const [sourceState, setSourceState] = useState<ImageState>("empty");
   const [refState, setRefState] = useState<ImageState>("empty");
+  
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [refFile, setRefFile] = useState<File | null>(null);
+
   const [runState, setRunState] = useState<RunState>("disabled");
   const [activeStage, setActiveStage] = useState<PipelineStageName | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const pollRef = useRef<number | null>(null);
 
   // Derive disabled state based on inputs
   useEffect(() => {
@@ -25,53 +35,113 @@ export function RegistrationWorkspace({ onComplete }: RegistrationWorkspaceProps
     }
   }, [sourceState, refState, runState]);
 
-  const handleSourceSelect = () => {
-    setSourceState("loading");
-    setTimeout(() => {
-      setSourceState("selected");
-    }, 800);
+  const handleSourceSelect = (file: File) => {
+    setSourceFile(file);
+    setSourceState("selected");
   };
 
-  const handleRefSelect = () => {
-    setRefState("loading");
-    setTimeout(() => {
-      setRefState("selected");
-    }, 800);
+  const handleRefSelect = (file: File) => {
+    setRefFile(file);
+    setRefState("selected");
   };
 
-  const handleRun = () => {
-    setRunState("running");
-    
-    // Mock pipeline execution for UI/UX demonstration
-    const stages: PipelineStageName[] = [
-      "INGEST", "CHARACTERIZE", "PREPROCESS", "REPRESENT", 
-      "MATCH", "VERIFY", "CONTROL POINTS", "SUBPIXEL", 
-      "REGISTER", "EVALUATE"
-    ];
-    
-    let step = 0;
-    setActiveStage(stages[0]);
+  const pollUntilDone = async (jobId: string) => {
+    const pollIntervalMs = 800;
+    const tick = async () => {
+      try {
+        const status = await client.getJob(jobId);
+        if (status.current_stage) {
+          setActiveStage(status.current_stage.toUpperCase() as PipelineStageName);
+        }
 
-    const interval = setInterval(() => {
-      step++;
-      if (step < stages.length) {
-        setActiveStage(stages[step]);
-      } else {
-        clearInterval(interval);
-        setRunState("completed");
+        if (status.status === "completed" || status.status === "failed") {
+          if (pollRef.current != null) window.clearInterval(pollRef.current);
+          pollRef.current = null;
+          
+          if (status.status === "failed" || status.error) {
+            setRunState("disabled");
+            setErrorMsg(status.error?.message ?? "Registration failed. Check product format.");
+            setActiveStage(null);
+            return;
+          }
+
+          const payload = await client.getResult(jobId);
+          if (!payload.result) {
+            setRunState("disabled");
+            setErrorMsg("Result unavailable after a completed job.");
+            setActiveStage(null);
+            return;
+          }
+
+          const artifactUrl = payload.result.registered_artifact_available
+            ? client.artifactUrl(jobId, "registered_source")
+            : null;
+
+          const viewData = fromRegistrationResult(payload.result, { jobId, artifactUrl });
+          
+          setRunState("completed");
+          setActiveStage(null);
+          onResults(viewData);
+        }
+      } catch (err) {
+        if (pollRef.current != null) window.clearInterval(pollRef.current);
+        pollRef.current = null;
+        setRunState("disabled");
+        setErrorMsg(err instanceof ApiClientError ? err.message : "Polling failed.");
         setActiveStage(null);
-        setTimeout(() => {
-          onComplete(); // Scroll to results
-        }, 500);
       }
-    }, 600); // 600ms per stage for the demo
+    };
+    
+    await tick();
+    pollRef.current = window.setInterval(() => {
+      void tick();
+    }, pollIntervalMs);
+  };
+
+  const handleRun = async () => {
+    setRunState("running");
+    setErrorMsg(null);
+    setActiveStage("INGEST");
+    
+    try {
+      let sourceProductId: string | undefined;
+      let referenceProductId: string | undefined;
+      const body: { source_product_id?: string; reference_product_id?: string } = {};
+
+      if (sourceFile) {
+        const uploaded = await client.uploadProduct(sourceFile);
+        sourceProductId = uploaded.product_id;
+        body.source_product_id = sourceProductId;
+      }
+      if (refFile) {
+        const uploaded = await client.uploadProduct(refFile);
+        referenceProductId = uploaded.product_id;
+        body.reference_product_id = referenceProductId;
+      }
+
+      if (!body.source_product_id || !body.reference_product_id) {
+        throw new Error("Both source and reference files are required.");
+      }
+
+      setActiveStage("CHARACTERIZE");
+      const created = await client.createJob(body);
+      
+      await pollUntilDone(created.job_id);
+    } catch (err) {
+      setRunState("disabled");
+      setErrorMsg(err instanceof ApiClientError ? err.message : (err as Error).message);
+      setActiveStage(null);
+    }
   };
 
   const handleReset = () => {
     setSourceState("empty");
     setRefState("empty");
+    setSourceFile(null);
+    setRefFile(null);
     setRunState("disabled");
     setActiveStage(null);
+    setErrorMsg(null);
   };
 
   return (
@@ -87,21 +157,21 @@ export function RegistrationWorkspace({ onComplete }: RegistrationWorkspaceProps
             label="SOURCE IMAGE"
             description="Select the OHRC product to be registered."
             state={sourceState}
-            filename="ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+            filename={sourceFile?.name || "ch2_ohr_ncp_..."}
             dimensions="12,000 × 78,175 px"
             sensor="OHRC"
             onSelect={handleSourceSelect}
-            onClear={() => setSourceState("empty")}
+            onClear={() => { setSourceState("empty"); setSourceFile(null); }}
           />
           <ImageInput
             label="REFERENCE IMAGE"
             description="Select the LRO NAC basemap."
             state={refState}
-            filename="M150368601RC.IMG"
+            filename={refFile?.name || "M150368601RC.IMG"}
             dimensions="5,064 × 52,224 px"
             sensor="LRO NAC"
             onSelect={handleRefSelect}
-            onClear={() => setRefState("empty")}
+            onClear={() => { setRefState("empty"); setRefFile(null); }}
           />
         </div>
 
@@ -111,6 +181,11 @@ export function RegistrationWorkspace({ onComplete }: RegistrationWorkspaceProps
             status={runState === "idle" || runState === "disabled" ? "idle" : runState}
             currentStage={activeStage} 
           />
+          {errorMsg && (
+            <div style={{ marginTop: "16px", padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "4px", color: "var(--critical)", fontSize: "13px", fontFamily: "var(--mono)" }}>
+              ⚠️ {errorMsg}
+            </div>
+          )}
         </div>
       </div>
 
