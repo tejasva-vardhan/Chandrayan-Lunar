@@ -83,6 +83,18 @@ def determine_matching_view(
     return _view_from_stride(product, settings, stride)
 
 
+def apply_relative_stride(stride: int, factor: float) -> int:
+    """Return ``max(1, round(stride * factor))`` for a relative scale variant."""
+    if stride <= 0:
+        raise ValueError("stride must be positive")
+    number = float(factor)
+    if not math.isfinite(number) or number <= 0.0:
+        raise ValueError(
+            f"relative stride factor must be finite and positive, got {factor!r}"
+        )
+    return max(1, int(round(stride * number)))
+
+
 def determine_pair_matching_views(
     source: LunarProduct,
     reference: LunarProduct,
@@ -245,6 +257,11 @@ def _view_from_stride(
     stride: int,
     extra: dict[str, object] | None = None,
 ) -> dict[str, object]:
+    stride, relative_extra = _apply_relative_stride_override(product, settings, stride)
+    if extra is None:
+        extra = relative_extra
+    elif relative_extra:
+        extra = {**extra, **relative_extra}
     if settings.downsample_method != "stride_decimation":
         raise ValueError(
             "unsupported matching-view method: "
@@ -269,6 +286,42 @@ def _view_from_stride(
     if extra:
         view.update(extra)
     return view
+
+
+def _apply_relative_stride_override(
+    product: LunarProduct,
+    settings: MatchingViewSettings,
+    stride: int,
+) -> tuple[int, dict[str, object]]:
+    factor = _relative_stride_factor(settings, product.instrument)
+    if factor is None:
+        return stride, {}
+    chosen = apply_relative_stride(stride, factor)
+    height, width = _require_shape(product)
+    match_h, match_w = matching_shape_for_stride(height, width, chosen)
+    return chosen, {
+        "relative_stride_factor": factor,
+        "baseline_stride": stride,
+        "exceeds_max_pixels_per_image": (
+            match_h * match_w > int(settings.max_pixels_per_image)
+        ),
+    }
+
+
+def _relative_stride_factor(
+    settings: MatchingViewSettings, instrument: str
+) -> float | None:
+    for name, value in settings.relative_stride_factor_by_instrument:
+        if name == instrument:
+            parsed = _finite_positive(value)
+            if parsed is None:
+                raise ValueError(
+                    "relative stride factor for "
+                    f"instrument={instrument!r} must be finite and positive, "
+                    f"got {value!r}"
+                )
+            return parsed
+    return None
 
 
 def _catalog_gsd(settings: MatchingViewSettings, instrument: str) -> float | None:
@@ -309,6 +362,7 @@ def _product_shape(product: LunarProduct) -> tuple[int, int] | None:
 
 
 __all__ = [
+    "apply_relative_stride",
     "build_matching_mask",
     "build_representation_array",
     "common_scale_stride",
