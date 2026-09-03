@@ -163,7 +163,114 @@ function computeKeplerianOrbitPoint(planet: KeplerianPlanet, anomaly: number): V
   return new Vector3(x, y, z);
 }
 
-// Procedural textures
+function createSunTexture(): CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024; canvas.height = 512;
+  const ctx = canvas.getContext("2d")!;
+  
+  // Pitch black base for maximum contrast
+  ctx.fillStyle = "#030000"; 
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Heavy black/dark crimson magma patches
+  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+  for (let i = 0; i < 300; i++) {
+    ctx.beginPath();
+    ctx.ellipse(Math.random() * 1024, Math.random() * 512, 20 + Math.random() * 80, 10 + Math.random() * 40, Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Layer 1: Deep red ambient glow (sparser so black shows through)
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * 1024;
+    const y = Math.random() * 512;
+    const r = 20 + Math.random() * 50;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, "rgba(100, 5, 0, 0.45)"); // Deeper dark red
+    grad.addColorStop(1, "rgba(100, 5, 0, 0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Layer 2: Fiery red/orange turbulent veins (thinner, less dense)
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 400; i++) {
+    ctx.strokeStyle = `rgba(${120 + Math.random() * 80}, ${10 + Math.random() * 30}, 0, 0.3)`;
+    ctx.beginPath();
+    const startX = Math.random() * 1024;
+    const startY = Math.random() * 512;
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(
+      startX + (Math.random() - 0.5) * 80, startY + (Math.random() - 0.5) * 80,
+      startX + (Math.random() - 0.5) * 80, startY + (Math.random() - 0.5) * 80,
+      startX + (Math.random() - 0.5) * 120, startY + (Math.random() - 0.5) * 120
+    );
+    ctx.stroke();
+  }
+
+  // Layer 3: Sparse yellow/orange plasma hotspots
+  for (let i = 0; i < 150; i++) {
+    const x = Math.random() * 1024;
+    const y = Math.random() * 512;
+    const w = 3 + Math.random() * 20;
+    const h = 2 + Math.random() * 8;
+    const angle = Math.random() * Math.PI;
+    
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, w);
+    grad.addColorStop(0, "rgba(230, 100, 0, 0.7)"); // Darker orange-yellow
+    grad.addColorStop(0.5, "rgba(200, 40, 0, 0.5)"); // Deep orange-red
+    grad.addColorStop(1, "rgba(255, 0, 0, 0)");
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath(); 
+    ctx.ellipse(x, y, w, h, angle, 0, Math.PI * 2); 
+    ctx.fill();
+  }
+  
+  const texture = new CanvasTexture(canvas);
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function createBlackHoleDiskTexture(): CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512; canvas.height = 512;
+  const ctx = canvas.getContext("2d")!;
+  
+  const cx = 256;
+  const cy = 256;
+  
+  // Radial gradient mimicking the intense accretion disk from the image
+  // Colors from the image: Deep crimson/purple edge -> Fiery red -> Bright orange -> White hot inner edge
+  const grad = ctx.createRadialGradient(cx, cy, 100, cx, cy, 256);
+  grad.addColorStop(0.0, "rgba(255, 255, 255, 1.0)");   // White hot inner
+  grad.addColorStop(0.1, "rgba(255, 230, 150, 0.95)"); // Intense yellow-white
+  grad.addColorStop(0.3, "rgba(255, 100, 20, 0.9)");   // Bright fiery orange
+  grad.addColorStop(0.6, "rgba(200, 20, 0, 0.8)");     // Deep crimson red
+  grad.addColorStop(0.85, "rgba(80, 0, 20, 0.5)");     // Dark purple-red
+  grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)");        // Fade out
+  
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Add some angular streak noise for the plasma swirling effect
+  for(let i=0; i<300; i++) {
+    const r = 120 + Math.random() * 120;
+    const angle = Math.random() * Math.PI * 2;
+    const length = 0.1 + Math.random() * 0.4;
+    const thick = 1 + Math.random() * 3;
+    
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, angle, angle + length);
+    ctx.lineWidth = thick;
+    ctx.strokeStyle = Math.random() > 0.5 ? "rgba(255,255,255,0.4)" : "rgba(255,150,0,0.3)";
+    ctx.stroke();
+  }
+
+  const texture = new CanvasTexture(canvas);
+  return texture;
+}
+
 function createEarthTexture(): CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = 1024; canvas.height = 512;
@@ -285,13 +392,13 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
     camera.position.set(0, 46, 68);
     camera.lookAt(0, 0, 0);
 
-    const ambientLight = new AmbientLight(0x1a2638, 1.8);
+    const ambientLight = new AmbientLight(0x1a2638, 0.4); // Darker ambient for deeper shadows
     scene.add(ambientLight);
 
-    const sunLight = new PointLight(0xfffaed, 5.5, 500, 0.45);
+    const sunLight = new PointLight(0xfffaed, 8.5, 800, 0.25); // Stronger point light
     scene.add(sunLight);
 
-    const dirLight = new DirectionalLight(0xfffaea, 0.8);
+    const dirLight = new DirectionalLight(0xfffaea, 1.5);
     dirLight.position.set(0, 5, 0);
     scene.add(dirLight);
 
@@ -325,15 +432,64 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
 
     // Radiant Sun in center
     const sunGeom = new SphereGeometry(3.6, 36, 36);
-    const sunMat = new MeshBasicMaterial({ color: 0xfffa70 });
+    const sunTex = createSunTexture();
+    const sunMat = new MeshStandardMaterial({ 
+      map: sunTex,
+      emissiveMap: sunTex,
+      emissive: 0xff6600, // Brighter orange/red emissive
+      emissiveIntensity: 1.8, // Much higher intensity for extreme brightness
+      roughness: 0.9,
+    });
     const sun = new Mesh(sunGeom, sunMat);
     scene.add(sun);
 
     const sunGlow = new Mesh(
       new SphereGeometry(4.8, 32, 32),
-      new MeshBasicMaterial({ color: 0xff8c00, transparent: true, opacity: 0.28, blending: AdditiveBlending })
+      new MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.45, blending: AdditiveBlending })
     );
     scene.add(sunGlow);
+
+    // Supermassive Black Hole in the deep distance
+    const bhGroup = new Group();
+    bhGroup.position.set(150, 60, -220); // Brought closer for prominence
+
+    // The Event Horizon (Perfectly black sphere)
+    const bhGeom = new SphereGeometry(20, 32, 32); // Scaled up
+    const bhMat = new MeshBasicMaterial({ color: 0x000000 });
+    const blackHole = new Mesh(bhGeom, bhMat);
+    bhGroup.add(blackHole);
+    
+    const bhTex = createBlackHoleDiskTexture();
+
+    // Accretion Disk
+    const diskGeom = new RingGeometry(22, 60, 64);
+    const diskMat = new MeshBasicMaterial({
+      map: bhTex,
+      color: 0xffffff, // White base so the texture colors shine through
+      side: DoubleSide,
+      transparent: true,
+      opacity: 0.95,
+      blending: AdditiveBlending,
+    });
+    const disk = new Mesh(diskGeom, diskMat);
+    disk.rotation.x = Math.PI / 2.2;
+    disk.rotation.y = Math.PI / 8;
+    bhGroup.add(disk);
+
+    // Photon Ring / Gravitational Lensing Halo (Spherical wrap mimicking the image)
+    const haloGeom = new SphereGeometry(22.5, 32, 32);
+    const haloMat = new MeshBasicMaterial({
+      map: bhTex,
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.55,
+      blending: AdditiveBlending,
+      side: DoubleSide
+    });
+    const halo = new Mesh(haloGeom, haloMat);
+    bhGroup.add(halo);
+
+    scene.add(bhGroup);
 
     // Real Keplerian Orbital Ellipses & Bodies
     const planetObjects: {
@@ -371,14 +527,14 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
       if (def.textureFactory) {
         pMat = new MeshStandardMaterial({
           map: def.textureFactory(),
-          roughness: 0.5,
-          metalness: 0.05,
+          roughness: 0.7,
+          metalness: 0.15,
         });
       } else {
         pMat = new MeshStandardMaterial({
           color: new Color(def.color),
           roughness: 0.6,
-          metalness: 0.1,
+          metalness: 0.2,
         });
       }
 
@@ -631,6 +787,17 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
         };
       }
 
+      const bhV = new Vector3(150, 60, -220).project(camera);
+      if (bhV.z < 1) {
+        updatedLabels["BlackHole"] = {
+          x: ((bhV.x + 1) * width) / 2,
+          y: ((-bhV.y + 1) * height) / 2,
+          visible: true,
+          label: "SGR A* [BLACK HOLE]",
+          color: "#ff7700",
+        };
+      }
+
       planetObjects.forEach((item) => {
         const temp = new Vector3();
         item.group.getWorldPosition(temp);
@@ -747,11 +914,10 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
       {/* NASA Eyes Header Navigation */}
       <header className="solar-nav" style={{ opacity: isZooming ? 1 - zoomFade : 1 }}>
         <div className="solar-brand">
-          <span className="brand-dot" />
-          <span>EYES ON THE SOLAR SYSTEM // <strong>fieldSPACE HELIOCENTRIC RADAR</strong></span>
+          <span style={{ font: "600 11px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace" }}>EYES ON THE SOLAR SYSTEM // <strong>fieldSPACE HELIOCENTRIC RADAR</strong></span>
         </div>
-        <div className="solar-tag">
-          {hoveredBodyName ? `TARGET LOCK: ${hoveredBodyName.toUpperCase()}` : "DRAG TO ROTATE · SCROLL TO ZOOM"}
+        <div className="solar-tag" style={{ font: "500 10px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace" }}>
+          {hoveredBodyName ? `TARGET LOCK: ${hoveredBodyName.toUpperCase()}` : "DRAG TO ROTATE / SCROLL TO ZOOM"}
         </div>
         <button
           className="solar-skip-btn"
@@ -775,7 +941,7 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
               transform: "translate(-50%, -130%)",
               pointerEvents: "none",
               zIndex: 10,
-              font: "500 9px 'JetBrains Mono', monospace",
+              font: "500 9px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace",
               letterSpacing: "0.14em",
               color: item.color,
               whiteSpace: "nowrap",
@@ -825,11 +991,11 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
       {/* NASA Eyes Timeline Bar */}
       <footer className="solar-bottom-bar" style={{ opacity: isZooming ? 1 - zoomFade : 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ color: "#38bdf8", font: "600 11px 'JetBrains Mono'", letterSpacing: "0.1em" }}>
+          <span style={{ color: "#38bdf8", font: "600 11px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.1em" }}>
             LIVE
           </span>
-          <span style={{ color: "#8ca8af", font: "10px 'JetBrains Mono'", letterSpacing: "0.08em" }}>
-            SEP 04, 2026 · REAL RATE · 12:01:18 AM UTC
+          <span style={{ color: "#8ca8af", font: "10px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>
+            SEP 04, 2026 / REAL RATE / 12:01:18 AM UTC
           </span>
         </div>
 

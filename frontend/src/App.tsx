@@ -270,7 +270,6 @@ function App() {
             >
               ↺ Solar View
             </button>
-            <span className="nav-status">BASELINE REPLAY</span>
           </div>
         </nav>
 
