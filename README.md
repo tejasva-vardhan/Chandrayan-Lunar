@@ -8,9 +8,10 @@ This repository is the team implementation of Smart India Hackathon 2026 problem
 
 **FACT**
 
-- Foundation plus integration layer: documentation, canonical data contracts, module interfaces, pipeline orchestration, structural configuration, and wiring tests.
-- Scientific stages are not implemented. Default operations raise `NotImplementedError`.
-- No matcher, SPICE, sub-pixel, frontend, or HTTP scientific core is implemented yet.
+- Foundation plus scientific stages and a thin HTTP/frontend integration layer.
+- Canonical contracts, pipeline orchestration, and module ownership remain as frozen in interface freeze v1.
+- The scientific core (`src/`) does not import FastAPI/HTTP libraries.
+- The HTTP wrapper lives in `api/` and the existing cinematic UI lives in `frontend/`.
 - Official SIH dataset and evaluator constraints are **pending/TBD**. Do not treat any local or public lunar product as the official SIH test set.
 
 **DECISION** (from v3.0)
@@ -44,7 +45,7 @@ A lower-level source cannot silently override a higher-authority requirement.
 
 | Person | Owns |
 |---|---|
-| Tejas | Architecture, integration, contracts, `src/models/`, `src/pipeline/`, `src/io/`, `configs/`, `docs/` |
+| Tejas | Architecture, integration, contracts, `src/models/`, `src/pipeline/`, `src/io/`, `configs/`, `docs/`, `api/` |
 | Haruto | PDS/ingestion, preprocessing, manifests |
 | Shashwat | SPICE, geometry, pair characterization |
 | Chuba | Representation, matching, adaptive routing |
@@ -59,26 +60,78 @@ A lower-level source cannot silently override a higher-authority requirement.
 - Accuracy-affecting scientific changes require benchmarks/validation.
 - Architecture changes go into the decision log.
 
-## Current MVP target
+## Local development (frontend + API)
 
-The first scientific milestone (not implemented in this foundation) is:
+Python 3.11+ and Node/pnpm are required.
 
-real lunar data → `LunarProduct` → SIFT baseline → `CorrespondenceSet` → robust geometric verification → registration → basic metrics → registered image
+### 1. Scientific core + API
+
+```text
+python -m pip install -e ".[dev]"
+python scripts/run_api.py
+```
+
+API listens on `http://127.0.0.1:8000` by default.
+
+Useful endpoints (master spec demo API):
+
+- `GET /health`
+- `POST /products` (multipart upload)
+- `POST /registration/jobs`
+- `GET /registration/jobs/{id}`
+- `GET /registration/jobs/{id}/result`
+- `GET /registration/jobs/{id}/metrics`
+- `GET /registration/jobs/{id}/artifacts/{name}`
+
+### 2. Frontend
+
+```text
+cd frontend
+npm install
+npm run dev
+```
+
+(`pnpm install` / `pnpm dev` also work if pnpm is available.)
+
+Vite serves the UI on `http://127.0.0.1:5173` and proxies `/health`, `/products`, and `/registration` to the API (CORS is also enabled for local origins).
+
+### 3. Both together
+
+Terminal A:
+
+```text
+python scripts/run_api.py
+```
+
+Terminal B:
+
+```text
+cd frontend
+npm run dev
+```
+
+Open the UI, enter the mission view, use **Run registration** with:
+
+- uploaded OHRC PDS4 / LROC PDS3 products, or
+- local absolute paths readable by the API process (for example products under `CHANDRAYAN_DATA_ROOT`).
+
+Unsupported files return a clear backend error. The API never substitutes mock Chandrayaan-2 data.
+
+### Tests / lint
+
+```text
+python -m pytest
+python -m ruff check src tests api
+cd frontend
+npm test
+npm run lint
+npm run build
+```
 
 ## Configuration
 
 Structural settings live in `configs/default.yaml`. Slots exist for preprocessing, geometry, representation, matcher identity, verification, control points, refinement, registration, evaluation, and export. Scientific thresholds, routing cutoffs, and a final matcher are experimental and are not set here.
 
-## Development setup
-
-Python 3.11+ is required.
-
-```text
-python -m pip install -e ".[dev]"
-python -m pytest
-python -m ruff check src tests
-```
-
 ## Warning
 
-The official SIH26166 dataset is currently **pending/TBD**. Do not invent its format, pairs, or evaluator. Do not claim official-dataset results from representative data.
+The official SIH26166 dataset is currently **pending/TBD**. Do not invent its format, pairs, or evaluator. Do not claim official-dataset results from representative data. Verification residual RMSE is a geometric-verification fit diagnostic, not independent registration accuracy.

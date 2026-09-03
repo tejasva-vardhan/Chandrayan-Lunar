@@ -409,6 +409,60 @@ h1 em {
   background: rgba(248, 113, 113, 0.08); color: #fca5a5; font-size: 12px; border-radius: 4px;
 }
 
+/* ---------- Registration console (API) ---------- */
+.registration-console { display: grid; gap: 22px; }
+.console-lede { margin: 0; max-width: 720px; color: var(--mist); line-height: 1.7; font-size: 14px; }
+.console-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.console-grid label { display: grid; gap: 8px; }
+.console-grid span { color: var(--mist); font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.console-grid input[type="text"],
+.console-grid input[type="file"] {
+  width: 100%; min-height: 42px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: rgba(6, 12, 22, 0.55); color: var(--ink);
+}
+.console-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ghost-button {
+  min-height: 48px; padding: 12px 18px; border: 1px solid var(--line);
+  background: transparent; color: var(--mist); font: 600 11px var(--mono);
+  letter-spacing: .1em; border-radius: 4px; cursor: pointer;
+}
+.ghost-button:hover { color: var(--ink); border-color: var(--line-strong); }
+.state-pill.state-ok {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--signal);
+}
+.run-status, .run-success {
+  padding: 14px 18px; border: 1px solid var(--line-strong);
+  background: rgba(56, 189, 248, 0.08); border-radius: 4px;
+}
+.run-status b, .run-success { color: var(--ink); font-size: 13px; }
+.run-status span { display: block; margin-top: 6px; color: var(--mist); font: 11px var(--mono); }
+.stage-list {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none;
+}
+.stage-list li {
+  padding: 4px 8px; border: 1px solid var(--line); border-radius: 3px;
+  color: var(--dim); font: 10px var(--mono);
+}
+.stage-list li.done { color: var(--signal); border-color: rgba(56, 189, 248, 0.35); }
+.stage-list li.current {
+  color: #f8fafc; border-color: var(--signal);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+.run-error {
+  margin-top: 4px; padding: 14px 18px; border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.1); border-radius: 4px; display: grid; gap: 6px;
+}
+.run-error b { color: #fecaca; font-size: 13px; }
+.run-error span { color: #fca5a5; font-size: 12px; line-height: 1.5; }
+@media (max-width: 900px) {
+  .console-grid { grid-template-columns: 1fr; }
+}
+
 /* Geographic Target Specification Card */
 .geographic-target-card {
   margin-top: 24px;
