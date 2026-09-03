@@ -17,6 +17,7 @@ from api.schemas import (
     JobStatusResponse,
     ProductSummary,
     ProductUploadResponse,
+    VisualizationResponse,
 )
 from api.service import RegistrationService
 from src.pipeline.orchestrator import PIPELINE_STAGES
@@ -93,6 +94,10 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
     @app.get("/registration/jobs/{job_id}/metrics")
     def get_metrics(job_id: str) -> dict[str, Any]:
         return app.state.service.get_metrics(job_id)
+
+    @app.get("/registration/jobs/{job_id}/visualization", response_model=VisualizationResponse)
+    def get_visualization(job_id: str) -> VisualizationResponse:
+        return app.state.service.get_visualization(job_id)
 
     @app.get("/registration/jobs/{job_id}/artifacts/{name}")
     def get_artifact(job_id: str, name: str) -> FileResponse:
