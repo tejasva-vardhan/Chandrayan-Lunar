@@ -222,7 +222,7 @@ export function RegistrationConsole({
           {busy ? "Working…" : "Start registration"} <span>→</span>
         </button>
         <button type="button" className="ghost-button" disabled={busy} onClick={onResetBaseline}>
-          Show EXP-000 baseline
+          Show static EXP-000 fixture
         </button>
       </div>
 

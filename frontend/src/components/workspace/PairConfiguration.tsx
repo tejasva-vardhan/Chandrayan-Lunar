@@ -10,7 +10,10 @@ export function PairConfiguration() {
         </div>
       </div>
       
-      <p className="card-desc">Configure scientific parameters for the matching and registration pipeline. Some parameters are locked by the current experimental baseline.</p>
+      <p className="card-desc">
+        Scientific parameters are locked to the frozen baseline (SIFT / RANSAC / ZNCC).
+        They are not edited from the UI for this MVP.
+      </p>
 
       <div className="config-grid">
         <div className="config-group">

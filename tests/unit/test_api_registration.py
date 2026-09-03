@@ -40,11 +40,19 @@ def _synthetic_ops() -> PipelineOperations:
     def ingest(path: Path) -> LunarProduct:
         array = np.load(path)
         height, width = array.shape[:2]
+        # Uploads may use a .img filename while carrying synthetic .npy bytes.
+        # Downstream stages expect a loadable raster handle, so materialize .npy.
+        if path.suffix.lower() == ".npy":
+            raster_path = path
+        else:
+            raster_path = path.with_name(f"{path.stem}_raster.npy")
+        if raster_path != path:
+            np.save(raster_path, array)
         return LunarProduct(
             product_id=path.stem,
             instrument="SYNTHETIC",
             dimensions=ImageDimensions(width_px=int(width), height_px=int(height)),
-            raster_uri=str(path),
+            raster_uri=str(raster_path),
         )
 
     return PipelineOperations(
@@ -91,10 +99,62 @@ def test_create_job_validation_requires_inputs(client: TestClient) -> None:
 def test_upload_rejects_empty_file(client: TestClient) -> None:
     response = client.post(
         "/products",
-        files={"file": ("empty.bin", b"", "application/octet-stream")},
+        files={"file": ("empty.img", b"", "application/octet-stream")},
     )
     assert response.status_code == 400
     assert response.json()["code"] == "invalid_input"
+
+
+def test_upload_rejects_unsupported_extension(client: TestClient) -> None:
+    response = client.post(
+        "/products",
+        files={"file": ("photo.png", b"not-a-pds", "image/png")},
+    )
+    assert response.status_code == 400
+    assert response.json()["code"] == "unsupported_product"
+
+
+def test_catalog_and_exp000_without_data_root(client: TestClient, monkeypatch) -> None:
+    monkeypatch.delenv("CHANDRAYAN_DATA_ROOT", raising=False)
+    catalog = client.get("/products/catalog")
+    assert catalog.status_code == 200
+    body = catalog.json()
+    assert body["data_root_configured"] is False
+    assert body["product_count"] == 0
+
+    exp = client.get("/products/exp000")
+    assert exp.status_code == 200
+    assert exp.json()["available"] is False
+
+
+def test_catalog_and_exp000_with_synthetic_data_root(
+    client: TestClient, tmp_path: Path, monkeypatch
+) -> None:
+    root = tmp_path / "sih"
+    ohrc = root / "ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+    ohrc.mkdir(parents=True)
+    (ohrc / "placeholder.txt").write_text("x", encoding="utf-8")
+    lroc = root / "M150368601RC.IMG"
+    lroc.write_bytes(b"IMG")
+    monkeypatch.setenv("CHANDRAYAN_DATA_ROOT", str(root))
+
+    catalog = client.get("/products/catalog")
+    assert catalog.status_code == 200
+    body = catalog.json()
+    assert body["data_root_configured"] is True
+    assert body["product_count"] >= 2
+    assert all(p["path"].startswith("<") for p in body["products"])
+
+    exp = client.get("/products/exp000")
+    assert exp.status_code == 200
+    payload = exp.json()
+    assert payload["available"] is True
+    assert payload["source"]["product_id"].startswith("catalog-")
+    assert payload["reference"]["product_id"].startswith("catalog-")
+    # Absolute machine paths must not leak into the API response.
+    assert payload["source"]["path"].startswith("<")
+    assert payload["reference"]["path"].startswith("<")
+
 
 
 def test_successful_registration_result(client: TestClient, tmp_path: Path) -> None:
@@ -181,11 +241,11 @@ def test_upload_then_job_paths(client: TestClient, tmp_path: Path) -> None:
 
     up_src = client.post(
         "/products",
-        files={"file": ("source.npy", source.read_bytes(), "application/octet-stream")},
+        files={"file": ("source.img", source.read_bytes(), "application/octet-stream")},
     )
     up_ref = client.post(
         "/products",
-        files={"file": ("reference.npy", reference.read_bytes(), "application/octet-stream")},
+        files={"file": ("reference.img", reference.read_bytes(), "application/octet-stream")},
     )
     assert up_src.status_code == 200
     assert up_ref.status_code == 200
@@ -211,3 +271,32 @@ def test_result_not_ready_for_unknown_async_semantics(tmp_path: Path) -> None:
     with TestClient(app) as client:
         missing = client.get("/registration/jobs/job-missing/result")
         assert missing.status_code == 404
+
+
+def test_preprocess_guard_identity_for_oversized_pair() -> None:
+    from api.preprocess_guard import PREPROCESS_IDENTITY_FLAG, guarded_preprocess
+    from src.models.registration_pair import RegistrationPair
+
+    source = LunarProduct(
+        product_id="big-src",
+        instrument="OHRC",
+        dimensions=ImageDimensions(width_px=12000, height_px=78175),
+    )
+    reference = LunarProduct(
+        product_id="big-ref",
+        instrument="LRO_NAC",
+        dimensions=ImageDimensions(width_px=5064, height_px=52224),
+    )
+    pair = RegistrationPair(pair_id="pair", source=source, reference=reference)
+    called = {"n": 0}
+
+    def boom(_pair: RegistrationPair) -> RegistrationPair:
+        called["n"] += 1
+        raise AssertionError("frozen preprocess must not run for oversized pair")
+
+    notes: list[str] = []
+    out = guarded_preprocess(pair, boom, on_identity=notes.append)
+    assert out is pair
+    assert called["n"] == 0
+    assert notes and "identity passthrough" in notes[0]
+    assert PREPROCESS_IDENTITY_FLAG.startswith("preprocess_identity")

@@ -13,6 +13,22 @@ function mockClient(overrides: Partial<ApiClient> = {}): ApiClient {
   return {
     health: vi.fn(),
     uploadProduct: vi.fn(),
+    listProducts: vi.fn().mockResolvedValue([]),
+    listCatalog: vi.fn().mockResolvedValue({
+      data_root_configured: false,
+      data_root_env: "CHANDRAYAN_DATA_ROOT",
+      product_count: 0,
+      products: [],
+      message: "unset",
+    }),
+    getExp000Pair: vi.fn().mockResolvedValue({
+      available: false,
+      pair_id: "pair_01_equatorial",
+      experiment_id: "EXP-000",
+      source: null,
+      reference: null,
+      message: "unset",
+    }),
     createJob: vi.fn(),
     getJob: vi.fn(),
     getResult: vi.fn(),
@@ -153,7 +169,7 @@ describe("RegistrationConsole", () => {
   it("can restore EXP-000 baseline view", () => {
     const onResults = vi.fn();
     render(<RegistrationConsole client={mockClient()} onResults={onResults} />);
-    fireEvent.click(screen.getByRole("button", { name: /show exp-000 baseline/i }));
+    fireEvent.click(screen.getByRole("button", { name: /show static exp-000 fixture/i }));
     expect(onResults).toHaveBeenCalledWith(baselineResultsView());
   });
 });
