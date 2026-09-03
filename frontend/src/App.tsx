@@ -4,6 +4,7 @@ import { A618OrbiterLayer } from "./components/A618OrbiterLayer";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
+import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
 import { exp000 } from "./data/exp000";
 
 const stages = [
@@ -298,17 +299,10 @@ function App() {
           </aside>
         </section>
 
-        {/* ── WORKFLOW ── */}
-        <section className="bridge" aria-label="Scientific workflow">
-          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
-            <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
-            <div className="workflow">
-              {["OHRC PDS4 ingest", "LRO NAC PDS3 ingest", "SIFT baseline matching", "RANSAC verification", "Control-point refinement", "Projective DLT fit", "Evaluation &amp; export"].map((item, i) => (
-                <div key={item}><b>0{i + 1}</b><span dangerouslySetInnerHTML={{ __html: item }} /></div>
-              ))}
-            </div>
-          </Reveal>
-        </section>
+        {/* ── WORKSPACE ── */}
+        <RegistrationWorkspace onComplete={() => {
+          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+        }} />
 
         {/* ── RESULTS ── */}
         <section className="results-shell" id="results">
@@ -322,17 +316,27 @@ function App() {
             </header>
 
             <div className="metric-strip">
-              <div><b>{exp000.rawMatches}</b><span>candidate correspondences</span></div>
-              <div><b>{exp000.verified}</b><span>geometric inliers</span></div>
-              <div><b>{exp000.inlierRatio}</b><span>inlier ratio</span></div>
-              <div><b>{exp000.coverage}</b><span>spatial coverage</span></div>
-              <div>
+              <div title="Total features matched before geometric filtering.">
+                <b>{exp000.rawMatches}</b><span>candidate correspondences</span>
+              </div>
+              <div title="Correspondences surviving geometric verification via RANSAC.">
+                <b>{exp000.verified}</b><span>geometric inliers</span>
+              </div>
+              <div title="Ratio of inliers to total candidates.">
+                <b>{exp000.inlierRatio}</b><span>inlier ratio</span>
+              </div>
+              <div title="Proportion of the image area bounded by control points.">
+                <b>{exp000.coverage}</b><span>spatial coverage</span>
+              </div>
+              <div title="⚠️ Verification RMSE is NOT independent registration accuracy. Fit residuals on 4 points will naturally approach zero.">
                 <b className="metric-val-formatted">
                   9.41 × 10<sup>-10</sup> <span className="metric-unit">px</span>
                 </b>
-                <span>verification RMSE</span>
+                <span style={{ color: "var(--danger)", fontWeight: 500 }}>verification RMSE ⚠️</span>
               </div>
-              <div><b>{exp000.runtimeSeconds.toFixed(1)} s</b><span>pipeline runtime</span></div>
+              <div title="Total execution time for the pipeline.">
+                <b>{exp000.runtimeSeconds.toFixed(1)} s</b><span>pipeline runtime</span>
+              </div>
             </div>
 
           {/* Image dimensions */}
