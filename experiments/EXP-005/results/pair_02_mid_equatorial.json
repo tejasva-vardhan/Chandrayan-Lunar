@@ -1,23 +1,105 @@
 {
+  "comparison": {
+    "rows": [
+      {
+        "accepted_count": null,
+        "control_point_count": 11,
+        "control_point_held_out_rmse": 1.7823913141260208,
+        "coordinates_changed_count": 0,
+        "max_displacement_pixels": 0.0,
+        "mean_displacement_pixels": 0.0,
+        "method_id": "identity_passthrough",
+        "refinement_status": "INDETERMINATE",
+        "rejected_count": null,
+        "runtime_seconds": {
+          "control_point_held_out": 0.008504900150001049,
+          "displacement_report": 0.00016229995526373386,
+          "evaluate": 0.0005131999496370554,
+          "refine_points": 0.002033800119534135,
+          "register": 0.0034088001120835543,
+          "unselected_verified_checkpoints": 0.0005411000456660986,
+          "variant_total": 0.015238100197166204,
+          "zncc_acceptance_report": 7.399986498057842e-05
+        },
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "unselected_checkpoint_rmse": 2.1243239946902492,
+        "variant": "A",
+        "verified_inliers": 25
+      },
+      {
+        "accepted_count": 2,
+        "control_point_count": 11,
+        "control_point_held_out_rmse": 3.5420425879459874,
+        "coordinates_changed_count": 2,
+        "max_displacement_pixels": 2.7320256048170255,
+        "mean_displacement_pixels": 0.43898795391066714,
+        "method_id": "zncc_parabolic_baseline",
+        "refinement_status": "COORDINATES_UPDATED",
+        "rejected_count": 9,
+        "runtime_seconds": {
+          "control_point_held_out": 0.007663700031116605,
+          "displacement_report": 0.00014319992624223232,
+          "evaluate": 0.0003307000733911991,
+          "refine_points": 0.642893899930641,
+          "register": 0.002320700092241168,
+          "unselected_verified_checkpoints": 0.0004792001564055681,
+          "variant_total": 1.3087998002301902,
+          "zncc_acceptance_report": 0.6549684000201523
+        },
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "unselected_checkpoint_rmse": 2.220870473622833,
+        "variant": "B",
+        "verified_inliers": 25
+      }
+    ]
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M1504316436RC",
+    "lroc_source_name": "M1504316436RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18"
+  },
+  "decision_rule": "The independent variable is valid only if variant A uses identity_passthrough and variant B uses zncc_parabolic_baseline on the same selected control points (shared match, verification, and control-point selection). Coordinate change is measured, not assumed. Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate and the same held-out checkpoint RMSE is strictly lower for B than for A. Coordinate change alone is not accuracy. Matcher-derived held-out points are not ground truth. Independent accuracy remains NOT VALIDATED. One pair cannot validate sub-pixel accuracy.",
   "experiment_id": "EXP-005",
-  "pair_manifest_id": "pair_02_mid_equatorial",
-  "status": "data_unavailable",
-  "run_note": "The pair_02_mid_equatorial raw products (OHRC ch2_ohr_ncp_20250612T2229094979_d_img_d18 and LROC M1504316436RC) are stored on D:\\SIH, which was not mounted during this session. The EXP-005 runner (scripts/run_exp005.py) requires those products. The metrics below are sourced from the EXP-001 SIFT arm record (experiments/EXP-001/results/pair_02_mid_equatorial.json), which ran the identical frozen pipeline including zncc_parabolic_baseline refinement. When D:\\SIH is remounted, run: $env:CHANDRAYAN_DATA_ROOT = 'D:\\SIH'; python scripts/run_exp005.py to populate a live record.",
-  "data_source": "EXP-001 pair_02_mid_equatorial SIFT arm (git_commit 779caec98ad4eafda13c3cf3edf5d16768ff3d2a)",
   "failed_stage": null,
-  "hypothesis": "H1: On pair_02_mid_equatorial, with the EXP-001 SIFT configuration held fixed, the existing ZNCC + parabolic refinement produces measurable coordinate changes relative to identity passthrough and those changes strictly reduce held-out image-space transfer error on the same matcher-derived checkpoints. H0: the existing refinement either does not change coordinates, or the changes do not improve held-out geometric consistency.",
-  "decision_rule": "Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate AND the same held-out checkpoint RMSE is strictly lower for B than for A. Coordinate change alone is not accuracy.",
-  "inherited_from": "EXP-000",
-  "sift_baseline_experiment_id": "EXP-001",
   "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
     "experiment_id": "EXP-005",
-    "inherited_from": "EXP-000",
-    "independent_variable": "refinement_method_id",
+    "footprint_source": "NASA PDS ODE",
     "held_constant": [
-      "input products and pair manifest",
-      "matching-view policy (stride_decimation, 4,194,304 pixels per image)",
+      "input products and pair manifest (pair_02_mid_equatorial)",
+      "matcher_id sift and all SiftSettings (EXP-001 SIFT arm)",
+      "matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
       "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
-      "representation routing and intensity percentile stretch",
+      "intensity representation routing",
       "coordinate mapping back to original image pixels",
       "geometric model projective_2d_baseline",
       "robust estimator ransac_style_baseline",
@@ -25,400 +107,102 @@
       "RANSAC max_trials 500",
       "rng_seed 0",
       "control-point selection grid_bins 8, max 1 point per cell",
+      "ZNCC window/search/min_peak settings when the ZNCC method runs",
       "registration model and the 16,777,216-pixel output cap",
       "evaluation metric definitions",
       "Lowe ratio threshold 0.75 and min_matches 4"
     ],
+    "held_out_validation": {
+      "design": "same verified-inlier checkpoints scored on the transform fitted from unrefined vs refined control points; k-fold on control-point coordinates is recorded as a secondary split",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; checkpoints are matcher-derived and there is no surveyed lunar control",
+      "rng_seed": 0
+    },
+    "independent_variable": "refinement_method_id",
+    "inherited_from": "EXP-000",
+    "matcher_id": "sift",
     "matching_view": {
-      "max_pixels_per_image": 4194304,
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
       "downsample_method": "stride_decimation",
-      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
-      "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
-      "expected_pair_02_strides": {"ohrc": 16, "lroc": 8}
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
     },
-    "sift": {
-      "nfeatures": 0,
-      "n_octave_layers": 3,
-      "contrast_threshold": 0.04,
-      "edge_threshold": 10.0,
-      "sigma": 1.6,
-      "ratio_threshold": 0.75,
-      "min_matches": 4
+    "matching_view_held_fixed": true,
+    "pair_manifest_id": "pair_02_mid_equatorial",
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
     },
-    "verification": {
-      "model_id": "projective_2d_baseline",
-      "estimator_id": "ransac_style_baseline",
-      "residual_limit": 3.0,
-      "max_trials": 500,
-      "rng_seed": 0,
-      "confidence_min": null
-    },
-    "control_points": {
-      "grid_bins": 8,
-      "max_per_source_cell": 1,
-      "max_per_reference_cell": 1,
-      "max_points": null
-    },
-    "refinement_shared_zncc_settings": {
-      "window_radius": 7,
-      "search_radius": 3,
-      "min_valid_pixel_fraction": 0.75,
-      "min_peak_zncc": 0.25,
+    "refinement": {
       "fine_half_width": 1.0,
-      "fine_step": 0.1
+      "fine_step": 0.1,
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
     },
     "registration": {
+      "max_output_pixels": 16777216,
       "model_id": "projective_2d_baseline",
-      "max_output_pixels": 16777216
+      "role": "software_baseline_not_d010_lunar_model"
     },
-    "evaluation": {
-      "independent_accuracy": "NOT VALIDATED",
-      "independent_ground_truth": false,
-      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy"
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
     },
-    "held_out_validation": {
-      "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
-      "folds": 5,
-      "rng_seed": 0,
-      "independent_accuracy": "NOT VALIDATED",
-      "note": "held-out transfer error is not independent accuracy; there is no surveyed lunar control"
-    }
-  },
-  "variant_configuration": {
-    "A": {
-      "label": "no_subpixel_refinement",
-      "method_id": "identity_passthrough",
-      "role": "ablation_no_refinement",
-      "callable": "refine_points_with_settings(..., identity_passthrough)"
-    },
-    "B": {
-      "label": "existing_zncc_parabolic_baseline",
-      "method_id": "zncc_parabolic_baseline",
-      "role": "same_modality_software_baseline",
-      "callable": "refine_points(control_points, pair)"
-    }
-  },
-  "dataset": {
-    "data_root_env": "CHANDRAYAN_DATA_ROOT",
-    "footprint_source": "NASA PDS ODE",
-    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
-    "lroc_product_id": "M1504316436RC",
-    "ohrc_found": true,
-    "lroc_found": true,
-    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
-    "lroc_source_name": "M1504316436RC.IMG"
-  },
-  "shared_stages": {
-    "source": "EXP-001 SIFT arm, git_commit 779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
-    "ingest_product": {
-      "source": {
-        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
-        "instrument": "OHRC",
-        "mission": "Chandrayaan-2",
-        "dimensions": {"height_px": 79780, "width_px": 12000, "pixel_count": 957360000},
-        "gsd_meters": 0.28,
-        "valid_pixel_ratio": 1.0
-      },
-      "reference": {
-        "product_id": "M1504316436RC",
-        "instrument": "LRO_NAC",
-        "mission": "LRO",
-        "dimensions": {"height_px": 52224, "width_px": 5064, "pixel_count": 264462336},
-        "gsd_meters": null,
-        "valid_pixel_ratio": 0.9873617693522907
-      }
-    },
-    "preprocess": {
-      "applied": "identity_passthrough",
-      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
-      "cap_pixels": 16777216,
-      "source_pixels": 957360000,
-      "reference_pixels": 264462336
-    },
-    "generate_representation": {
-      "representation_id": "intensity",
-      "source_matching_view": {
-        "original_shape": [79780, 12000],
-        "matching_shape": [4987, 750],
-        "stride": 16,
-        "x_scale": 16.0,
-        "y_scale": 16.0,
-        "max_pixels_per_image": 4194304,
-        "policy": "stride_decimation"
-      },
-      "reference_matching_view": {
-        "original_shape": [52224, 5064],
-        "matching_shape": [6528, 633],
-        "stride": 8,
-        "x_scale": 8.0,
-        "y_scale": 8.0,
-        "max_pixels_per_image": 4194304,
-        "policy": "stride_decimation"
-      },
-      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
-      "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
-      "shared_across_variants": true
-    },
-    "match": {
-      "matcher_id": "sift",
-      "representation_id": "intensity",
-      "raw_match_count": 919,
-      "coordinates": "original_image_pixels_after_matching_view_scale",
-      "shared_across_variants": true
-    },
-    "verify_matches": {
-      "raw_match_count": 919,
-      "verified_inlier_count": 25,
-      "rejected_count": 894,
-      "inlier_ratio": 0.02720348204570185,
-      "model_min_samples": 4,
-      "inliers_above_model_minimum": 21,
-      "exceeds_model_minimum": true,
-      "inlier_residual_min": 0.3047142941734978,
-      "inlier_residual_max": 2.653533215225044,
-      "residual_meaning": "verification_image_space_transfer_error_pixels",
-      "shared_across_variants": true
-    },
-    "select_control_points": {
-      "control_point_count": 11,
-      "selection_succeeded": true,
-      "shared_across_variants": true,
-      "note": "spatial grid 8x8, max 1 per cell; all 11 points are the pre-refinement coordinates passed to both variants"
-    },
-    "matcher_held_out_validation": {
-      "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+    "sift_baseline_experiment_id": "EXP-001",
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
       "model_id": "projective_2d_baseline",
-      "requested_folds": 5,
-      "effective_folds": 5,
-      "folds_used": 5,
-      "folds_skipped": 0,
-      "held_out_point_count": 25,
-      "held_out_transfer_error_pixels": {
-        "count": 25,
-        "mean": 1.7388797941585585,
-        "median": 1.7959947582848357,
-        "min": 0.34569302673882957,
-        "max": 3.0980838888403253,
-        "rmse": 1.9043709874947647
-      },
-      "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
-      "units": "original image pixels (reference frame transfer error)",
-      "independent_accuracy": "NOT VALIDATED",
-      "independent_ground_truth_used": false,
-      "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists",
-      "note": "This split is on verified correspondences and does not use refined coordinates. It is the EXP-001 SIFT control on this pair, identical for A and B. It is not independent accuracy."
+      "residual_limit": 3.0,
+      "rng_seed": 0
     }
   },
-  "variants": {
-    "A": {
-      "variant_id": "A",
-      "matcher_id": "sift",
-      "method_id": "identity_passthrough",
-      "uses_shared_correspondences": true,
-      "uses_shared_control_points": true,
-      "refine_points": {
-        "method_id": "identity_passthrough",
-        "outcome": "INDETERMINATE",
-        "coordinates_changed_count": 0,
-        "input_count": 11,
-        "output_count": 11,
-        "mean_displacement_pixels": 0.0,
-        "max_displacement_pixels": 0.0,
-        "limitation": "Variant A is the identity passthrough ablation. Zero coordinates changed by definition. INDETERMINATE means no refinement was applied; this is the intended control, not a failure."
-      },
-      "zncc_acceptance": {
-        "note": "ZNCC acceptance is not computed for identity_passthrough; no template comparison is performed.",
-        "accepted_count": null,
-        "rejected_count": null,
-        "status": "NOT_APPLICABLE_identity_passthrough"
-      },
-      "register": {
-        "transform_fitted": true,
-        "model_name": "projective_2d_baseline",
-        "control_points_used_for_fit": 11,
-        "minimal_sample_fit": false,
-        "full_raster_warp_blocked": true,
-        "quality_flags": ["registration_output_too_large"],
-        "registered_source_uri": null
-      },
-      "evaluate": {
-        "independent_accuracy": "NOT VALIDATED",
-        "independent_ground_truth_used": false,
-        "metrics": {
-          "control_point_count": 11,
-          "inlier_count": 25,
-          "inlier_ratio": 0.02720348204570185,
-          "rmse": 1.686182317045492,
-          "spatial_coverage": 0.505643792898762
-        },
-        "rmse_meaning": "RMSE of stored verification inlier residuals on points used to fit the transform; this is a fit diagnostic, not accuracy"
-      },
-      "control_point_held_out": {
-        "note": "Variant A uses unrefined coordinates (same as EXP-001 pre-refinement). k-fold on 11 control points with 4-point minimum: 11 < 5 (min_required = model_min_samples + 1), so k-fold is possible. EXP-001 SIFT held-out on 25 verified inliers (not just control points) gives RMSE = 1.9044 px. Control-point subset k-fold was not run in EXP-001 and requires a live run.",
-        "status": "REQUIRES_LIVE_RUN",
-        "independent_accuracy": "NOT VALIDATED"
-      },
-      "unselected_verified_checkpoints": {
-        "note": "14 verified inliers (25 total - 11 control points) could serve as unselected checkpoints. These were not scored in EXP-001 and require a live run.",
-        "status": "REQUIRES_LIVE_RUN",
-        "independent_accuracy": "NOT VALIDATED"
-      },
-      "status": "derived_from_exp001"
-    },
-    "B": {
-      "variant_id": "B",
-      "matcher_id": "sift",
-      "method_id": "zncc_parabolic_baseline",
-      "uses_shared_correspondences": true,
-      "uses_shared_control_points": true,
-      "refine_points": {
-        "method_id": "zncc_parabolic_baseline",
-        "outcome": "COORDINATES_UPDATED",
-        "coordinates_changed_count": 2,
-        "input_count": 11,
-        "output_count": 11,
-        "mean_displacement_pixels": null,
-        "max_displacement_pixels": null,
-        "mean_displacement_among_changed_pixels": null,
-        "limitation": "EXP-001 stores the count of changed coordinates (2) and the post-refinement coordinates but not the pre-refinement coordinates of the changed points, so mean and max displacement cannot be computed from this record. A live EXP-005 run is required for displacement magnitudes."
-      },
-      "zncc_acceptance": {
-        "accepted_count": 2,
-        "rejected_count": 9,
-        "acceptance_rate": 0.18181818181818182,
-        "note": "Inferred from EXP-001 coordinates_changed_count=2 out of 11 input points. The 9 rejected points were accepted by the frozen refine_points() but their parabolic peaks either fell below min_peak_zncc=0.25 or the valid-pixel fraction was below 0.75, so their coordinates were not updated. Exact ZNCC values per point require a live run.",
-        "status": "INFERRED_FROM_EXP001_COUNT"
-      },
-      "register": {
-        "transform_fitted": true,
-        "model_name": "projective_2d_baseline",
-        "control_points_used_for_fit": 11,
-        "minimal_sample_fit": false,
-        "full_raster_warp_blocked": true,
-        "quality_flags": ["registration_output_too_large"],
-        "registered_source_uri": null
-      },
-      "evaluate": {
-        "independent_accuracy": "NOT VALIDATED",
-        "independent_ground_truth_used": false,
-        "metrics": {
-          "control_point_count": 11,
-          "inlier_count": 25,
-          "inlier_ratio": 0.02720348204570185,
-          "rmse": 1.686182317045492,
-          "spatial_coverage": 0.505643792898762
-        },
-        "rmse_meaning": "RMSE of stored verification inlier residuals on points used to fit the transform; this is a fit diagnostic, not accuracy; this RMSE is NOT recomputed after refinement and therefore does not measure refinement accuracy"
-      },
-      "control_point_held_out": {
-        "note": "k-fold on 11 refined control points requires a live run; not in EXP-001 record.",
-        "status": "REQUIRES_LIVE_RUN",
-        "independent_accuracy": "NOT VALIDATED"
-      },
-      "unselected_verified_checkpoints": {
-        "note": "14 unselected verified inliers could be scored against the transform fitted on 11 refined control points. This was not computed in EXP-001 and requires a live run.",
-        "status": "REQUIRES_LIVE_RUN",
-        "independent_accuracy": "NOT VALIDATED"
-      },
-      "held_out_validation_from_exp001": {
-        "design": "k-fold split of all 25 verified correspondences (not just the 11 control points). This is the EXP-001 held-out split with zncc_parabolic_baseline in the pipeline.",
-        "held_out_point_count": 25,
-        "held_out_transfer_error_pixels": {
-          "count": 25,
-          "mean": 1.7388797941585585,
-          "median": 1.7959947582848357,
-          "min": 0.34569302673882957,
-          "max": 3.0980838888403253,
-          "rmse": 1.9043709874947647
-        },
-        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
-        "units": "original image pixels (reference frame transfer error)",
-        "independent_accuracy": "NOT VALIDATED",
-        "note": "This held-out split is on all verified correspondences before control-point grid selection. It is the same split as the matcher_held_out_validation above and applies equally to both A and B because control points were selected from the same verified set before any refinement differentiation occurred in this re-analysis."
-      },
-      "status": "derived_from_exp001"
-    }
-  },
-  "comparison": {
-    "rows": [
-      {
-        "variant": "A",
-        "method_id": "identity_passthrough",
-        "verified_inliers": 25,
-        "control_point_count": 11,
-        "coordinates_changed_count": 0,
-        "mean_displacement_pixels": 0.0,
-        "max_displacement_pixels": 0.0,
-        "accepted_count": null,
-        "rejected_count": null,
-        "unselected_checkpoint_rmse": "REQUIRES_LIVE_RUN",
-        "control_point_held_out_rmse": "REQUIRES_LIVE_RUN",
-        "transform_status": "fitted",
-        "refinement_status": "INDETERMINATE"
-      },
-      {
-        "variant": "B",
-        "method_id": "zncc_parabolic_baseline",
-        "verified_inliers": 25,
-        "control_point_count": 11,
-        "coordinates_changed_count": 2,
-        "mean_displacement_pixels": "NOT_STORED_IN_EXP001",
-        "max_displacement_pixels": "NOT_STORED_IN_EXP001",
-        "accepted_count": 2,
-        "rejected_count": 9,
-        "unselected_checkpoint_rmse": "REQUIRES_LIVE_RUN",
-        "control_point_held_out_rmse": "REQUIRES_LIVE_RUN",
-        "transform_status": "fitted",
-        "refinement_status": "COORDINATES_UPDATED"
-      }
-    ]
-  },
+  "hypothesis": "H1: On pair_02_mid_equatorial, with the EXP-001 SIFT configuration held fixed, the existing ZNCC + parabolic refinement produces measurable coordinate changes relative to identity passthrough and those changes strictly reduce held-out image-space transfer error on the same matcher-derived checkpoints. H0: the existing refinement either does not change coordinates, or the changes do not improve held-out geometric consistency.",
+  "inherited_from": "EXP-000",
   "interpretation": {
-    "primary_metric": "held_out_checkpoint_rmse_strictly_lower_after_measurable_coordinate_change",
-    "decision_rule": "Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate AND the same held-out checkpoint RMSE is strictly lower for B than for A.",
-    "verified_inliers": 25,
     "control_point_count": 11,
-    "method_ids_by_variant": {
-      "A": "identity_passthrough",
-      "B": "zncc_parabolic_baseline"
-    },
+    "coordinate_change_is_not_accuracy": true,
+    "coordinates_changed": true,
     "coordinates_changed_count_by_variant": {
       "A": 0,
       "B": 2
     },
-    "mean_displacement_pixels_by_variant": {
-      "A": 0.0,
-      "B": "NOT_STORED_IN_EXP001"
+    "decision_rule": "The independent variable is valid only if variant A uses identity_passthrough and variant B uses zncc_parabolic_baseline on the same selected control points (shared match, verification, and control-point selection). Coordinate change is measured, not assumed. Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate and the same held-out checkpoint RMSE is strictly lower for B than for A. Coordinate change alone is not accuracy. Matcher-derived held-out points are not ground truth. Independent accuracy remains NOT VALIDATED. One pair cannot validate sub-pixel accuracy.",
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
     },
-    "max_displacement_pixels_by_variant": {
-      "A": 0.0,
-      "B": "NOT_STORED_IN_EXP001"
-    },
-    "held_out_rmse_by_variant": {
-      "A": "REQUIRES_LIVE_RUN",
-      "B": "REQUIRES_LIVE_RUN"
-    },
-    "independent_variable_applied": true,
-    "identity_left_coordinates_unchanged": true,
-    "coordinates_changed": true,
-    "held_out_comparable": false,
+    "four_point_dlt_residuals_are_not_accuracy": true,
+    "held_out_comparable": true,
     "held_out_improved": false,
+    "held_out_metric_used": "unselected_verified_checkpoints",
+    "held_out_rmse_by_variant": {
+      "A": 2.1243239946902492,
+      "B": 2.220870473622833
+    },
     "hypothesis_supported": false,
-    "coordinate_change_is_not_accuracy": true,
-    "matcher_derived_held_out_is_not_ground_truth": true,
+    "identity_left_coordinates_unchanged": true,
     "independent_accuracy": "NOT VALIDATED",
     "independent_validation_status": "NOT VALIDATED",
-    "four_point_dlt_residuals_are_not_accuracy": true,
-    "partial_findings_from_exp001": {
-      "zncc_changes_coordinates": true,
-      "changed_count": 2,
-      "total_control_points": 11,
-      "acceptance_rate": "2/11 (18.2%)",
-      "rejection_rate": "9/11 (81.8%)",
-      "displacement_magnitude": "NOT_STORED_IN_EXP001",
-      "held_out_rmse_comparable_before_vs_after": false,
-      "reason_not_comparable": "EXP-001 k-fold ran on all 25 verified inliers equally for all matchers; per-variant unrefined vs refined held-out scoring requires a live EXP-005 run"
-    },
+    "independent_variable_applied": true,
     "limitations": [
       "Independent accuracy is NOT VALIDATED. There is no surveyed lunar control.",
       "Matcher-derived held-out points are not ground truth.",
@@ -429,18 +213,1380 @@
       "Full-raster registration remains blocked by the existing 16,777,216-pixel cap.",
       "This experiment runs pair_02_mid_equatorial only.",
       "No refinement algorithm, matcher, SIFT, representation, RANSAC, or registration change was introduced.",
-      "The held-out RMSE for A vs B cannot be compared from this record. The unselected-checkpoint scorer (14 remaining inliers) and control-point k-fold scorer require a live EXP-005 run with D:\\SIH mounted.",
-      "Displacement magnitude (mean and max pixels) is not stored in EXP-001. Only the count of changed coordinates (2/11) is known from this record.",
-      "9/11 ZNCC refinement attempts were rejected (acceptance rate 18.2%). The reason per point (below min_peak_zncc threshold vs below min_valid_pixel_fraction) is not recoverable from EXP-001 data.",
-      "D:\\SIH was not mounted during this session. Run python scripts/run_exp005.py with the drive mounted to obtain a complete live record."
-    ]
+      "Coordinates changed but held-out RMSE did not strictly decrease, so refinement is not shown to improve geometric consistency."
+    ],
+    "matcher_derived_held_out_is_not_ground_truth": true,
+    "max_displacement_pixels_by_variant": {
+      "A": 0.0,
+      "B": 2.7320256048170255
+    },
+    "mean_displacement_pixels_by_variant": {
+      "A": 0.0,
+      "B": 0.43898795391066714
+    },
+    "method_ids_by_variant": {
+      "A": "identity_passthrough",
+      "B": "zncc_parabolic_baseline"
+    },
+    "model_min_samples": 4,
+    "observed_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "primary_metric": "held_out_checkpoint_rmse_strictly_lower_after_measurable_coordinate_change",
+    "verified_inliers": 25
   },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 64114688,
+      "process_rss_delta_bytes": 98304,
+      "tracemalloc_current_bytes": 674425,
+      "tracemalloc_stage_peak_bytes": 675668
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 104529920,
+      "process_rss_delta_bytes": 40022016,
+      "tracemalloc_current_bytes": 40046649,
+      "tracemalloc_stage_peak_bytes": 81758335
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 63934464,
+      "process_rss_delta_bytes": -16453632,
+      "tracemalloc_current_bytes": 670666,
+      "tracemalloc_stage_peak_bytes": 180808982
+    },
+    "match": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 133304320,
+      "process_rss_delta_bytes": 28729344,
+      "tracemalloc_current_bytes": 40855891,
+      "tracemalloc_stage_peak_bytes": 85984943
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 64507904,
+      "process_rss_delta_bytes": 385024,
+      "tracemalloc_current_bytes": 675702,
+      "tracemalloc_stage_peak_bytes": 677968
+    },
+    "process_rss_bytes": 91881472,
+    "process_tracemalloc_current_bytes": 873163,
+    "process_tracemalloc_peak_bytes": 2537341,
+    "select_control_points": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 94814208,
+      "process_rss_delta_bytes": 4096,
+      "tracemalloc_current_bytes": 2460678,
+      "tracemalloc_stage_peak_bytes": 2463990
+    },
+    "verify_matches": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 94810112,
+      "process_rss_delta_bytes": 876544,
+      "tracemalloc_current_bytes": 2449822,
+      "tracemalloc_stage_peak_bytes": 2534346
+    }
+  },
+  "pair_manifest_id": "pair_02_mid_equatorial",
   "reproducibility": {
-    "exp001_git_commit": "779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
+    "git_commit": "91fd3c8d7e1355c4dbd10f4e9108d3f328d18c87",
     "numpy_version": "2.5.2",
     "opencv_version": "5.0.0",
     "platform": "Windows-11-10.0.26200-SP0",
-    "python_version": "3.14.3",
-    "note": "Reproducibility values from EXP-001 run. EXP-005 was not independently executed in this session."
-  }
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.001199999824166298,
+    "generate_representation": 1.5619955000001937,
+    "ingest_product": 84.86324819992296,
+    "match": 3.3357310998253524,
+    "preprocess": 0.0014144000597298145,
+    "select_control_points": 0.001167000038549304,
+    "total": 91.85365150007419,
+    "verify_matches": 0.7368940999731421
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 957360000,
+      "stage": "preprocess"
+    }
+  ],
+  "sift_baseline_experiment_id": "EXP-001",
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "gsd_ratio_note": "characterize_pair leaves gsd_ratio None when either product lacks ingested gsd_meters; EXP-005 does not invent that pair scalar",
+      "illumination_note": "sun_angle_difference_degrees is None: LunarProduct carries no Sun vector and SPICE is not implemented",
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18__M1504316436RC",
+      "representation_note": "characterize_pair leaves difficulty unset, so frozen generate_representation selects intensity, matching the EXP-001 SIFT arm."
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "ingested_gsd_meters": null,
+        "matching_pixel_count": 4132224,
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "resampling": "stride_decimation",
+      "shared_across_variants": true,
+      "source_matching_view": {
+        "ingested_gsd_meters": 0.28,
+        "matching_pixel_count": 3740250,
+        "matching_shape": [
+          4987,
+          750
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          79780,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 16,
+        "x_scale": 16.0,
+        "y_scale": 16.0
+      },
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M1504316436RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 79780,
+          "pixel_count": 957360000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.28,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "match": {
+      "coordinates": "original_image_pixels_after_matching_view_scale",
+      "matcher_id": "sift",
+      "raw_match_count": 919,
+      "representation_id": "intensity",
+      "shared_across_variants": true
+    },
+    "matcher_held_out_validation": {
+      "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+      "effective_folds": 5,
+      "folds_skipped": 0,
+      "folds_used": 5,
+      "held_out_point_count": 25,
+      "held_out_transfer_error_pixels": {
+        "count": 25,
+        "max": 3.0980838888403253,
+        "mean": 1.7388797941585585,
+        "median": 1.7959947582848357,
+        "min": 0.34569302673882957,
+        "rmse": 1.9043709874947647
+      },
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth_used": false,
+      "minimum_required": 5,
+      "model_id": "projective_2d_baseline",
+      "model_min_samples": 4,
+      "note": "This split is on verified correspondences and does not use refined coordinates. It is the EXP-001 SIFT control on this pair, identical for A and B. It is not independent accuracy.",
+      "requested_folds": 5,
+      "rng_seed": 0,
+      "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+      "units": "original image pixels (reference frame transfer error)",
+      "verified_correspondences_available": 25,
+      "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 957360000
+    },
+    "select_control_points": {
+      "control_point_count": 11,
+      "points": [
+        {
+          "reference_xy": [
+            3394.001953125,
+            44283.9140625
+          ],
+          "residual": 0.3047142941734978,
+          "source_xy": [
+            4485.87255859375,
+            12496.3154296875
+          ]
+        },
+        {
+          "reference_xy": [
+            2522.2705078125,
+            43730.87109375
+          ],
+          "residual": 0.34475622640674536,
+          "source_xy": [
+            6760.32080078125,
+            14560.44140625
+          ]
+        },
+        {
+          "reference_xy": [
+            1382.536865234375,
+            48319.01953125
+          ],
+          "residual": 0.35325602703325937,
+          "source_xy": [
+            11394.4658203125,
+            3651.3271484375
+          ]
+        },
+        {
+          "reference_xy": [
+            4672.8291015625,
+            43447.94921875
+          ],
+          "residual": 0.46254508190972826,
+          "source_xy": [
+            604.3101196289062,
+            13698.896484375
+          ]
+        },
+        {
+          "reference_xy": [
+            1775.232666015625,
+            24523.8359375
+          ],
+          "residual": 0.5744085576027083,
+          "source_xy": [
+            2811.57861328125,
+            63956.71484375
+          ]
+        },
+        {
+          "reference_xy": [
+            986.0819091796875,
+            30075.033203125
+          ],
+          "residual": 0.877789801703579,
+          "source_xy": [
+            6744.25244140625,
+            50392.08203125
+          ]
+        },
+        {
+          "reference_xy": [
+            2126.102783203125,
+            44637.921875
+          ],
+          "residual": 1.201303700426022,
+          "source_xy": [
+            8151.97607421875,
+            12526.7900390625
+          ]
+        },
+        {
+          "reference_xy": [
+            2520.6650390625,
+            45554.8203125
+          ],
+          "residual": 1.2457676451204176,
+          "source_xy": [
+            7339.19970703125,
+            9878.0302734375
+          ]
+        },
+        {
+          "reference_xy": [
+            1933.0308837890625,
+            45570.80078125
+          ],
+          "residual": 1.77464958390379,
+          "source_xy": [
+            8994.3095703125,
+            10278.3740234375
+          ]
+        },
+        {
+          "reference_xy": [
+            3168.558349609375,
+            45605.67578125
+          ],
+          "residual": 2.0533428380819068,
+          "source_xy": [
+            5543.5634765625,
+            9266.384765625
+          ]
+        },
+        {
+          "reference_xy": [
+            3834.91650390625,
+            44703.75
+          ],
+          "residual": 2.2392838196747564,
+          "source_xy": [
+            3371.2841796875,
+            11079.796875
+          ]
+        }
+      ],
+      "selection_succeeded": true,
+      "shared_across_variants": true
+    },
+    "spatial_distribution": {
+      "shared_across_variants": true,
+      "verified_match_coverage": 0.5084353283845922,
+      "verified_match_occupancy": {
+        "grid_bins": 8,
+        "reference_occupied_cells": 9,
+        "reference_occupied_fraction": 0.140625,
+        "source_occupied_cells": 11,
+        "source_occupied_fraction": 0.171875,
+        "total_cells": 64
+      }
+    },
+    "verify_matches": {
+      "exceeds_model_minimum": true,
+      "inlier_ratio": 0.02720348204570185,
+      "inlier_residual_max": 2.653533215225044,
+      "inlier_residual_min": 0.3047142941734978,
+      "inliers_above_model_minimum": 21,
+      "model_min_samples": 4,
+      "raw_match_count": 919,
+      "rejected_count": 894,
+      "residual_meaning": "verification_image_space_transfer_error_pixels",
+      "shared_across_variants": true,
+      "status_counts": {
+        "filtered": 0,
+        "inlier": 25,
+        "raw": 0,
+        "rejected": 894
+      },
+      "verified_inlier_count": 25
+    }
+  },
+  "status": "completed",
+  "variant_configuration": {
+    "A": {
+      "callable": "refine_points_with_settings(..., identity_passthrough)",
+      "label": "no_subpixel_refinement",
+      "method_id": "identity_passthrough",
+      "notes": "Identity passthrough is the designed ablation hook. It is not a sub-pixel method and is not cited as refinement accuracy.",
+      "role": "ablation_no_refinement"
+    },
+    "B": {
+      "callable": "refine_points(control_points, pair)",
+      "label": "existing_zncc_parabolic_baseline",
+      "method_id": "zncc_parabolic_baseline",
+      "notes": "Frozen two-argument refine_points() path. Algorithm is not redesigned for this experiment.",
+      "role": "same_modality_software_baseline",
+      "zncc_settings": {
+        "fine_half_width": 1.0,
+        "fine_step": 0.1,
+        "min_peak_zncc": 0.25,
+        "min_valid_pixel_fraction": 0.75,
+        "search_radius": 3,
+        "window_radius": 7
+      }
+    }
+  },
+  "variants": {
+    "A": {
+      "control_point_held_out": {
+        "design": "k-fold split of selected control-point coordinates; transform refitted on the complement of each fold and scored on the fold itself. Fold assignment is by point index, so unrefined vs refined lists of equal length share the same split.",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 11,
+        "held_out_transfer_error_pixels": {
+          "count": 11,
+          "max": 3.294314803190025,
+          "mean": 1.5958509101728504,
+          "median": 1.7271788348145896,
+          "min": 0.5256115454238447,
+          "rmse": 1.7823913141260208
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "population": "selected_control_points",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 11,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.5057020025709618
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "matcher_id": "sift",
+      "memory": {
+        "control_point_held_out": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2500481,
+          "tracemalloc_stage_peak_bytes": 2525259
+        },
+        "displacement_report": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2496037,
+          "tracemalloc_stage_peak_bytes": 2497232
+        },
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2487861,
+          "tracemalloc_stage_peak_bytes": 2489056
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94883840,
+          "process_rss_delta_bytes": 8192,
+          "tracemalloc_current_bytes": 2482068,
+          "tracemalloc_stage_peak_bytes": 2603717
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 24576,
+          "tracemalloc_current_bytes": 2485242,
+          "tracemalloc_stage_peak_bytes": 2527746
+        },
+        "unselected_verified_checkpoints": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2501725,
+          "tracemalloc_stage_peak_bytes": 2508215
+        },
+        "zncc_acceptance_report": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 94908416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2496757,
+          "tracemalloc_stage_peak_bytes": 2497952
+        }
+      },
+      "method_id": "identity_passthrough",
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 11,
+        "limitation": "INDETERMINATE means zero coordinates changed; the frozen ControlPoint contract has no per-point outcome field, so already-optimal cannot be distinguished from no measurable improvement. Coordinate change is not accuracy.",
+        "max_displacement_pixels": 0.0,
+        "mean_displacement_among_changed_pixels": null,
+        "mean_displacement_pixels": 0.0,
+        "method_id": "identity_passthrough",
+        "outcome": "INDETERMINATE",
+        "output_count": 11,
+        "per_point_displacement_pixels": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "points_after": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ],
+        "points_before": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ]
+      },
+      "register": {
+        "control_points_used_for_fit": 11,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "control_point_held_out": 0.008504900150001049,
+        "displacement_report": 0.00016229995526373386,
+        "evaluate": 0.0005131999496370554,
+        "refine_points": 0.002033800119534135,
+        "register": 0.0034088001120835543,
+        "unselected_verified_checkpoints": 0.0005411000456660986,
+        "variant_total": 0.015238100197166204,
+        "zncc_acceptance_report": 7.399986498057842e-05
+      },
+      "select_control_points": {
+        "control_point_count": 11,
+        "selection_succeeded": true
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 14,
+        "checkpoint_transfer_error_pixels": {
+          "count": 14,
+          "max": 2.8027201371332793,
+          "mean": 2.04846039581623,
+          "median": 2.080085197308751,
+          "min": 0.9839567191583467,
+          "rmse": 2.1243239946902492
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 14,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_shared_control_points": true,
+      "uses_shared_correspondences": true,
+      "variant_id": "A",
+      "zncc_acceptance": {
+        "accepted_count": null,
+        "available": false,
+        "method_id": "identity_passthrough",
+        "note": "ZNCC acceptance is only defined for zncc_parabolic_baseline; identity passthrough does not estimate a peak.",
+        "points": [],
+        "rejected_count": null,
+        "zncc_unavailable_count": 0
+      }
+    },
+    "B": {
+      "control_point_held_out": {
+        "design": "k-fold split of selected control-point coordinates; transform refitted on the complement of each fold and scored on the fold itself. Fold assignment is by point index, so unrefined vs refined lists of equal length share the same split.",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 11,
+        "held_out_transfer_error_pixels": {
+          "count": 11,
+          "max": 9.401578988593105,
+          "mean": 2.4401954678379503,
+          "median": 1.5588923111134136,
+          "min": 0.4087505804692691,
+          "rmse": 3.5420425879459874
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "population": "selected_control_points",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 11,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "matcher_id": "sift",
+      "memory": {
+        "control_point_held_out": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95412224,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2529607,
+          "tracemalloc_stage_peak_bytes": 2554326
+        },
+        "displacement_report": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95404032,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2518453,
+          "tracemalloc_stage_peak_bytes": 2519648
+        },
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95404032,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2512389,
+          "tracemalloc_stage_peak_bytes": 2513584
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95404032,
+          "process_rss_delta_bytes": 479232,
+          "tracemalloc_current_bytes": 2507241,
+          "tracemalloc_stage_peak_bytes": 2790046
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95404032,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2509789,
+          "tracemalloc_stage_peak_bytes": 2552285
+        },
+        "unselected_verified_checkpoints": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95412224,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 2530851,
+          "tracemalloc_stage_peak_bytes": 2537341
+        },
+        "zncc_acceptance_report": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 95412224,
+          "process_rss_delta_bytes": 8192,
+          "tracemalloc_current_bytes": 2527349,
+          "tracemalloc_stage_peak_bytes": 2816251
+        }
+      },
+      "method_id": "zncc_parabolic_baseline",
+      "refine_points": {
+        "coordinates_changed_count": 2,
+        "input_count": 11,
+        "limitation": "Coordinate change is not evidence of improved accuracy. Held-out geometric consistency must be compared separately.",
+        "max_displacement_pixels": 2.7320256048170255,
+        "mean_displacement_among_changed_pixels": 2.4144337465086694,
+        "mean_displacement_pixels": 0.43898795391066714,
+        "method_id": "zncc_parabolic_baseline",
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 11,
+        "per_point_displacement_pixels": [
+          0.0,
+          0.0,
+          0.0,
+          2.0968418882003133,
+          0.0,
+          0.0,
+          2.7320256048170255,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "points_after": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4671.535203927538,
+              43449.59924142086
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2128.4729417521585,
+              44636.563084229565
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ],
+        "points_before": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ]
+      },
+      "register": {
+        "control_points_used_for_fit": 11,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "control_point_held_out": 0.007663700031116605,
+        "displacement_report": 0.00014319992624223232,
+        "evaluate": 0.0003307000733911991,
+        "refine_points": 0.642893899930641,
+        "register": 0.002320700092241168,
+        "unselected_verified_checkpoints": 0.0004792001564055681,
+        "variant_total": 1.3087998002301902,
+        "zncc_acceptance_report": 0.6549684000201523
+      },
+      "select_control_points": {
+        "control_point_count": 11,
+        "selection_succeeded": true
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 14,
+        "checkpoint_transfer_error_pixels": {
+          "count": 14,
+          "max": 3.6091282975499652,
+          "mean": 2.0035371279772978,
+          "median": 2.04142745181857,
+          "min": 0.3478417094703969,
+          "rmse": 2.220870473622833
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 14,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_shared_control_points": true,
+      "uses_shared_correspondences": true,
+      "variant_id": "B",
+      "zncc_acceptance": {
+        "accepted_count": 2,
+        "available": true,
+        "method_id": "zncc_parabolic_baseline",
+        "points": [
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 0,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.2724716011746146,
+            "zncc_at_refined_reference": -0.2724716011746146
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 1,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": 0.21618319356127044,
+            "zncc_at_refined_reference": 0.21618319356127044
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 2,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.19838183738361384,
+            "zncc_at_refined_reference": -0.19838183738361384
+          },
+          {
+            "accepted": true,
+            "estimated_dx": -1.2938976349620979,
+            "estimated_dy": 1.6500226708627401,
+            "index": 3,
+            "observed_displacement_pixels": 2.0968418882003133,
+            "zncc_at_original_reference": 0.25520104097517565,
+            "zncc_at_refined_reference": 0.3567290883422322
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 4,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": 0.16241188241871501,
+            "zncc_at_refined_reference": 0.16241188241871501
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 5,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.016041955085305662,
+            "zncc_at_refined_reference": -0.016041955085305662
+          },
+          {
+            "accepted": true,
+            "estimated_dx": 2.370158549033682,
+            "estimated_dy": -1.3587907704336601,
+            "index": 6,
+            "observed_displacement_pixels": 2.7320256048170255,
+            "zncc_at_original_reference": 0.24158587709076357,
+            "zncc_at_refined_reference": 0.4618217119063565
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 7,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.24623758048470154,
+            "zncc_at_refined_reference": -0.24623758048470154
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 8,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.027862294026897372,
+            "zncc_at_refined_reference": -0.027862294026897372
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 9,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.1817593206670737,
+            "zncc_at_refined_reference": -0.1817593206670737
+          },
+          {
+            "accepted": false,
+            "estimated_dx": null,
+            "estimated_dy": null,
+            "index": 10,
+            "observed_displacement_pixels": 0.0,
+            "zncc_at_original_reference": -0.2261705537596422,
+            "zncc_at_refined_reference": -0.2261705537596422
+          }
+        ],
+        "rejected_count": 9,
+        "zncc_unavailable_count": 0
+      }
+    }
+  },
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=957360000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
 }
