@@ -1,14 +1,22 @@
 import { useEffect, useRef } from "react";
 import {
   AdditiveBlending,
+  BoxGeometry,
   BufferGeometry,
+  ConeGeometry,
+  CylinderGeometry,
+  DoubleSide,
   Float32BufferAttribute,
+  Group,
   LineBasicMaterial,
   LineLoop,
   Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
   PerspectiveCamera,
   Points,
   PointsMaterial,
+  RingGeometry,
   Scene,
   ShaderMaterial,
   SphereGeometry,
@@ -90,7 +98,6 @@ function regionAt(progress: number) {
   const b = REGION_MILESTONES[idx + 1] ?? a;
   const range = b.progress - a.progress;
   const rawT = range > 0 ? (clamped - a.progress) / range : 0;
-  // Smoothstep easing for cinematic camera glide
   const t = rawT * rawT * (3 - 2 * rawT);
 
   return {
@@ -125,7 +132,7 @@ varying vec3 vPosition;
 ${noiseFunctions}
 void main() {
   vec3 direction = normalize(position);
-  float relief = fbm(direction * 7.5) * .055 + noise(direction * 38.) * .015;
+  float relief = fbm(direction * 7.5) * .058 + noise(direction * 38.) * .016;
   vec3 displaced = position + normal * relief;
   vNormal = normalize(normalMatrix * normal);
   vPosition = direction;
@@ -147,14 +154,14 @@ void main() {
   float craterField = smoothstep(.058, .0, abs(noise(vPosition * 20.) - .5));
   float microCraters = smoothstep(.03, .0, abs(noise(vPosition * 85.) - .5));
 
-  vec3 basalt = vec3(.14, .17, .19);
-  vec3 highland = vec3(.55, .58, .56);
+  vec3 basalt = vec3(.13, .16, .18);
+  vec3 highland = vec3(.56, .59, .57);
   vec3 albedo = mix(basalt, highland, terrain * .88 + smallDetail * .18 + microDetail * .06);
-  albedo *= 1. - (craterField * .36 + microCraters * .18);
+  albedo *= 1. - (craterField * .38 + microCraters * .18);
 
-  // Subtle atmospheric / solar rim illumination
+  // Rim glow
   float rim = pow(1. - max(0., n.z), 3.0);
-  gl_FragColor = vec4(albedo * (diffuse + .12) + vec3(.12, .22, .24) * rim, 1.);
+  gl_FragColor = vec4(albedo * (diffuse + .12) + vec3(.14, .24, .26) * rim, 1.);
 }`;
 
 const cpVertexShader = `
@@ -162,8 +169,7 @@ varying float vAlpha;
 void main() {
   vAlpha = 1.0;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  // Crisp point sizing based on camera distance
-  gl_PointSize = clamp(24.0 * (280.0 / -mv.z), 10.0, 48.0);
+  gl_PointSize = clamp(26.0 * (280.0 / -mv.z), 10.0, 52.0);
   gl_Position  = projectionMatrix * mv;
 }`;
 
@@ -173,10 +179,9 @@ void main() {
   vec2 d = gl_PointCoord - 0.5;
   float r = length(d) * 2.0;
   if (r > 1.0) discard;
-  // Radar target reticle: bright center dot with concentric pulse ring
   float dotCenter = smoothstep(0.32, 0.08, r);
   float ring = smoothstep(0.72, 0.86, r) * smoothstep(1.0, 0.86, r);
-  float intensity = (dotCenter * 1.2 + ring * 1.6) * vAlpha;
+  float intensity = (dotCenter * 1.3 + ring * 1.8) * vAlpha;
   gl_FragColor = vec4(0.2, 0.98, 0.82, clamp(intensity, 0.0, 1.0));
 }`;
 
@@ -199,17 +204,45 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
     const camera = new PerspectiveCamera(33, 1, 0.1, 100);
     camera.position.set(0, 0, 3.8);
 
-    // Moon mesh
+    // 3D Moon mesh container
+    const moonGroup = new Group();
+    scene.add(moonGroup);
+
+    // Moon mesh with relief displacement shader
     const moonMaterial = new ShaderMaterial({ vertexShader, fragmentShader });
     const moon = new Mesh(new SphereGeometry(1.15, 192, 192), moonMaterial);
-    scene.add(moon);
+    moonGroup.add(moon);
 
-    // Sensor scan footprint boundary line
+    // 3D Selenographic Grid Arcs
+    const gridMat = new LineBasicMaterial({
+      color: 0x22d3ee,
+      transparent: true,
+      opacity: 0.15,
+    });
+    // Latitude parallel lines
+    [-45, -20, 0, 20, 45].forEach((latDeg) => {
+      const latRad = latDeg * (Math.PI / 180);
+      const rRing = 1.154 * Math.cos(latRad);
+      const yRing = 1.154 * Math.sin(latRad);
+      const ringGeom = new BufferGeometry();
+      const segs = 64;
+      const pts = new Float32Array((segs + 1) * 3);
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        pts[i * 3]     = Math.cos(a) * rRing;
+        pts[i * 3 + 1] = yRing;
+        pts[i * 3 + 2] = Math.sin(a) * rRing;
+      }
+      ringGeom.setAttribute("position", new Float32BufferAttribute(pts, 3));
+      moonGroup.add(new LineLoop(ringGeom, gridMat));
+    });
+
+    // 3D Sensor scan footprint boundary line
     const footprintGeom = new BufferGeometry();
     const footprintPos = new Float32Array(FOOTPRINT_POINTS.length * 3);
     FOOTPRINT_POINTS.forEach((pt, i) => {
-      const v = lonLatToVec3(pt.lon, pt.lat, 1.156);
-      footprintPos[i * 3] = v.x;
+      const v = lonLatToVec3(pt.lon, pt.lat, 1.158);
+      footprintPos[i * 3]     = v.x;
       footprintPos[i * 3 + 1] = v.y;
       footprintPos[i * 3 + 2] = v.z;
     });
@@ -217,18 +250,40 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
     const footprintMat = new LineBasicMaterial({
       color: 0x34f5c5,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.85,
       blending: AdditiveBlending,
     });
     const footprintLine = new LineLoop(footprintGeom, footprintMat);
-    scene.add(footprintLine);
+    moonGroup.add(footprintLine);
 
-    // Control point markers (verified inliers)
+    // 3D Vertical Laser Beacons & Targeting Pins for Verified Control Points
+    const cpBeaconsGroup = new Group();
+    const beaconCylinderGeom = new CylinderGeometry(0.006, 0.014, 0.45, 12);
+    const beaconCylinderMat = new MeshBasicMaterial({
+      color: 0x38ef7d,
+      transparent: true,
+      opacity: 0.85,
+      blending: AdditiveBlending,
+    });
+
+    CP_POINTS.forEach((cp) => {
+      const surfPos = lonLatToVec3(cp.lon, cp.lat, 1.156);
+      const normal = surfPos.clone().normalize();
+
+      const bMesh = new Mesh(beaconCylinderGeom, beaconCylinderMat);
+      // Position halfway up the normal
+      bMesh.position.copy(surfPos).addScaledVector(normal, 0.225);
+      bMesh.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), normal);
+      cpBeaconsGroup.add(bMesh);
+    });
+    moonGroup.add(cpBeaconsGroup);
+
+    // Control point surface markers (verified inliers)
     const cpGeom = new BufferGeometry();
     const cpPos = new Float32Array(CP_POINTS.length * 3);
     CP_POINTS.forEach((cp, i) => {
-      const v = lonLatToVec3(cp.lon, cp.lat, 1.162);
-      cpPos[i * 3] = v.x;
+      const v = lonLatToVec3(cp.lon, cp.lat, 1.164);
+      cpPos[i * 3]     = v.x;
       cpPos[i * 3 + 1] = v.y;
       cpPos[i * 3 + 2] = v.z;
     });
@@ -241,14 +296,14 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
       blending: AdditiveBlending,
     });
     const cpPoints = new Points(cpGeom, cpMat);
-    scene.add(cpPoints);
+    moonGroup.add(cpPoints);
 
-    // Ambient deep-space starfield
+    // Ambient Starfield
     const starsGeom = new BufferGeometry();
     const stars = new Float32Array(800 * 3);
     for (let i = 0; i < stars.length; i += 3) {
-      stars[i] = (Math.random() - 0.5) * 18;
-      stars[i + 1] = (Math.random() - 0.5) * 12;
+      stars[i]     = (Math.random() - 0.5) * 20;
+      stars[i + 1] = (Math.random() - 0.5) * 14;
       stars[i + 2] = -4 - Math.random() * 6;
     }
     starsGeom.setAttribute("position", new Float32BufferAttribute(stars, 3));
@@ -256,23 +311,33 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
       starsGeom,
       new PointsMaterial({
         color: 0x8be5e0,
-        size: 0.015,
+        size: 0.016,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.55,
         blending: AdditiveBlending,
-      }),
+      })
     );
     scene.add(starField);
+
+    // Mouse Parallax for 3D Depth
+    let mouseParallaxX = 0;
+    let mouseParallaxY = 0;
+    const onMouseMove = (e: MouseEvent) => {
+      mouseParallaxX = (e.clientX / window.innerWidth - 0.5) * 0.18;
+      mouseParallaxY = (e.clientY / window.innerHeight - 0.5) * 0.14;
+    };
+    window.addEventListener("mousemove", onMouseMove);
 
     // Smooth camera state
     let camDist = 3.75;
     let camLon = 23.43;
     let camLat = 0.65;
     let camFov = 33;
-
     const springK = 0.045;
 
+    let orbiterAngle = 0;
     let frame = 0;
+
     const render = (time: number) => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -290,11 +355,10 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
       let targetDist = regionTarget.dist;
       let targetFov = regionTarget.fov;
 
-      // If a specific target coordinate is hovered / focused
       if (targetRef.current) {
         targetLon = targetRef.current.lon;
         targetLat = targetRef.current.lat;
-        targetDist = 1.48 * (targetRef.current.zoomMultiplier ?? 1.0);
+        targetDist = 1.46 * (targetRef.current.zoomMultiplier ?? 1.0);
         targetFov = 6.2;
       }
 
@@ -307,14 +371,18 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
       camera.fov = camFov;
       camera.updateProjectionMatrix();
 
-      // Look directly at the target lon/lat on the sphere surface
+      // Look directly at the target on sphere
       const lookAt = lonLatToVec3(camLon, camLat, 1.15);
       const normal = lookAt.clone().normalize();
 
-      // Camera stands directly above this portion of the Moon
       camera.position.copy(lookAt).addScaledVector(normal, camDist);
 
-      // Prevent gimbal flip near polar extremes
+      // Subtle 3D mouse parallax tilt
+      if (!reducedMotion) {
+        camera.position.x += mouseParallaxX;
+        camera.position.y += mouseParallaxY;
+      }
+
       if (Math.abs(normal.y) > 0.92) {
         camera.up.set(0, 0, normal.y < 0 ? 1 : -1);
       } else {
@@ -322,23 +390,26 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
       }
       camera.lookAt(lookAt);
 
-      // Subtle slow planetary rotation only in deep space / hero view
+      // Slow planetary rotation only in deep space
       if (!reducedMotion && progressRef.current < 0.12 && !targetRef.current) {
         moon.rotation.y = time * 0.000015;
       }
 
-      // Control points & footprint visibility & pulse
+      // Control points & footprint visibility
       const isResultsField = progressRef.current > 0.32 && progressRef.current < 0.72;
-      const pulse = 0.55 + 0.45 * Math.sin(time * 0.0035);
+      const pulse = 0.55 + 0.45 * Math.sin(time * 0.004);
 
       if (isResultsField || targetRef.current) {
         cpPoints.visible = true;
         footprintLine.visible = true;
+        cpBeaconsGroup.visible = true;
         (cpMat as ShaderMaterial).opacity = pulse;
-        footprintMat.opacity = 0.35 + 0.4 * pulse;
+        footprintMat.opacity = 0.4 + 0.45 * pulse;
+        beaconCylinderMat.opacity = 0.5 + 0.35 * pulse;
       } else {
         cpPoints.visible = false;
         footprintLine.visible = false;
+        cpBeaconsGroup.visible = false;
       }
 
       starField.rotation.y = reducedMotion ? 0 : time * 0.000004;
@@ -350,6 +421,7 @@ export function MoonScene({ progress, reducedMotion, focusedTarget }: MoonSceneP
 
     return () => {
       cancelAnimationFrame(frame);
+      window.removeEventListener("mousemove", onMouseMove);
       moon.geometry.dispose();
       moonMaterial.dispose();
       starsGeom.dispose();
