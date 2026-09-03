@@ -146,3 +146,48 @@ class OrbSettings:
             raise ValueError("scale_factor must be > 1")
         if self.n_levels < 1:
             raise ValueError("n_levels must be >= 1")
+
+
+@dataclass(frozen=True, slots=True)
+class CoarseToFineSettings:
+    """Fixed engineering defaults for tiled multi-scale SIFT.
+
+    These values were chosen before the pair_02 run. They are not SIH
+    thresholds and must not be retuned after seeing a real-data result.
+    """
+
+    fine_stride_factor: float = 0.5
+    max_pixels_per_tile: int = 4_194_304
+    max_fine_tiles: int = 4
+    bbox_expand_fraction: float = 0.25
+    tile_overlap_fraction: float = 0.125
+    reference_margin_fraction: float = 0.20
+    reference_margin_min_px: int = 256
+    max_matches_per_tile: int = 200
+    dedup_radius_px: float = 8.0
+    coarse_min_inliers: int = 5
+    min_tile_matching_side: int = 32
+
+    def __post_init__(self) -> None:
+        if self.fine_stride_factor <= 0.0 or self.fine_stride_factor > 1.0:
+            raise ValueError("fine_stride_factor must be in (0, 1]")
+        if self.max_pixels_per_tile <= 0:
+            raise ValueError("max_pixels_per_tile must be positive")
+        if self.max_fine_tiles < 1:
+            raise ValueError("max_fine_tiles must be >= 1")
+        if self.bbox_expand_fraction < 0.0:
+            raise ValueError("bbox_expand_fraction must be >= 0")
+        if not 0.0 <= self.tile_overlap_fraction < 1.0:
+            raise ValueError("tile_overlap_fraction must be in [0, 1)")
+        if self.reference_margin_fraction < 0.0:
+            raise ValueError("reference_margin_fraction must be >= 0")
+        if self.reference_margin_min_px < 0:
+            raise ValueError("reference_margin_min_px must be >= 0")
+        if self.max_matches_per_tile < 1:
+            raise ValueError("max_matches_per_tile must be >= 1")
+        if self.dedup_radius_px < 0.0:
+            raise ValueError("dedup_radius_px must be >= 0")
+        if self.coarse_min_inliers < 5:
+            raise ValueError("coarse_min_inliers must be >= 5")
+        if self.min_tile_matching_side < 1:
+            raise ValueError("min_tile_matching_side must be >= 1")
