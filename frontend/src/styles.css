@@ -4,6 +4,8 @@
   --void: #03060d;
   --void-2: #060d18;
   --panel: rgba(11, 22, 36, 0.72);
+  --glass: rgba(8, 19, 32, 0.4);
+  --glass-strong: rgba(8, 19, 32, 0.58);
   --ink: #e9f0ee;
   --mist: #8fa5aa;
   --dim: #5b7178;
@@ -26,9 +28,13 @@ body {
   overflow-x: hidden;
   color: var(--ink);
   font-family: var(--sans);
+  /* The page-wide space field. Sections no longer carry their own opaque
+     backgrounds, so this is what shows through everywhere, not just
+     behind the hero. */
   background:
     radial-gradient(circle at 82% 6%, #0f2a3f 0, transparent 34rem),
     radial-gradient(circle at 10% 90%, #0a2030 0, transparent 30rem),
+    radial-gradient(circle at 50% 55%, #081726 0, transparent 40rem),
     var(--void);
 }
 a { color: inherit; text-decoration: none; }
@@ -36,6 +42,14 @@ button, input { font: inherit; color: inherit; }
 *:focus-visible { outline: 1px solid var(--signal); outline-offset: 2px; }
 
 .app-shell { position: relative; overflow: hidden; isolation: isolate; }
+
+/* ---------- global stacking order ----------
+   ambient-stars / nebula-field (negative z) sit behind absolutely
+   everything. moon-layer is fixed and pinned above them but must sit
+   BELOW all readable content, so every section below is explicitly
+   promoted to z-index: 2 — a static (non-positioned) element does not
+   automatically out-rank a positioned z-index layer regardless of DOM
+   order, so this has to be explicit rather than assumed. */
 
 .scroll-satellite {
   position: fixed; z-index: 10; top: 19vh; right: 7vw; width: 126px; height: 60px;
@@ -55,17 +69,31 @@ button, input { font: inherit; color: inherit; }
 
 /* ---------- global texture ---------- */
 .ambient-stars {
-  position: fixed; z-index: -5; inset: 0; pointer-events: none; opacity: .5;
+  position: fixed; z-index: -5; inset: 0; pointer-events: none; opacity: .55;
   background-image:
     radial-gradient(circle at 12% 18%, rgba(201,255,94,.9) 0 1px, transparent 1.6px),
     radial-gradient(circle at 78% 16%, rgba(116,226,230,.7) 0 1px, transparent 1.4px),
     radial-gradient(circle at 38% 72%, rgba(255,255,255,.8) 0 1px, transparent 1.5px),
     radial-gradient(circle at 86% 83%, rgba(255,255,255,.6) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 55% 40%, rgba(255,255,255,.5) 0 1px, transparent 1.3px);
-  background-size: 263px 227px, 347px 293px, 401px 379px, 509px 443px, 600px 500px;
+    radial-gradient(circle at 55% 40%, rgba(255,255,255,.5) 0 1px, transparent 1.3px),
+    radial-gradient(circle at 24% 48%, rgba(255,255,255,.55) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 64% 88%, rgba(201,255,94,.5) 0 1px, transparent 1.4px);
+  background-size: 263px 227px, 347px 293px, 401px 379px, 509px 443px, 600px 500px, 340px 610px, 470px 380px;
   animation: twinkle 7s ease-in-out infinite alternate;
 }
 @keyframes twinkle { from { opacity: .35; } to { opacity: .6; } }
+
+/* Soft colour washes that drift very slowly with scroll to give the
+   starfield a sense of depth without costing layout — background-position
+   is animated via transform on a pseudo-sized layer, not repainted. */
+.nebula-field {
+  position: fixed; z-index: -4; inset: -10%; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(ellipse 60% 40% at 70% 15%, rgba(116,226,230,.10), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 15% 80%, rgba(201,255,94,.08), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 50% 50%, rgba(122,90,180,.06), transparent 70%);
+  filter: blur(2px);
+}
 
 .grain {
   position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .05; mix-blend-mode: overlay;
@@ -76,23 +104,67 @@ button, input { font: inherit; color: inherit; }
   background: radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(2,5,10,.55) 100%);
 }
 
+/* ---------- the orbiting moon ----------
+   Fixed to the viewport, positioned purely with transform (x/y/scale via
+   framer-motion, applied inline) so scroll-linked movement never touches
+   layout. z-index sits above the starfield/nebula and below every section
+   (see stacking note above), so the moon reads as passing *behind* the
+   floating glass content as you scroll past it. */
+.moon-layer {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  contain: layout style;
+}
+.moon-orbit-wrap {
+  position: absolute; top: 0; left: 0;
+  width: min(50vw, 620px); height: min(50vw, 620px);
+  /* Recenters the box on the animated (x, y) point rather than anchoring
+     by its top-left corner. */
+  margin-top: calc(min(50vw, 620px) / -2);
+  margin-left: calc(min(50vw, 620px) / -2);
+  will-change: transform;
+  filter: drop-shadow(0 60px 120px rgba(0,0,0,.5));
+}
+/* The two things that can actually render inside .moon-orbit-wrap: the
+   Three.js fallback canvas, or a live Cesium viewer. Both just need to
+   fill whatever box they're given. */
+.moon-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.cesium-moon { position: absolute; inset: 0; background: transparent; }
+.cesium-moon .cesium-viewer, .cesium-moon .cesium-viewer-cesiumWidget, .cesium-moon .cesium-widget { width: 100%; height: 100%; }
+/* Cesium's own widgets.css paints the viewer, widget, and canvas with an
+   opaque black background by default — that's the hard-edged box you saw
+   sitting on top of the starfield. All of these need to be forced
+   transparent explicitly; the alpha-enabled WebGL context (see
+   CesiumMoon.tsx) only gets you halfway there. */
+.cesium-moon .cesium-viewer,
+.cesium-moon .cesium-viewer-cesiumWidget,
+.cesium-moon .cesium-widget,
+.cesium-moon .cesium-widget canvas {
+  background: transparent !important;
+}
+.cesium-moon .cesium-viewer-toolbar { display: none; }
+/* The required ion attribution stays (removing it violates Cesium ion's
+   terms), just restyled as a small, low-contrast chip instead of the
+   default black credits bar. */
+.cesium-moon .cesium-viewer-bottom { background: transparent; }
+.cesium-moon .cesium-widget-credits {
+  right: 12px; bottom: 8px; font: 8px var(--mono); opacity: .55;
+  background: transparent !important; padding: 0;
+}
+.cesium-moon .cesium-credit-expand-link, .cesium-moon .cesium-credit-text, .cesium-moon .cesium-credit-text a { color: var(--mist) !important; }
+
 /* ---------- hero ---------- */
 .hero {
-  height: clamp(680px, 100svh, 980px); position: relative; overflow: hidden; isolation: isolate;
+  position: relative; z-index: 2;
+  height: clamp(680px, 100svh, 980px); overflow: hidden; isolation: isolate;
   border-bottom: 1px solid var(--line);
 }
-.moon-canvas {
-  position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%;
-}
-.cesium-moon { position: absolute; inset: 0; z-index: 0; }
-.cesium-moon .cesium-viewer, .cesium-moon .cesium-viewer-cesiumWidget, .cesium-moon .cesium-widget { width: 100%; height: 100%; }
-.cesium-moon .cesium-viewer-toolbar { display: none; }
-.cesium-moon .cesium-widget-credits { right: 12px; bottom: 8px; font: 8px var(--mono); opacity: .65; }
 .hero::before {
   content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
   background:
-    linear-gradient(100deg, rgba(3,6,13,.94), rgba(3,6,13,.1) 58%, rgba(3,6,13,.85)),
-    linear-gradient(0deg, rgba(3,6,13,.95), transparent 38%);
+    linear-gradient(100deg, rgba(3,6,13,.75), rgba(3,6,13,.05) 58%, rgba(3,6,13,.65)),
+    linear-gradient(0deg, rgba(3,6,13,.85), transparent 38%);
 }
 .hero::after {
   content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none;
@@ -158,12 +230,28 @@ h1 em {
 @keyframes rotateMoon { from { transform: rotate(-28deg); } to { transform: rotate(332deg); } }
 
 
-/* ---------- bridge / workflow ---------- */
-.bridge, .results-shell, .quality, .report { position: relative; }
-.bridge {
-  padding: 80px 4vw 72px; border-bottom: 1px solid var(--line);
-  background: linear-gradient(135deg, rgba(10,26,40,.85), rgba(4,10,18,.95));
+/* ---------- floating glass content ----------
+   Sections themselves carry no opaque fill any more — the starfield and
+   the orbiting moon show straight through. Content instead sits inside
+   bordered, blurred "glass" panels, so it reads as cards drifting in open
+   space rather than a stacked set of solid page blocks. */
+.glass-panel {
+  position: relative;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.45),
+    0 0 0 1px rgba(255,255,255,.03) inset,
+    0 1px 0 rgba(255,255,255,.05) inset;
+  padding: clamp(28px, 4vw, 56px);
 }
+
+/* ---------- bridge / workflow ---------- */
+.bridge, .results-shell, .quality, .report { position: relative; z-index: 2; }
+.bridge { padding: 80px 4vw 72px; }
 .bridge .eyebrow { color: var(--cyan); }
 .workflow { display: grid; grid-template-columns: repeat(5,1fr); margin-top: 22px; border-top: 1px solid var(--line); }
 .workflow > div { display: grid; min-height: 112px; align-content: start; gap: 22px; padding: 18px 16px 0 0; border-right: 1px solid var(--line); }
@@ -171,16 +259,7 @@ h1 em {
 .workflow span { max-width: 130px; color: #cfe0dd; font-size: 13px; line-height: 1.35; }
 
 /* ---------- results ---------- */
-.results-shell {
-  padding: 100px 4vw;
-  background: radial-gradient(circle at 75% 12%, rgba(20,62,80,.24), transparent 30rem), linear-gradient(180deg,#050f1a,#071a27);
-  border-bottom: 1px solid var(--line);
-}
-.results-shell::before {
-  content: ""; position: absolute; pointer-events: none; inset: 0; opacity: .22;
-  background-image: linear-gradient(rgba(116,226,230,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(116,226,230,.08) 1px, transparent 1px);
-  background-size: 72px 72px; mask-image: linear-gradient(to bottom, black, transparent 55%);
-}
+.results-shell { padding: 100px 4vw; }
 .section-header, .metric-strip, .evidence-grid, .explorer-controls, .rejected-note { position: relative; }
 .section-header { display: flex; align-items: start; justify-content: space-between; gap: 30px; }
 .section-header h2, .quality h2, .report h2 { font-size: clamp(2.4rem, 4.6vw, 4.6rem); font-weight: 600; }
@@ -188,12 +267,12 @@ h1 em {
   padding: 8px 10px; border: 1px solid rgba(255,157,133,.6); background: rgba(255,157,133,.06);
   color: var(--danger); font: 9px var(--mono); letter-spacing: .1em; white-space: nowrap; height: fit-content;
 }
-.metric-strip { display: grid; grid-template-columns: repeat(4,1fr); margin: 50px 0 30px; border: 1px solid var(--line); border-right: 0; background: rgba(8,24,36,.6); backdrop-filter: blur(10px); }
+.metric-strip { display: grid; grid-template-columns: repeat(4,1fr); margin: 50px 0 30px; border: 1px solid var(--line); border-right: 0; background: rgba(8,24,36,.4); }
 .metric-strip div { min-width: 0; padding: 22px 17px; border-right: 1px solid var(--line); }
 .metric-strip b { display: block; color: var(--signal); font-size: clamp(1.8rem, 3.8vw, 3.4rem); letter-spacing: -.02em; font-family: var(--sans); }
 .metric-strip span { color: var(--mist); font-size: 11px; }
 
-.evidence-grid { display: grid; min-height: 420px; grid-template-columns: 1fr 92px 1fr; overflow: hidden; border: 1px solid var(--line); background: #050d16; box-shadow: 0 18px 60px rgba(0,0,0,.25); }
+.evidence-grid { display: grid; min-height: 420px; grid-template-columns: 1fr 92px 1fr; overflow: hidden; border: 1px solid var(--line); background: rgba(5,13,22,.55); box-shadow: 0 18px 60px rgba(0,0,0,.25); }
 .raster {
   position: relative; min-height: 420px; margin: 0; overflow: hidden;
   background: radial-gradient(circle at 28% 22%,#8fa693 0 2%,transparent 3%), radial-gradient(circle at 72% 78%,#527a76 0 3%,transparent 4%), repeating-radial-gradient(circle at 40% 50%,#6c8985 0 2px,#45605e 3px 18px);
@@ -212,7 +291,7 @@ h1 em {
 .raster-point { position: absolute; z-index: 3; width: 11px; height: 11px; border: 2px solid var(--signal); border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 0 5px rgba(201,255,94,.14), 0 0 16px var(--signal); }
 .raster figcaption { position: absolute; z-index: 3; bottom: 16px; left: 18px; display: grid; color: white; font: 600 12px var(--mono); }
 .raster figcaption span { margin-top: 5px; opacity: .7; font: 9px var(--sans); letter-spacing: .02em; }
-.correspondence-rail { position: relative; border-inline: 1px solid var(--line); background: linear-gradient(180deg,#0b2432,#050f18); }
+.correspondence-rail { position: relative; border-inline: 1px solid var(--line); background: linear-gradient(180deg, rgba(11,36,50,.6), rgba(5,15,24,.6)); }
 .correspondence-rail p { padding: 20px 12px; color: #a9c7c6; font: 9px var(--mono); letter-spacing: .06em; line-height: 1.6; }
 .correspondence-rail span { position: absolute; left: 16px; width: 60px; height: 1px; transform: rotate(-35deg); transform-origin: left; background: var(--signal); box-shadow: 0 0 13px rgba(201,255,94,.8); }
 
@@ -229,24 +308,25 @@ h1 em {
 .rejected-note { padding: 14px; border: 1px solid rgba(255,157,133,.28); border-top: 0; background: rgba(255,157,133,.07); color: #ffcabf; font-size: 12px; }
 
 /* ---------- quality ---------- */
-.quality { display: grid; grid-template-columns: 1.1fr .9fr; gap: 70px; padding: 105px 8vw; border-bottom: 1px solid var(--line); background: linear-gradient(125deg,#0a2332,#050e18 70%); }
+.quality { display: grid; grid-template-columns: 1.1fr .9fr; gap: 34px; padding: 105px 8vw; align-items: start; }
 .quality-copy, .certificate { position: relative; }
 .quality-copy > p:last-child { max-width: 500px; color: #b6c9c7; line-height: 1.8; }
-.certificate { margin: 0; border-top: 1px solid var(--line); }
+.certificate { margin: 0; }
 .certificate div { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; padding: 17px 0; border-bottom: 1px solid var(--line); }
+.certificate div:last-child { border-bottom: 0; }
 .certificate dt { color: var(--cyan); font: 10px var(--mono); letter-spacing: .04em; }
 .certificate dd { margin: 0; color: #e7efed; font-size: 13px; }
 
 /* ---------- report ---------- */
-.report { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding: 100px 4vw; border-bottom: 1px solid var(--line); background: radial-gradient(circle at 15% 20%, rgba(201,255,94,.08), transparent 24rem), #040c16; }
+.report { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding: 100px 4vw; }
 .report .eyebrow { color: var(--cyan); }
-.report-card { display: grid; min-height: 260px; align-content: start; gap: 18px; padding: 30px; border: 1px solid rgba(201,255,94,.4); background: linear-gradient(135deg, rgba(17,48,56,.75), rgba(5,12,20,.9)); box-shadow: inset 0 0 45px rgba(201,255,94,.03); }
+.report-card { display: grid; min-height: 260px; align-content: start; gap: 18px; }
 .report-mark { color: var(--signal); font-size: 24px; }
 .report-card p { margin: 0; color: #a9c0be; line-height: 1.6; font-size: 13px; }
 .report-card button { justify-self: start; }
-.technical { align-self: start; grid-column: 2; padding: 24px; border: 1px solid var(--line); background: rgba(8,24,36,.6); color: #b9cecc; font: 10px var(--mono); overflow-wrap: anywhere; }
+.technical { align-self: start; grid-column: 2; color: #b9cecc; font: 10px var(--mono); overflow-wrap: anywhere; }
 .technical p { line-height: 1.7; }
-footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 4vw; color: #7d9998; background: #03060d; font: 10px var(--mono); letter-spacing: .05em; }
+footer { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 20px; padding: 24px 4vw; color: #7d9998; background: #03060d; font: 10px var(--mono); letter-spacing: .05em; }
 
 @keyframes blink { 50% { opacity: .55; text-shadow: 0 0 8px var(--signal); } }
 
@@ -255,12 +335,13 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   .nav-status { display: none; }
   .hero-copy { padding-top: 21vh; }
   .workflow { grid-template-columns: repeat(3,1fr); }
-  .quality { gap: 40px; padding-inline: 6vw; }
+  .quality { gap: 24px; padding-inline: 6vw; }
   .evidence-grid { grid-template-columns: 1fr 72px 1fr; }
   .correspondence-rail span { width: 48px; }
 }
 @media (max-width: 760px) {
   .scroll-satellite { top: 16vh; right: 4vw; transform: scale(.65); transform-origin: top right; }
+  .moon-orbit-wrap { width: min(78vw, 460px); height: min(78vw, 460px); margin-top: calc(min(78vw, 460px) / -2); margin-left: calc(min(78vw, 460px) / -2); }
   .top-nav { display: flex; padding: 20px 22px; }
   .top-nav > div { display: none; }
   .nav-status { display: block; }
@@ -273,6 +354,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   .mission-control input { min-height: 32px; }
   .orbital-path { top: 18%; right: -36vw; width: 96vw; height: 96vw; opacity: .7; }
   .bridge, .results-shell { padding: 60px 22px; }
+  .glass-panel { border-radius: 16px; padding: 22px; }
   .workflow, .metric-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .workflow > div { min-height: 88px; padding-right: 10px; }
   .workflow > div:nth-child(even), .metric-strip div:nth-child(even) { border-right: 0; }
@@ -294,10 +376,10 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   .correspondence-rail span:nth-of-type(4) { left: 76%; }
   .explorer-controls { align-items: stretch; }
   .explorer-controls button, .report button { align-self: start; min-height: 44px; }
-  .quality, .report { grid-template-columns: 1fr; gap: 30px; padding: 60px 22px; }
+  .quality, .report { grid-template-columns: 1fr; gap: 20px; padding: 60px 22px; }
   .certificate div { grid-template-columns: 1fr; gap: 6px; }
-  .technical { grid-column: auto; padding: 18px; }
-  .report-card { min-height: 0; padding: 22px; }
+  .technical { grid-column: auto; }
+  .report-card { min-height: 0; }
   footer { padding: 20px; line-height: 1.5; }
 }
 @media (max-width: 390px) {
@@ -319,7 +401,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 @media print {
-  .hero, .bridge, .explorer-controls button, footer { display: none; }
+  .hero, .bridge, .moon-layer, .explorer-controls button, footer { display: none; }
   .results-shell, .quality, .report { padding: 30px; color: #000; background: #fff; }
-  .report-card, .technical { color: #000; background: #eee; border-color: #777; }
+  .glass-panel { color: #000; background: #eee; border-color: #777; backdrop-filter: none; box-shadow: none; }
 }

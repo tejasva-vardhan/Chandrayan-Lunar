@@ -35,13 +35,32 @@ export function CesiumMoon({ children, reducedMotion }: CesiumMoonProps) {
           sceneModePicker: false,
           selectionIndicator: false,
           timeline: false,
+          // Without an alpha-enabled WebGL context, scene.backgroundColor's
+          // alpha channel below has nothing to composite against and the
+          // canvas paints solid black wherever there's no geometry — that's
+          // the hard-edged black box behind the Moon. premultipliedAlpha:
+          // false keeps the moon's own colors from darkening as they blend
+          // with the transparent page background behind them.
+          contextOptions: { webgl: { alpha: true, premultipliedAlpha: false } },
         });
-        viewer.resolutionScale = Math.min(window.devicePixelRatio * 1.25, 2);
+        viewer.resolutionScale = Math.min(window.devicePixelRatio * 1.45, 2.35);
         const tileset = await Cesium3DTileset.fromIonAssetId(moonAssetId);
         if (disposed) return;
-        tileset.maximumScreenSpaceError = 3;
+        tileset.maximumScreenSpaceError = 2;
         viewer.scene.primitives.add(tileset);
         viewer.scene.backgroundColor.alpha = 0;
+        // Cesium's own widgets.css opts the viewer container and canvas
+        // into an opaque black background regardless of the context/scene
+        // settings above — that has to be overridden separately (see
+        // App.css's .cesium-moon rules) or the box reappears.
+        // enableRotate stays on so drag-to-orbit still works if this ever
+        // renders inside a container with pointer-events enabled. In the
+        // current layout (App.tsx's .moon-layer sets pointer-events: none,
+        // since the moon is a decorative, scroll-driven element sitting
+        // behind floating content) drag input never reaches the canvas —
+        // only the scroll listener below drives the camera. Flip
+        // .moon-layer to pointer-events: auto if manual dragging should
+        // come back.
         viewer.scene.screenSpaceCameraController.enableRotate = true;
         viewer.scene.screenSpaceCameraController.enableZoom = false;
         // A Moon-scale stand-off reveals the curved limb instead of a flat close-up tile.

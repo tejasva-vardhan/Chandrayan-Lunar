@@ -69,11 +69,17 @@ export function MoonScene({ progress, reducedMotion }: MoonSceneProps) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.25));
     const scene = new Scene();
     const camera = new PerspectiveCamera(33, 1, .1, 100);
-    camera.position.z = 3.45;
+    // Start a little further back than the resting distance so the first
+    // mission-timeline scrub reads as closing in on the Moon.
+    camera.position.z = 3.9;
 
     const moonMaterial = new ShaderMaterial({ vertexShader, fragmentShader });
     const moon = new Mesh(new SphereGeometry(1.15, 192, 192), moonMaterial);
-    moon.position.set(.7, .04, 0);
+    // Previously offset to x=.7 to dodge the hero headline sharing the same
+    // canvas. The moon now lives in its own dedicated, centered stage
+    // (App.tsx's .moon-orbit-wrap handles on-screen position via CSS
+    // transform), so the model itself sits centered.
+    moon.position.set(0, 0, 0);
     scene.add(moon);
 
     const starsGeometry = new BufferGeometry();
@@ -95,8 +101,11 @@ export function MoonScene({ progress, reducedMotion }: MoonSceneProps) {
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      const targetX = .55 - progressRef.current * .82;
-      moon.position.x += (targetX - moon.position.x) * .035;
+      // The mission-timeline slider now dollies the camera in rather than
+      // sliding the moon sideways — "approach" reads as getting closer,
+      // which fits the Deep space -> Lunar orbit -> Region scan narrative.
+      const targetZ = 3.9 - progressRef.current * 1.15;
+      camera.position.z += (targetZ - camera.position.z) * .035;
       moon.rotation.y = reducedMotion ? .18 : time * .000025;
       moon.rotation.x = .14;
       starField.rotation.y = reducedMotion ? 0 : time * .000006;
