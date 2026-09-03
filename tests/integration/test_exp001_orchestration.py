@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from src.ingestion import DATA_ROOT_ENV
 from src.io.exp001.config import EXPERIMENT_ID
 from src.io.exp001.run import Exp001Error, run_exp001, run_exp001_pair_from_products
 from src.io.exp001.validation import INDEPENDENT_ACCURACY_NOT_VALIDATED
@@ -225,8 +226,12 @@ def test_record_carries_the_hypothesis_and_fixed_configuration(
     assert set(record["matcher_configuration"]) == set(PORTFOLIO_MATCHER_IDS)
 
 
-def test_missing_data_root_is_reported_not_guessed() -> None:
-    with pytest.raises(Exp001Error, match="CHANDRAYAN_DATA_ROOT"):
+def test_missing_data_root_is_reported_not_guessed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(DATA_ROOT_ENV, raising=False)
+
+    with pytest.raises(Exp001Error, match=DATA_ROOT_ENV):
         run_exp001(data_root=None, pair_ids=["pair_01_equatorial"])
 
 
