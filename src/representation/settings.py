@@ -35,12 +35,23 @@ class MatchingViewSettings:
         ``LunarProduct.gsd_meters`` is missing. Empty by default so the
         frozen ``generate_representation(pair)`` path never invents a GSD.
         Values here are not written onto ``LunarProduct``.
+    relative_stride_factor_by_instrument:
+        Optional multipliers applied to the already-selected integer stride
+        for named instruments. Empty by default so the frozen
+        ``generate_representation(pair)`` path is unchanged. Factor 2.0 is
+        approximately 2× additional stride-decimation (coarser matching
+        view). Factor 0.5 is approximately 2× finer spatial sampling of the
+        same source raster. This changes the pixels SIFT sees; it does not
+        invent a metadata GSD. A factor may produce a matching view larger
+        than ``max_pixels_per_image``; that is intentional when testing
+        finer sampling. Still ``stride_decimation``; never interpolation.
     """
 
     max_pixels_per_image: int = 4_194_304
     downsample_method: str = "stride_decimation"
     scale_policy: str = SCALE_POLICY_PER_IMAGE_PIXEL_BUDGET
     catalog_gsd_meters_by_instrument: tuple[tuple[str, float], ...] = ()
+    relative_stride_factor_by_instrument: tuple[tuple[str, float], ...] = ()
 
 
 def unvalidated_matching_view_defaults() -> MatchingViewSettings:

@@ -59,6 +59,7 @@ def test_default_settings_remain_per_image_pixel_budget() -> None:
     assert settings.max_pixels_per_image == 4_194_304
     assert settings.downsample_method == "stride_decimation"
     assert settings.catalog_gsd_meters_by_instrument == ()
+    assert settings.relative_stride_factor_by_instrument == ()
 
 
 def test_per_image_policy_ignores_gsd_difference() -> None:
