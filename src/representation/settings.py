@@ -45,6 +45,12 @@ class MatchingViewSettings:
         invent a metadata GSD. A factor may produce a matching view larger
         than ``max_pixels_per_image``; that is intentional when testing
         finer sampling. Still ``stride_decimation``; never interpolation.
+    representation_id_override:
+        Optional representation label. ``None`` (default) keeps existing
+        ``select_representation_id`` routing so EXP-000/EXP-004 stay
+        unchanged. Set to ``"illumination"`` to request the engineering
+        illumination-normalization baseline without changing the frozen
+        ``generate_representation(pair)`` signature.
     """
 
     max_pixels_per_image: int = 4_194_304
@@ -52,6 +58,7 @@ class MatchingViewSettings:
     scale_policy: str = SCALE_POLICY_PER_IMAGE_PIXEL_BUDGET
     catalog_gsd_meters_by_instrument: tuple[tuple[str, float], ...] = ()
     relative_stride_factor_by_instrument: tuple[tuple[str, float], ...] = ()
+    representation_id_override: str | None = None
 
 
 def unvalidated_matching_view_defaults() -> MatchingViewSettings:
