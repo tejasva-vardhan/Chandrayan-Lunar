@@ -1,0 +1,2826 @@
+{
+  "comparison": {
+    "rows": [
+      {
+        "control_point_count": 11,
+        "deterministic": true,
+        "held_out_rmse": 1.9043709874947647,
+        "inlier_ratio": 0.02720348204570185,
+        "match_rss_delta_bytes": 51458048,
+        "match_runtime_seconds": 9.945120699936524,
+        "matcher_id": "sift",
+        "protocol_id": "sift_single_matching_view",
+        "raw_matches": 919,
+        "reference_occupied_cells": 9,
+        "residual_max": 2.653533215225044,
+        "residual_median": 1.686909606565198,
+        "residual_rmse": 1.686182317045492,
+        "source_concentration": 0.28,
+        "source_max_matches_per_cell": 7,
+        "source_occupied_cells": 11,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "variant": "A",
+        "variant_runtime_seconds": 21.068981199990958,
+        "verified_inliers": 25,
+        "verified_match_coverage": 0.5084353283845922
+      },
+      {
+        "control_point_count": 23,
+        "deterministic": true,
+        "held_out_rmse": 2.086068243667503,
+        "inlier_ratio": 0.044171779141104296,
+        "match_rss_delta_bytes": 19046400,
+        "match_runtime_seconds": 74.03846649988554,
+        "matcher_id": "sift_coarse_to_fine",
+        "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+        "raw_matches": 1630,
+        "reference_occupied_cells": 14,
+        "residual_max": 2.9998847466001095,
+        "residual_median": 2.0795200094551447,
+        "residual_rmse": 2.0805026673513356,
+        "source_concentration": 0.1527777777777778,
+        "source_max_matches_per_cell": 11,
+        "source_occupied_cells": 23,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "variant": "B",
+        "variant_runtime_seconds": 150.2513610997703,
+        "verified_inliers": 72,
+        "verified_match_coverage": 0.4072370354719722
+      }
+    ],
+    "spatial_delta": {
+      "source_cells_gained": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        25,
+        26,
+        27,
+        30,
+        33,
+        34,
+        35,
+        36,
+        41,
+        48,
+        50,
+        51,
+        52,
+        56,
+        57,
+        58
+      ],
+      "source_cells_lost": [
+        3,
+        4,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13,
+        44
+      ],
+      "source_cells_shared": [
+        42,
+        49
+      ]
+    }
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M1504316436RC",
+    "lroc_source_name": "M1504316436RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18"
+  },
+  "decision_rule": "The independent variable is valid only if variant A is frozen match() one-way SIFT on the shared RepresentationResult and variant B is run_coarse_to_fine_sift on that same representation. B is SUPPORTED only if: (1) verified inliers strictly increase, (2) source and reference 8x8 occupied-cell counts are each >= A's, (3) both variants fit a transform from more than 4 verified inliers, (4) B match-stage runtime is at most 12x A's. Raw match count is not success. Inlier ratio is reported, not gated, because B is allowed to add local candidates. Bounding-box coverage and Clark-Evans R are reported, not gated. Matcher-derived held-out RMSE is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If H1 fails, report NOT SUPPORTED and do not retune.",
+  "failed_stage": null,
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_01_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "experiment_id": "EXP-000",
+    "follow_up_pair_manifest_id": "pair_01_equatorial",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest for a given pair",
+      "SIFT detector and descriptor (EXP-001 SIFT arm)",
+      "Lowe ratio 0.75 and min_matches 4",
+      "coarse matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "preprocessing identity passthrough above the 16,777,216-pixel cap",
+      "intensity representation routing",
+      "downstream geometric model projective_2d_baseline",
+      "downstream estimator ransac_style_baseline",
+      "verification residual_limit 3.0, max_trials 500, rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences per variant",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "rng_seed": 0
+    },
+    "independent_variable": "correspondence_generation_path",
+    "inherited_from": "EXP-000",
+    "matcher_family": "sift",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "matching_view_held_fixed_for_control": true,
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "record_id": "PS-CORRESPONDENCE",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 12.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "sift_baseline_experiment_id": "EXP-001",
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "same_grid_as_control_point_selection": true,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "hypothesis": "H1: On pair_02_mid_equatorial, a coarse-to-fine tiled multi-scale SIFT path that searches at half the matching-view stride inside the coarse geometric overlap, then uses the same downstream geometric verification, recovers more verified inliers and maintains or improves 8x8 occupancy versus the EXP-001 single matching-view SIFT baseline. H0: multi-scale tiled search does not improve verified quality and spatial occupancy, or the transform becomes unstable, or runtime is pathological.",
+  "inherited_from": "EXP-000",
+  "interpretation": {
+    "critical_measurements_missing": false,
+    "decision": "SUPPORTED",
+    "decision_reason": "verified inliers increased, spatial occupancy was maintained or improved, transform stayed above the model minimum, and match runtime stayed within the 12x limit",
+    "decision_rule": "The independent variable is valid only if variant A is frozen match() one-way SIFT on the shared RepresentationResult and variant B is run_coarse_to_fine_sift on that same representation. B is SUPPORTED only if: (1) verified inliers strictly increase, (2) source and reference 8x8 occupied-cell counts are each >= A's, (3) both variants fit a transform from more than 4 verified inliers, (4) B match-stage runtime is at most 12x A's. Raw match count is not success. Inlier ratio is reported, not gated, because B is allowed to add local candidates. Bounding-box coverage and Clark-Evans R are reported, not gated. Matcher-derived held-out RMSE is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If H1 fails, report NOT SUPPORTED and do not retune.",
+    "expected_protocols": {
+      "A": "sift_single_matching_view",
+      "B": "sift_coarse_to_fine_tiled_multiscale"
+    },
+    "expected_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "hypothesis_supported": true,
+    "independent_accuracy": "NOT VALIDATED",
+    "independent_validation_status": "NOT VALIDATED",
+    "independent_variable_applied": true,
+    "inlier_ratio_is_not_gated": true,
+    "limitations": [
+      "Independent accuracy is NOT VALIDATED.",
+      "Matcher-derived held-out points are not ground truth.",
+      "Raw match count is not a success criterion.",
+      "Inlier ratio is reported, not gated.",
+      "Occupied-cell ratio is an engineering diagnostic, not a frozen SIH uniformity score.",
+      "Overlap is not recomputed from the products.",
+      "Full-raster registration remains blocked by the 16,777,216-pixel cap.",
+      "If H1 is not supported, parameters are not retuned."
+    ],
+    "model_min_samples": 4,
+    "observed_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "quality_improved": true,
+    "quality_reason": "verified inliers 25 -> 72",
+    "raw_match_count_is_not_success": true,
+    "reference_occupied_cells_by_variant": {
+      "A": 9,
+      "B": 14
+    },
+    "runtime_acceptable": true,
+    "runtime_reason": "B match runtime 74.038s is within 12x A (9.945s)",
+    "source_occupied_cells_by_variant": {
+      "A": 11,
+      "B": 23
+    },
+    "spatial_maintained_or_improved": true,
+    "spatial_reason": "source occupied cells 11 -> 23, reference occupied cells 9 -> 14",
+    "transform_reason": "both variants fitted a transform from more than 4 verified inliers",
+    "transform_stable": true,
+    "verified_inliers_by_variant": {
+      "A": 25,
+      "B": 72
+    }
+  },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 17121280,
+      "process_rss_delta_bytes": 270336,
+      "tracemalloc_current_bytes": 662832,
+      "tracemalloc_stage_peak_bytes": 664075
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 59285504,
+      "process_rss_delta_bytes": 41504768,
+      "tracemalloc_current_bytes": 40035073,
+      "tracemalloc_stage_peak_bytes": 81746847
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 16695296,
+      "process_rss_delta_bytes": -64589824,
+      "tracemalloc_current_bytes": 659089,
+      "tracemalloc_stage_peak_bytes": 180796504
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 17776640,
+      "process_rss_delta_bytes": 630784,
+      "tracemalloc_current_bytes": 664278,
+      "tracemalloc_stage_peak_bytes": 666528
+    },
+    "process_rss_bytes": 83709952,
+    "process_tracemalloc_current_bytes": 1065178,
+    "process_tracemalloc_peak_bytes": 45750312
+  },
+  "pair_manifest_id": "pair_02_mid_equatorial",
+  "record_id": "PS-CORRESPONDENCE",
+  "reproducibility": {
+    "git_commit": "071666b89a3c302e9d75ad42c2ad9d093020f2eb",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.005549499997869134,
+    "generate_representation": 6.067974699893966,
+    "ingest_product": 87.9014425999485,
+    "preprocess": 0.005377100082114339,
+    "total": 265.4361205000896
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 957360000,
+      "stage": "preprocess"
+    }
+  ],
+  "sift_baseline_experiment_id": "EXP-001",
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18__M1504316436RC"
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "ingested_gsd_meters": null,
+        "matching_pixel_count": 4132224,
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "shared_across_variants": true,
+      "source_matching_view": {
+        "ingested_gsd_meters": 0.28,
+        "matching_pixel_count": 3740250,
+        "matching_shape": [
+          4987,
+          750
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          79780,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 16,
+        "x_scale": 16.0,
+        "y_scale": 16.0
+      }
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M1504316436RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 79780,
+          "pixel_count": 957360000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.28,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 957360000
+    }
+  },
+  "status": "completed",
+  "variant_configuration": {
+    "A": {
+      "callable": "match(pair, representation)",
+      "label": "exp001_sift_single_matching_view",
+      "protocol_id": "sift_single_matching_view",
+      "role": "control_existing_sift_baseline"
+    },
+    "B": {
+      "callable": "run_coarse_to_fine_sift(pair, representation)",
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "label": "sift_coarse_to_fine_tiled_multiscale",
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "role": "candidate_correspondence_core"
+    }
+  },
+  "variants": {
+    "A": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "geometry_inspection": {
+        "inliers": [
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4543.865234375,
+              43377.1328125
+            ],
+            "residual": 0.8277192696814142,
+            "source_xy": [
+              945.2175903320312,
+              13977.7998046875
+            ]
+          },
+          {
+            "reference_xy": [
+              4322.2587890625,
+              44290.8046875
+            ],
+            "residual": 1.9333864747641392,
+            "source_xy": [
+              1870.354248046875,
+              11787.0986328125
+            ]
+          },
+          {
+            "reference_xy": [
+              4296.56640625,
+              44094.0859375
+            ],
+            "residual": 1.4162989803880288,
+            "source_xy": [
+              1876.9530029296875,
+              12316.1640625
+            ]
+          },
+          {
+            "reference_xy": [
+              4218.7158203125,
+              44648.45703125
+            ],
+            "residual": 2.653533215225044,
+            "source_xy": [
+              2263.7939453125,
+              10938.515625
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          },
+          {
+            "reference_xy": [
+              1467.8082275390625,
+              26558.28515625
+            ],
+            "residual": 1.1847305733960982,
+            "source_xy": [
+              4309.30908203125,
+              58994.6484375
+            ]
+          },
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              2343.3994140625,
+              44737.30859375
+            ],
+            "residual": 1.686909606565198,
+            "source_xy": [
+              7582.30322265625,
+              12108.9365234375
+            ]
+          },
+          {
+            "reference_xy": [
+              2247.914794921875,
+              45478.73046875
+            ],
+            "residual": 2.374664465443022,
+            "source_xy": [
+              8079.53515625,
+              10286.58203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2203.5546875,
+              45323.66015625
+            ],
+            "residual": 2.2657480637971448,
+            "source_xy": [
+              8158.15673828125,
+              10717.5166015625
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              1601.1328125,
+              47733.52734375
+            ],
+            "residual": 1.8426220530135893,
+            "source_xy": [
+              10604.6435546875,
+              4983.45751953125
+            ]
+          },
+          {
+            "reference_xy": [
+              1472.2596435546875,
+              47407.16015625
+            ],
+            "residual": 1.763641101754683,
+            "source_xy": [
+              10854.3310546875,
+              5924.71337890625
+            ]
+          },
+          {
+            "reference_xy": [
+              1452.3514404296875,
+              47241.36328125
+            ],
+            "residual": 2.020366186947672,
+            "source_xy": [
+              10857.6220703125,
+              6365.57958984375
+            ]
+          },
+          {
+            "reference_xy": [
+              1354.0120849609375,
+              47496.9921875
+            ],
+            "residual": 2.5307834573862107,
+            "source_xy": [
+              11207.2236328125,
+              5781.75
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1190.59130859375,
+              46674.76953125
+            ],
+            "residual": 1.4790515434302853,
+            "source_xy": [
+              11409.5859375,
+              8006.16259765625
+            ]
+          },
+          {
+            "reference_xy": [
+              1206.828857421875,
+              47046.26171875
+            ],
+            "residual": 2.526290403077723,
+            "source_xy": [
+              11481.25,
+              7039.857421875
+            ]
+          }
+        ],
+        "note": "coordinates are original-image pixels; occupancy is the full-image 8x8 grid, not the inlier bounding box",
+        "points_recorded": 25,
+        "points_truncated": false,
+        "source_cell_counts_row_major": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          7,
+          2,
+          3,
+          2,
+          0,
+          1,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "source_occupied_cols": 7,
+        "source_occupied_rows": 4,
+        "verified_inlier_count": 25
+      },
+      "match": {
+        "coarse_to_fine_diagnostics": null,
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "protocol_id": "sift_single_matching_view",
+        "raw_match_count": 919,
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 919,
+          "raw_match_count_second": 919,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity"
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 25,
+        "held_out_transfer_error_pixels": {
+          "count": 25,
+          "max": 3.0980838888403253,
+          "mean": 1.7388797941585585,
+          "median": 1.7959947582848357,
+          "min": 0.34569302673882957,
+          "rmse": 1.9043709874947647
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 25,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 115683328,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 42527201,
+          "tracemalloc_stage_peak_bytes": 42528396
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 111042560,
+          "process_rss_delta_bytes": 51458048,
+          "tracemalloc_current_bytes": 40834797,
+          "tracemalloc_stage_peak_bytes": 84990633
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 113631232,
+          "process_rss_delta_bytes": 2588672,
+          "tracemalloc_current_bytes": 41527053,
+          "tracemalloc_stage_peak_bytes": 85680505
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 115630080,
+          "process_rss_delta_bytes": 770048,
+          "tracemalloc_current_bytes": 42521679,
+          "tracemalloc_stage_peak_bytes": 42800717
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 115679232,
+          "process_rss_delta_bytes": 49152,
+          "tracemalloc_current_bytes": 42524329,
+          "tracemalloc_stage_peak_bytes": 42566625
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 114860032,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 42496157,
+          "tracemalloc_stage_peak_bytes": 42499469
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 114855936,
+          "process_rss_delta_bytes": 1224704,
+          "tracemalloc_current_bytes": 42485269,
+          "tracemalloc_stage_peak_bytes": 42569321
+        }
+      },
+      "protocol_id": "sift_single_matching_view",
+      "refine_points": {
+        "coordinates_changed_count": 2,
+        "input_count": 11,
+        "limitation": null,
+        "outcome": "COORDINATES_UPDATED",
+        "output_count": 11
+      },
+      "register": {
+        "control_points_used_for_fit": 11,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "evaluate": 0.0008984999731183052,
+        "match": 9.945120699936524,
+        "match_repeat": 7.273047300055623,
+        "refine_points": 1.8358776001259685,
+        "register": 0.0058313999325037,
+        "select_control_points": 0.002145300153642893,
+        "variant_total": 21.068981199990958,
+        "verify_matches": 2.0060603998135775
+      },
+      "select_control_points": {
+        "control_point_count": 11,
+        "points": [
+          {
+            "reference_xy": [
+              3394.001953125,
+              44283.9140625
+            ],
+            "residual": 0.3047142941734978,
+            "source_xy": [
+              4485.87255859375,
+              12496.3154296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2522.2705078125,
+              43730.87109375
+            ],
+            "residual": 0.34475622640674536,
+            "source_xy": [
+              6760.32080078125,
+              14560.44140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1382.536865234375,
+              48319.01953125
+            ],
+            "residual": 0.35325602703325937,
+            "source_xy": [
+              11394.4658203125,
+              3651.3271484375
+            ]
+          },
+          {
+            "reference_xy": [
+              4672.8291015625,
+              43447.94921875
+            ],
+            "residual": 0.46254508190972826,
+            "source_xy": [
+              604.3101196289062,
+              13698.896484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1775.232666015625,
+              24523.8359375
+            ],
+            "residual": 0.5744085576027083,
+            "source_xy": [
+              2811.57861328125,
+              63956.71484375
+            ]
+          },
+          {
+            "reference_xy": [
+              986.0819091796875,
+              30075.033203125
+            ],
+            "residual": 0.877789801703579,
+            "source_xy": [
+              6744.25244140625,
+              50392.08203125
+            ]
+          },
+          {
+            "reference_xy": [
+              2126.102783203125,
+              44637.921875
+            ],
+            "residual": 1.201303700426022,
+            "source_xy": [
+              8151.97607421875,
+              12526.7900390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2520.6650390625,
+              45554.8203125
+            ],
+            "residual": 1.2457676451204176,
+            "source_xy": [
+              7339.19970703125,
+              9878.0302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1933.0308837890625,
+              45570.80078125
+            ],
+            "residual": 1.77464958390379,
+            "source_xy": [
+              8994.3095703125,
+              10278.3740234375
+            ]
+          },
+          {
+            "reference_xy": [
+              3168.558349609375,
+              45605.67578125
+            ],
+            "residual": 2.0533428380819068,
+            "source_xy": [
+              5543.5634765625,
+              9266.384765625
+            ]
+          },
+          {
+            "reference_xy": [
+              3834.91650390625,
+              44703.75
+            ],
+            "residual": 2.2392838196747564,
+            "source_xy": [
+              3371.2841796875,
+              11079.796875
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 25,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7,
+            0,
+            2,
+            4,
+            2,
+            0,
+            2,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.3663076308719734,
+          "concentration": 0.28,
+          "max_matches_per_cell": 7,
+          "mean_nearest_neighbour_px": 595.700385020198,
+          "occupied_cells": 9,
+          "occupied_cols": 6,
+          "occupied_fraction": 0.140625,
+          "occupied_rows": 4,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            7,
+            2,
+            3,
+            2,
+            0,
+            1,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.5057745168489801,
+          "concentration": 0.28,
+          "max_matches_per_cell": 7,
+          "mean_nearest_neighbour_px": 1564.9287992195261,
+          "occupied_cells": 11,
+          "occupied_cols": 7,
+          "occupied_fraction": 0.171875,
+          "occupied_rows": 4,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.5084353283845922,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 9,
+          "reference_occupied_fraction": 0.140625,
+          "source_occupied_cells": 11,
+          "source_occupied_fraction": 0.171875,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 14,
+        "checkpoint_transfer_error_pixels": {
+          "count": 14,
+          "max": 3.6091282975499652,
+          "mean": 2.0035371279772978,
+          "median": 2.04142745181857,
+          "min": 0.3478417094703969,
+          "rmse": 2.220870473622833
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 14,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": true,
+      "uses_shared_representation": true,
+      "variant_id": "A",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.02720348204570185,
+        "inlier_residual_max": 2.653533215225044,
+        "inlier_residual_min": 0.3047142941734978,
+        "inliers_above_model_minimum": 21,
+        "model_min_samples": 4,
+        "raw_match_count": 919,
+        "rejected_count": 894,
+        "residual_distribution": {
+          "count": 25,
+          "max": 2.653533215225044,
+          "mean": 1.5175025188362667,
+          "median": 1.686909606565198,
+          "min": 0.3047142941734978,
+          "not_accuracy": true,
+          "p95": 2.529884846524513,
+          "rmse": 1.686182317045492,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 25,
+          "raw": 0,
+          "rejected": 894
+        },
+        "verified_inlier_count": 25
+      }
+    },
+    "B": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 23,
+          "inlier_count": 72,
+          "inlier_ratio": 0.044171779141104296,
+          "rmse": 2.0805026673513356,
+          "spatial_coverage": 0.34877038347545253
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "geometry_inspection": {
+        "inliers": [
+          {
+            "reference_xy": [
+              2618.8076171875,
+              25727.74609375
+            ],
+            "residual": 0.08279036043114635,
+            "source_xy": [
+              827.7669067382812,
+              60256.88671875
+            ]
+          },
+          {
+            "reference_xy": [
+              1928.2022705078125,
+              21254.779296875
+            ],
+            "residual": 2.063725962186809,
+            "source_xy": [
+              1288.8560791015625,
+              72186.8828125
+            ]
+          },
+          {
+            "reference_xy": [
+              1707.5755615234375,
+              22837.55078125
+            ],
+            "residual": 1.6953958318076965,
+            "source_xy": [
+              2412.73974609375,
+              68302.2734375
+            ]
+          },
+          {
+            "reference_xy": [
+              1597.7088623046875,
+              22673.556640625
+            ],
+            "residual": 2.350833184072644,
+            "source_xy": [
+              2668.314697265625,
+              68809.28125
+            ]
+          },
+          {
+            "reference_xy": [
+              2890.48828125,
+              34684.75
+            ],
+            "residual": 1.2707765236760946,
+            "source_xy": [
+              2969.932861328125,
+              37232.3671875
+            ]
+          },
+          {
+            "reference_xy": [
+              1904.812255859375,
+              26356.240234375
+            ],
+            "residual": 2.477685484738024,
+            "source_xy": [
+              3010.66845703125,
+              59176.41015625
+            ]
+          },
+          {
+            "reference_xy": [
+              2710.79736328125,
+              35656.3203125
+            ],
+            "residual": 1.8186206613592886,
+            "source_xy": [
+              3781.032470703125,
+              34889.46484375
+            ]
+          },
+          {
+            "reference_xy": [
+              1043.0672607421875,
+              22208.484375
+            ],
+            "residual": 1.271026670352883,
+            "source_xy": [
+              4053.916015625,
+              70395.609375
+            ]
+          },
+          {
+            "reference_xy": [
+              1037.114990234375,
+              22387.4921875
+            ],
+            "residual": 2.421818088703321,
+            "source_xy": [
+              4130.53173828125,
+              69938.40625
+            ]
+          },
+          {
+            "reference_xy": [
+              1014.869873046875,
+              22316.650390625
+            ],
+            "residual": 1.6732755619970423,
+            "source_xy": [
+              4174.2509765625,
+              70143.3671875
+            ]
+          },
+          {
+            "reference_xy": [
+              1156.6727294921875,
+              23930.505859375
+            ],
+            "residual": 2.8900718202891214,
+            "source_xy": [
+              4293.0693359375,
+              65917.3125
+            ]
+          },
+          {
+            "reference_xy": [
+              1991.6636962890625,
+              32019.158203125
+            ],
+            "residual": 2.5921210278948483,
+            "source_xy": [
+              4597.0009765625,
+              44668.87109375
+            ]
+          },
+          {
+            "reference_xy": [
+              2395.74365234375,
+              38550.44140625
+            ],
+            "residual": 1.6212480417151263,
+            "source_xy": [
+              5582.66845703125,
+              27752.98046875
+            ]
+          },
+          {
+            "reference_xy": [
+              506.89239501953125,
+              23414.265625
+            ],
+            "residual": 2.739151308901274,
+            "source_xy": [
+              5939.79150390625,
+              67710.828125
+            ]
+          },
+          {
+            "reference_xy": [
+              1603.490234375,
+              33154.0390625
+            ],
+            "residual": 2.7442662962680906,
+            "source_xy": [
+              6032.71142578125,
+              42055.421875
+            ]
+          },
+          {
+            "reference_xy": [
+              637.4505004882812,
+              35122.859375
+            ],
+            "residual": 1.8720040375393197,
+            "source_xy": [
+              9338.009765625,
+              37722.3671875
+            ]
+          },
+          {
+            "reference_xy": [
+              465.3710021972656,
+              34700.91796875
+            ],
+            "residual": 2.929083622001063,
+            "source_xy": [
+              9677.7470703125,
+              38915.046875
+            ]
+          },
+          {
+            "reference_xy": [
+              421.18475341796875,
+              34881.734375
+            ],
+            "residual": 2.6480928312848278,
+            "source_xy": [
+              9857.693359375,
+              38491.28125
+            ]
+          },
+          {
+            "reference_xy": [
+              549.6049194335938,
+              40523.9765625
+            ],
+            "residual": 1.7231820753969005,
+            "source_xy": [
+              11324.7099609375,
+              24033.03515625
+            ]
+          },
+          {
+            "reference_xy": [
+              553.4761962890625,
+              40493.4052734375
+            ],
+            "residual": 0.48520744276423367,
+            "source_xy": [
+              11299.9541015625,
+              24110.34130859375
+            ]
+          },
+          {
+            "reference_xy": [
+              2342.499267578125,
+              33720.565185546875
+            ],
+            "residual": 0.11826838353386807,
+            "source_xy": [
+              4170.8232421875,
+              40077.0390625
+            ]
+          },
+          {
+            "reference_xy": [
+              721.0368041992188,
+              39551.0078125
+            ],
+            "residual": 1.3604742059086974,
+            "source_xy": [
+              10533.00390625,
+              26392.86767578125
+            ]
+          },
+          {
+            "reference_xy": [
+              2772.631103515625,
+              34255.0498046875
+            ],
+            "residual": 2.161197898194923,
+            "source_xy": [
+              3148.32666015625,
+              38410.912109375
+            ]
+          },
+          {
+            "reference_xy": [
+              662.5132446289062,
+              39686.146484375
+            ],
+            "residual": 1.0418136896692776,
+            "source_xy": [
+              10737.1162109375,
+              26086.95458984375
+            ]
+          },
+          {
+            "reference_xy": [
+              2576.551513671875,
+              34557.296142578125
+            ],
+            "residual": 1.3171719875569616,
+            "source_xy": [
+              3791.423095703125,
+              37776.59375
+            ]
+          },
+          {
+            "reference_xy": [
+              885.3552856445312,
+              39445.828125
+            ],
+            "residual": 1.842728552321992,
+            "source_xy": [
+              10050.6669921875,
+              26540.57861328125
+            ]
+          },
+          {
+            "reference_xy": [
+              247.2897491455078,
+              34605.71337890625
+            ],
+            "residual": 2.2864858557122862,
+            "source_xy": [
+              10254.14453125,
+              39322.880859375
+            ]
+          },
+          {
+            "reference_xy": [
+              1446.5203857421875,
+              38717.44970703125
+            ],
+            "residual": 2.361504883550848,
+            "source_xy": [
+              8264.509765625,
+              27999.9287109375
+            ]
+          },
+          {
+            "reference_xy": [
+              2336.548583984375,
+              38388.0009765625
+            ],
+            "residual": 1.9342402909089136,
+            "source_xy": [
+              5684.91796875,
+              28203.69921875
+            ]
+          },
+          {
+            "reference_xy": [
+              2814.185546875,
+              34310.445556640625
+            ],
+            "residual": 1.9015146225422228,
+            "source_xy": [
+              3061.961181640625,
+              38238.708984375
+            ]
+          },
+          {
+            "reference_xy": [
+              442.41009521484375,
+              40893.767578125
+            ],
+            "residual": 2.840384669022829,
+            "source_xy": [
+              11732.025390625,
+              23164.911865234375
+            ]
+          },
+          {
+            "reference_xy": [
+              2753.89794921875,
+              34315.9970703125
+            ],
+            "residual": 2.528674988615533,
+            "source_xy": [
+              3220.1025390625,
+              38262.248046875
+            ]
+          },
+          {
+            "reference_xy": [
+              2006.09521484375,
+              38214.203125
+            ],
+            "residual": 1.815969187025626,
+            "source_xy": [
+              6543.78515625,
+              28882.412109375
+            ]
+          },
+          {
+            "reference_xy": [
+              2836.626953125,
+              33509.6064453125
+            ],
+            "residual": 2.950960539139503,
+            "source_xy": [
+              2733.4267578125,
+              40253.693359375
+            ]
+          },
+          {
+            "reference_xy": [
+              700.1063232421875,
+              41421.98046875
+            ],
+            "residual": 2.2581624143780115,
+            "source_xy": [
+              11192.939453125,
+              21652.337646484375
+            ]
+          },
+          {
+            "reference_xy": [
+              2083.96240234375,
+              35160.79248046875
+            ],
+            "residual": 1.5675905004581316,
+            "source_xy": [
+              5352.3388671875,
+              36598.54296875
+            ]
+          },
+          {
+            "reference_xy": [
+              2496.236083984375,
+              33128.3125
+            ],
+            "residual": 1.449545267884121,
+            "source_xy": [
+              3555.873046875,
+              41471.85302734375
+            ]
+          },
+          {
+            "reference_xy": [
+              2218.494873046875,
+              26818.912109375
+            ],
+            "residual": 2.6363626761203487,
+            "source_xy": [
+              2291.129150390625,
+              57768.42578125
+            ]
+          },
+          {
+            "reference_xy": [
+              2217.4208984375,
+              33344.453125
+            ],
+            "residual": 2.9867445777013732,
+            "source_xy": [
+              4399.8505859375,
+              41131.7958984375
+            ]
+          },
+          {
+            "reference_xy": [
+              2472.283935546875,
+              33946.8251953125
+            ],
+            "residual": 2.7425568907835225,
+            "source_xy": [
+              3892.6005859375,
+              39408.33850097656
+            ]
+          },
+          {
+            "reference_xy": [
+              2550.885009765625,
+              32537.84375
+            ],
+            "residual": 2.3701670750310933,
+            "source_xy": [
+              3217.530029296875,
+              42945.74072265625
+            ]
+          },
+          {
+            "reference_xy": [
+              2177.066162109375,
+              25850.61767578125
+            ],
+            "residual": 2.888106694595286,
+            "source_xy": [
+              2085.583740234375,
+              60269.044921875
+            ]
+          },
+          {
+            "reference_xy": [
+              2463.328369140625,
+              32230.6396484375
+            ],
+            "residual": 0.27363156468876393,
+            "source_xy": [
+              3356.0546875,
+              43784.9892578125
+            ]
+          },
+          {
+            "reference_xy": [
+              2539.822021484375,
+              32600.568359375
+            ],
+            "residual": 0.2742032932401719,
+            "source_xy": [
+              3264.19677734375,
+              42787.643310546875
+            ]
+          },
+          {
+            "reference_xy": [
+              2337.0087890625,
+              27687.38671875
+            ],
+            "residual": 1.8629304790256722,
+            "source_xy": [
+              2235.847900390625,
+              55460.861328125
+            ]
+          },
+          {
+            "reference_xy": [
+              2459.3115234375,
+              25559.78369140625
+            ],
+            "residual": 2.4874575493647755,
+            "source_xy": [
+              1207.9305419921875,
+              60799.857421875
+            ]
+          },
+          {
+            "reference_xy": [
+              1290.561767578125,
+              24019.3828125
+            ],
+            "residual": 2.1976787406189877,
+            "source_xy": [
+              3954.596435546875,
+              65592.546875
+            ]
+          },
+          {
+            "reference_xy": [
+              1850.2064208984375,
+              22055.55859375
+            ],
+            "residual": 2.295560006500575,
+            "source_xy": [
+              1766.768310546875,
+              70192.84765625
+            ]
+          },
+          {
+            "reference_xy": [
+              1319.2923583984375,
+              24095.7236328125
+            ],
+            "residual": 1.7951277388060054,
+            "source_xy": [
+              3904.1083984375,
+              65374.2119140625
+            ]
+          },
+          {
+            "reference_xy": [
+              2241.64208984375,
+              24417.4814453125
+            ],
+            "residual": 0.478732339614636,
+            "source_xy": [
+              1447.2430419921875,
+              63877.07666015625
+            ]
+          },
+          {
+            "reference_xy": [
+              1947.3660888671875,
+              23835.6806640625
+            ],
+            "residual": 0.9014176770178597,
+            "source_xy": [
+              2074.57421875,
+              65575.171875
+            ]
+          },
+          {
+            "reference_xy": [
+              1800.14111328125,
+              24962.5439453125
+            ],
+            "residual": 2.124885540910862,
+            "source_xy": [
+              2853.374755859375,
+              62806.4853515625
+            ]
+          },
+          {
+            "reference_xy": [
+              1246.8536376953125,
+              23116.5654296875
+            ],
+            "residual": 2.2948701865433843,
+            "source_xy": [
+              3778.502685546875,
+              67924.3232421875
+            ]
+          },
+          {
+            "reference_xy": [
+              1319.65673828125,
+              24042.40966796875
+            ],
+            "residual": 2.3375709697207596,
+            "source_xy": [
+              3887.768310546875,
+              65505.1123046875
+            ]
+          },
+          {
+            "reference_xy": [
+              1478.867919921875,
+              22550.6865234375
+            ],
+            "residual": 1.3650313066437019,
+            "source_xy": [
+              2955.5478515625,
+              69205.9189453125
+            ]
+          },
+          {
+            "reference_xy": [
+              757.6375732421875,
+              24313.33642578125
+            ],
+            "residual": 1.8070632962990876,
+            "source_xy": [
+              5525.58837890625,
+              65227.9619140625
+            ]
+          },
+          {
+            "reference_xy": [
+              530.910888671875,
+              24718.3447265625
+            ],
+            "residual": 2.987347595747143,
+            "source_xy": [
+              6282.75390625,
+              64359.63232421875
+            ]
+          },
+          {
+            "reference_xy": [
+              1728.9010009765625,
+              22858.56298828125
+            ],
+            "residual": 2.2230330137191654,
+            "source_xy": [
+              2362.122802734375,
+              68228.791015625
+            ]
+          },
+          {
+            "reference_xy": [
+              1106.3701171875,
+              24954.4453125
+            ],
+            "residual": 1.9400154958834266,
+            "source_xy": [
+              4771.47021484375,
+              63335.3115234375
+            ]
+          },
+          {
+            "reference_xy": [
+              752.3206176757812,
+              24307.93603515625
+            ],
+            "residual": 2.123794782444833,
+            "source_xy": [
+              5539.75634765625,
+              65247.033203125
+            ]
+          },
+          {
+            "reference_xy": [
+              1030.4351806640625,
+              24141.61767578125
+            ],
+            "residual": 1.5807683714413692,
+            "source_xy": [
+              4717.818359375,
+              65468.080078125
+            ]
+          },
+          {
+            "reference_xy": [
+              784.91015625,
+              23102.37255859375
+            ],
+            "residual": 2.51774129210704,
+            "source_xy": [
+              5054.6640625,
+              68297.28125
+            ]
+          },
+          {
+            "reference_xy": [
+              1333.420654296875,
+              22023.55078125
+            ],
+            "residual": 0.4793517436771489,
+            "source_xy": [
+              3192.73974609375,
+              70659.5419921875
+            ]
+          },
+          {
+            "reference_xy": [
+              1684.2684326171875,
+              22911.3701171875
+            ],
+            "residual": 0.6693727334705533,
+            "source_xy": [
+              2507.6826171875,
+              68131.8447265625
+            ]
+          },
+          {
+            "reference_xy": [
+              576.1411743164062,
+              25870.6923828125
+            ],
+            "residual": 2.7411089242647355,
+            "source_xy": [
+              6526.3779296875,
+              61376.53369140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1169.3157958984375,
+              24958.6953125
+            ],
+            "residual": 1.9988547911458496,
+            "source_xy": [
+              4599.66552734375,
+              63273.3701171875
+            ]
+          },
+          {
+            "reference_xy": [
+              1480.5682373046875,
+              22617.60400390625
+            ],
+            "residual": 1.2381659881247424,
+            "source_xy": [
+              2974.5087890625,
+              69028.6708984375
+            ]
+          },
+          {
+            "reference_xy": [
+              764.86767578125,
+              24504.4892578125
+            ],
+            "residual": 2.7490201504914213,
+            "source_xy": [
+              5573.08740234375,
+              64724.287109375
+            ]
+          },
+          {
+            "reference_xy": [
+              997.1475830078125,
+              24746.458984375
+            ],
+            "residual": 2.9998847466001095,
+            "source_xy": [
+              5011.30078125,
+              63945.84619140625
+            ]
+          },
+          {
+            "reference_xy": [
+              966.0116577148438,
+              24968.1005859375
+            ],
+            "residual": 2.533594956128459,
+            "source_xy": [
+              5160.42724609375,
+              63404.9326171875
+            ]
+          },
+          {
+            "reference_xy": [
+              1144.878173828125,
+              20469.18212890625
+            ],
+            "residual": 1.2677107755649701,
+            "source_xy": [
+              3208.66943359375,
+              74774.634765625
+            ]
+          },
+          {
+            "reference_xy": [
+              1007.32373046875,
+              25262.7412109375
+            ],
+            "residual": 2.09531405672348,
+            "source_xy": [
+              5140.94921875,
+              62620.6982421875
+            ]
+          }
+        ],
+        "note": "coordinates are original-image pixels; occupancy is the full-image 8x8 grid, not the inlier bounding box",
+        "points_recorded": 72,
+        "points_truncated": false,
+        "source_cell_counts_row_major": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          1,
+          1,
+          1,
+          6,
+          0,
+          1,
+          6,
+          1,
+          0,
+          0,
+          4,
+          0,
+          0,
+          1,
+          6,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          9,
+          5,
+          11,
+          2,
+          0,
+          0,
+          0,
+          1,
+          1,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "source_occupied_cols": 8,
+        "source_occupied_rows": 6,
+        "verified_inlier_count": 72
+      },
+      "match": {
+        "coarse_to_fine_diagnostics": {
+          "coarse_raw_matches": 919,
+          "coarse_verified_inliers": 25,
+          "fine_matches_added": 711,
+          "fine_raw_matches": 800,
+          "fine_stage": "ran",
+          "fine_tiles_attempted": 4,
+          "fine_tiles_planned": 4,
+          "reference_coarse_stride": 8,
+          "reference_fine_stride": 4,
+          "source_coarse_stride": 16,
+          "source_fine_stride": 8,
+          "source_overlap_bbox": [
+            0,
+            0,
+            12000,
+            79034
+          ],
+          "union_raw_matches": 1630
+        },
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift_coarse_to_fine",
+        "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+        "raw_match_count": 1630,
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 1630,
+          "raw_match_count_second": 1630,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity"
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 5,
+        "folds_skipped": 0,
+        "folds_used": 5,
+        "held_out_point_count": 72,
+        "held_out_transfer_error_pixels": {
+          "count": 72,
+          "max": 4.000101524524149,
+          "mean": 1.9147183456927657,
+          "median": 1.9353340955705018,
+          "min": 0.22086468158495606,
+          "rmse": 2.086068243667503
+        },
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "verified_correspondences_available": 72,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift_coarse_to_fine",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 152580096,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 45428773,
+          "tracemalloc_stage_peak_bytes": 45429968
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 133246976,
+          "process_rss_delta_bytes": 19046400,
+          "tracemalloc_current_bytes": 42241327,
+          "tracemalloc_stage_peak_bytes": 176195821
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 151904256,
+          "process_rss_delta_bytes": 18657280,
+          "tracemalloc_current_bytes": 44116229,
+          "tracemalloc_stage_peak_bytes": 178076753
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 152563712,
+          "process_rss_delta_bytes": 65536,
+          "tracemalloc_current_bytes": 45422504,
+          "tracemalloc_stage_peak_bytes": 45700980
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 152580096,
+          "process_rss_delta_bytes": 16384,
+          "tracemalloc_current_bytes": 45426045,
+          "tracemalloc_stage_peak_bytes": 45591893
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 152498176,
+          "process_rss_delta_bytes": 12288,
+          "tracemalloc_current_bytes": 45403445,
+          "tracemalloc_stage_peak_bytes": 45411109
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 152485888,
+          "process_rss_delta_bytes": 581632,
+          "tracemalloc_current_bytes": 45388157,
+          "tracemalloc_stage_peak_bytes": 45547608
+        }
+      },
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 23,
+        "limitation": "INDETERMINATE means zero coordinates changed; the frozen ControlPoint contract has no per-point outcome field, so already-optimal cannot be distinguished from no measurable improvement. This is not a successful refinement.",
+        "outcome": "INDETERMINATE",
+        "output_count": 23
+      },
+      "register": {
+        "control_points_used_for_fit": 23,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": false,
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "evaluate": 0.0010770999360829592,
+        "match": 74.03846649988554,
+        "match_repeat": 74.06588059989735,
+        "refine_points": 0.3536039001774043,
+        "register": 0.005762999877333641,
+        "select_control_points": 0.0037285001017153263,
+        "variant_total": 150.2513610997703,
+        "verify_matches": 1.7828414998948574
+      },
+      "select_control_points": {
+        "control_point_count": 23,
+        "points": [
+          {
+            "reference_xy": [
+              2618.8076171875,
+              25727.74609375
+            ],
+            "residual": 0.08279036043114635,
+            "source_xy": [
+              827.7669067382812,
+              60256.88671875
+            ]
+          },
+          {
+            "reference_xy": [
+              2342.499267578125,
+              33720.565185546875
+            ],
+            "residual": 0.11826838353386807,
+            "source_xy": [
+              4170.8232421875,
+              40077.0390625
+            ]
+          },
+          {
+            "reference_xy": [
+              2463.328369140625,
+              32230.6396484375
+            ],
+            "residual": 0.27363156468876393,
+            "source_xy": [
+              3356.0546875,
+              43784.9892578125
+            ]
+          },
+          {
+            "reference_xy": [
+              2241.64208984375,
+              24417.4814453125
+            ],
+            "residual": 0.478732339614636,
+            "source_xy": [
+              1447.2430419921875,
+              63877.07666015625
+            ]
+          },
+          {
+            "reference_xy": [
+              1333.420654296875,
+              22023.55078125
+            ],
+            "residual": 0.4793517436771489,
+            "source_xy": [
+              3192.73974609375,
+              70659.5419921875
+            ]
+          },
+          {
+            "reference_xy": [
+              553.4761962890625,
+              40493.4052734375
+            ],
+            "residual": 0.48520744276423367,
+            "source_xy": [
+              11299.9541015625,
+              24110.34130859375
+            ]
+          },
+          {
+            "reference_xy": [
+              1684.2684326171875,
+              22911.3701171875
+            ],
+            "residual": 0.6693727334705533,
+            "source_xy": [
+              2507.6826171875,
+              68131.8447265625
+            ]
+          },
+          {
+            "reference_xy": [
+              2890.48828125,
+              34684.75
+            ],
+            "residual": 1.2707765236760946,
+            "source_xy": [
+              2969.932861328125,
+              37232.3671875
+            ]
+          },
+          {
+            "reference_xy": [
+              1043.0672607421875,
+              22208.484375
+            ],
+            "residual": 1.271026670352883,
+            "source_xy": [
+              4053.916015625,
+              70395.609375
+            ]
+          },
+          {
+            "reference_xy": [
+              2083.96240234375,
+              35160.79248046875
+            ],
+            "residual": 1.5675905004581316,
+            "source_xy": [
+              5352.3388671875,
+              36598.54296875
+            ]
+          },
+          {
+            "reference_xy": [
+              1030.4351806640625,
+              24141.61767578125
+            ],
+            "residual": 1.5807683714413692,
+            "source_xy": [
+              4717.818359375,
+              65468.080078125
+            ]
+          },
+          {
+            "reference_xy": [
+              2395.74365234375,
+              38550.44140625
+            ],
+            "residual": 1.6212480417151263,
+            "source_xy": [
+              5582.66845703125,
+              27752.98046875
+            ]
+          },
+          {
+            "reference_xy": [
+              757.6375732421875,
+              24313.33642578125
+            ],
+            "residual": 1.8070632962990876,
+            "source_xy": [
+              5525.58837890625,
+              65227.9619140625
+            ]
+          },
+          {
+            "reference_xy": [
+              2006.09521484375,
+              38214.203125
+            ],
+            "residual": 1.815969187025626,
+            "source_xy": [
+              6543.78515625,
+              28882.412109375
+            ]
+          },
+          {
+            "reference_xy": [
+              885.3552856445312,
+              39445.828125
+            ],
+            "residual": 1.842728552321992,
+            "source_xy": [
+              10050.6669921875,
+              26540.57861328125
+            ]
+          },
+          {
+            "reference_xy": [
+              2337.0087890625,
+              27687.38671875
+            ],
+            "residual": 1.8629304790256722,
+            "source_xy": [
+              2235.847900390625,
+              55460.861328125
+            ]
+          },
+          {
+            "reference_xy": [
+              637.4505004882812,
+              35122.859375
+            ],
+            "residual": 1.8720040375393197,
+            "source_xy": [
+              9338.009765625,
+              37722.3671875
+            ]
+          },
+          {
+            "reference_xy": [
+              1928.2022705078125,
+              21254.779296875
+            ],
+            "residual": 2.063725962186809,
+            "source_xy": [
+              1288.8560791015625,
+              72186.8828125
+            ]
+          },
+          {
+            "reference_xy": [
+              1446.5203857421875,
+              38717.44970703125
+            ],
+            "residual": 2.361504883550848,
+            "source_xy": [
+              8264.509765625,
+              27999.9287109375
+            ]
+          },
+          {
+            "reference_xy": [
+              1991.6636962890625,
+              32019.158203125
+            ],
+            "residual": 2.5921210278948483,
+            "source_xy": [
+              4597.0009765625,
+              44668.87109375
+            ]
+          },
+          {
+            "reference_xy": [
+              576.1411743164062,
+              25870.6923828125
+            ],
+            "residual": 2.7411089242647355,
+            "source_xy": [
+              6526.3779296875,
+              61376.53369140625
+            ]
+          },
+          {
+            "reference_xy": [
+              1603.490234375,
+              33154.0390625
+            ],
+            "residual": 2.7442662962680906,
+            "source_xy": [
+              6032.71142578125,
+              42055.421875
+            ]
+          },
+          {
+            "reference_xy": [
+              530.910888671875,
+              24718.3447265625
+            ],
+            "residual": 2.987347595747143,
+            "source_xy": [
+              6282.75390625,
+              64359.63232421875
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 72,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            16,
+            12,
+            5,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            2,
+            0,
+            0,
+            0,
+            3,
+            1,
+            2,
+            8,
+            7,
+            0,
+            0,
+            0,
+            3,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.31584904511717227,
+          "concentration": 0.2222222222222222,
+          "max_matches_per_cell": 16,
+          "mean_nearest_neighbour_px": 302.66711649461075,
+          "occupied_cells": 14,
+          "occupied_cols": 5,
+          "occupied_fraction": 0.21875,
+          "occupied_rows": 4,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1,
+            1,
+            1,
+            6,
+            0,
+            1,
+            6,
+            1,
+            0,
+            0,
+            4,
+            0,
+            0,
+            1,
+            6,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            9,
+            5,
+            11,
+            2,
+            0,
+            0,
+            0,
+            1,
+            1,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.4486928062179117,
+          "concentration": 0.1527777777777778,
+          "max_matches_per_cell": 11,
+          "mean_nearest_neighbour_px": 818.0700661867484,
+          "occupied_cells": 23,
+          "occupied_cols": 8,
+          "occupied_fraction": 0.359375,
+          "occupied_rows": 6,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.4072370354719722,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 14,
+          "reference_occupied_fraction": 0.21875,
+          "source_occupied_cells": 23,
+          "source_occupied_fraction": 0.359375,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 49,
+        "checkpoint_transfer_error_pixels": {
+          "count": 49,
+          "max": 4.399290762439927,
+          "mean": 2.1982952791673274,
+          "median": 2.1754462861892296,
+          "min": 0.7166587330471015,
+          "rmse": 2.3785213951352597
+        },
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "held_out_point_count": 49,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": false,
+      "uses_shared_representation": true,
+      "variant_id": "B",
+      "verify_matches": {
+        "exceeds_model_minimum": true,
+        "inlier_ratio": 0.044171779141104296,
+        "inlier_residual_max": 2.9998847466001095,
+        "inlier_residual_min": 0.08279036043114635,
+        "inliers_above_model_minimum": 68,
+        "model_min_samples": 4,
+        "raw_match_count": 1630,
+        "rejected_count": 1558,
+        "residual_distribution": {
+          "count": 72,
+          "max": 2.9998847466001095,
+          "mean": 1.9357255943134004,
+          "median": 2.0795200094551447,
+          "min": 0.08279036043114635,
+          "not_accuracy": true,
+          "p95": 2.938928234713361,
+          "rmse": 2.0805026673513356,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 72,
+          "raw": 0,
+          "rejected": 1558
+        },
+        "verified_inlier_count": 72
+      }
+    }
+  },
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=957360000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
+}

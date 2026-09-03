@@ -1,0 +1,341 @@
+{
+  "decision_rule": "The independent variable is valid only if variant A is frozen match() one-way SIFT on the shared RepresentationResult and variant B is run_coarse_to_fine_sift on that same representation. B is SUPPORTED only if: (1) verified inliers strictly increase, (2) source and reference 8x8 occupied-cell counts are each >= A's, (3) both variants fit a transform from more than 4 verified inliers, (4) B match-stage runtime is at most 12x A's. Raw match count is not success. Inlier ratio is reported, not gated, because B is allowed to add local candidates. Bounding-box coverage and Clark-Evans R are reported, not gated. Matcher-derived held-out RMSE is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If H1 fails, report NOT SUPPORTED and do not retune.",
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_01_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "experiment_id": "EXP-000",
+    "follow_up_pair_manifest_id": "pair_01_equatorial",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest for a given pair",
+      "SIFT detector and descriptor (EXP-001 SIFT arm)",
+      "Lowe ratio 0.75 and min_matches 4",
+      "coarse matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "preprocessing identity passthrough above the 16,777,216-pixel cap",
+      "intensity representation routing",
+      "downstream geometric model projective_2d_baseline",
+      "downstream estimator ransac_style_baseline",
+      "verification residual_limit 3.0, max_trials 500, rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences per variant",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "rng_seed": 0
+    },
+    "independent_variable": "correspondence_generation_path",
+    "inherited_from": "EXP-000",
+    "matcher_family": "sift",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "matching_view_held_fixed_for_control": true,
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "record_id": "PS-CORRESPONDENCE",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 12.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "sift_baseline_experiment_id": "EXP-001",
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "same_grid_as_control_point_selection": true,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "follow_up_ran": true,
+  "follow_up_reason": "primary pair H1 was SUPPORTED; running the same A/B on pair_01_equatorial",
+  "hypothesis": "H1: On pair_02_mid_equatorial, a coarse-to-fine tiled multi-scale SIFT path that searches at half the matching-view stride inside the coarse geometric overlap, then uses the same downstream geometric verification, recovers more verified inliers and maintains or improves 8x8 occupancy versus the EXP-001 single matching-view SIFT baseline. H0: multi-scale tiled search does not improve verified quality and spatial occupancy, or the transform becomes unstable, or runtime is pathological.",
+  "inherited_from": "EXP-000",
+  "pair_ids": [
+    "pair_02_mid_equatorial",
+    "pair_01_equatorial"
+  ],
+  "pairs": {
+    "pair_01_equatorial": {
+      "comparison": {
+        "rows": [
+          {
+            "control_point_count": 4,
+            "deterministic": true,
+            "held_out_rmse": null,
+            "inlier_ratio": 0.1111111111111111,
+            "match_rss_delta_bytes": 17137664,
+            "match_runtime_seconds": 4.846259800018743,
+            "matcher_id": "sift",
+            "protocol_id": "sift_single_matching_view",
+            "raw_matches": 36,
+            "reference_occupied_cells": 4,
+            "residual_max": 6.958537960192885e-10,
+            "residual_median": 3.7157236839902915e-10,
+            "residual_rmse": 4.396175201142959e-10,
+            "source_concentration": 0.25,
+            "source_max_matches_per_cell": 1,
+            "source_occupied_cells": 4,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "A",
+            "variant_runtime_seconds": 9.77888139989227,
+            "verified_inliers": 4,
+            "verified_match_coverage": 0.2323628740965652
+          },
+          {
+            "control_point_count": 4,
+            "deterministic": true,
+            "held_out_rmse": null,
+            "inlier_ratio": 0.1111111111111111,
+            "match_rss_delta_bytes": 1261568,
+            "match_runtime_seconds": 4.50673110014759,
+            "matcher_id": "sift_coarse_to_fine",
+            "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+            "raw_matches": 36,
+            "reference_occupied_cells": 4,
+            "residual_max": 6.958537960192885e-10,
+            "residual_median": 3.7157236839902915e-10,
+            "residual_rmse": 4.396175201142959e-10,
+            "source_concentration": 0.25,
+            "source_max_matches_per_cell": 1,
+            "source_occupied_cells": 4,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "B",
+            "variant_runtime_seconds": 10.25641469983384,
+            "verified_inliers": 4,
+            "verified_match_coverage": 0.2323628740965652
+          }
+        ],
+        "spatial_delta": {
+          "source_cells_gained": [],
+          "source_cells_lost": [],
+          "source_cells_shared": [
+            4,
+            5,
+            27,
+            41
+          ]
+        }
+      },
+      "decision": "NOT SUPPORTED",
+      "hypothesis_supported": false,
+      "pair_manifest_id": "pair_01_equatorial",
+      "quality_improved": false,
+      "spatial_maintained_or_improved": true,
+      "status": "completed",
+      "transform_stable": false
+    },
+    "pair_02_mid_equatorial": {
+      "comparison": {
+        "rows": [
+          {
+            "control_point_count": 11,
+            "deterministic": true,
+            "held_out_rmse": 1.9043709874947647,
+            "inlier_ratio": 0.02720348204570185,
+            "match_rss_delta_bytes": 51458048,
+            "match_runtime_seconds": 9.945120699936524,
+            "matcher_id": "sift",
+            "protocol_id": "sift_single_matching_view",
+            "raw_matches": 919,
+            "reference_occupied_cells": 9,
+            "residual_max": 2.653533215225044,
+            "residual_median": 1.686909606565198,
+            "residual_rmse": 1.686182317045492,
+            "source_concentration": 0.28,
+            "source_max_matches_per_cell": 7,
+            "source_occupied_cells": 11,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "A",
+            "variant_runtime_seconds": 21.068981199990958,
+            "verified_inliers": 25,
+            "verified_match_coverage": 0.5084353283845922
+          },
+          {
+            "control_point_count": 23,
+            "deterministic": true,
+            "held_out_rmse": 2.086068243667503,
+            "inlier_ratio": 0.044171779141104296,
+            "match_rss_delta_bytes": 19046400,
+            "match_runtime_seconds": 74.03846649988554,
+            "matcher_id": "sift_coarse_to_fine",
+            "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+            "raw_matches": 1630,
+            "reference_occupied_cells": 14,
+            "residual_max": 2.9998847466001095,
+            "residual_median": 2.0795200094551447,
+            "residual_rmse": 2.0805026673513356,
+            "source_concentration": 0.1527777777777778,
+            "source_max_matches_per_cell": 11,
+            "source_occupied_cells": 23,
+            "transform_fitted": true,
+            "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+            "variant": "B",
+            "variant_runtime_seconds": 150.2513610997703,
+            "verified_inliers": 72,
+            "verified_match_coverage": 0.4072370354719722
+          }
+        ],
+        "spatial_delta": {
+          "source_cells_gained": [
+            19,
+            20,
+            21,
+            22,
+            23,
+            25,
+            26,
+            27,
+            30,
+            33,
+            34,
+            35,
+            36,
+            41,
+            48,
+            50,
+            51,
+            52,
+            56,
+            57,
+            58
+          ],
+          "source_cells_lost": [
+            3,
+            4,
+            7,
+            8,
+            9,
+            10,
+            12,
+            13,
+            44
+          ],
+          "source_cells_shared": [
+            42,
+            49
+          ]
+        }
+      },
+      "decision": "SUPPORTED",
+      "hypothesis_supported": true,
+      "pair_manifest_id": "pair_02_mid_equatorial",
+      "quality_improved": true,
+      "spatial_maintained_or_improved": true,
+      "status": "completed",
+      "transform_stable": true
+    }
+  },
+  "primary_decision": "SUPPORTED",
+  "record_id": "PS-CORRESPONDENCE",
+  "reproducibility": {
+    "git_commit": "071666b89a3c302e9d75ad42c2ad9d093020f2eb",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "sift_baseline_experiment_id": "EXP-001",
+  "variant_configuration": {
+    "A": {
+      "callable": "match(pair, representation)",
+      "label": "exp001_sift_single_matching_view",
+      "protocol_id": "sift_single_matching_view",
+      "role": "control_existing_sift_baseline"
+    },
+    "B": {
+      "callable": "run_coarse_to_fine_sift(pair, representation)",
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "label": "sift_coarse_to_fine_tiled_multiscale",
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "role": "candidate_correspondence_core"
+    }
+  }
+}

@@ -46,6 +46,7 @@ matching_view:
   max_pixels_per_image: 4194304
   downsample_method: stride_decimation
   stride_rule: ceil(sqrt(original_pixels / max_pixels_per_image))
+  spatial_window: full_image_stride_decimation_not_a_cropped_window
   coordinate_mapping: "x_original = x_matching * stride; y_original = y_matching * stride"
 
 sift:
@@ -91,6 +92,7 @@ registration:
 
 evaluation:
   independent_ground_truth: false
+  independent_accuracy: NOT VALIDATED
   rmse: stored_verification_inlier_transfer_residuals
   inlier_ratio_denominator: len_matches
   spatial_coverage: mean_source_reference_control_point_aabb_fraction
