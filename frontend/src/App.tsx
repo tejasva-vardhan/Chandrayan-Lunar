@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useState, type ReactNode } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
 import { exp000 } from "./data/exp000";
@@ -48,6 +48,67 @@ function ScrollSatellite({ reducedMotion }: { reducedMotion: boolean }) {
   );
 }
 
+/**
+ * The moon is pinned to the viewport (position: fixed) and traces a slow
+ * elliptical arc — from upper-right, bulging left, down to lower-center —
+ * driven entirely by how far the visitor has scrolled through the *whole*
+ * document. Only `x`/`y`/`scale`/`opacity` (all GPU-composited transform
+ * properties) ever change; nothing here touches layout, which is what
+ * keeps it smooth even on a fast trackpad fling.
+ *
+ * A spring sits between the raw scroll value and the ellipse so the moon
+ * glides and settles instead of snapping to the scrollbar 1:1.
+ */
+function useMoonOrbit() {
+  const { scrollYProgress } = useScroll();
+  const smoothed = useSpring(scrollYProgress, {
+    stiffness: 45,
+    damping: 20,
+    mass: 0.6,
+    restDelta: 0.0008,
+  });
+
+  const angle = useTransform(smoothed, (p) => p * Math.PI); // 0 -> π, a half ellipse
+  const x = useTransform(angle, (a) => `${70 - 18 * Math.sin(a)}vw`);
+  const y = useTransform(angle, (a) => `${34 + 29 * (1 - Math.cos(a))}vh`);
+  const scale = useTransform(smoothed, [0, 0.5, 1], [1, 0.84, 0.6]);
+  const opacity = useTransform(smoothed, [0, 0.85, 1], [1, 1, 0.5]);
+
+  return { x, y, scale, opacity };
+}
+
+/**
+ * A single, restrained "float into view" moment per section — not per
+ * card. Keeps the page feeling like content drifting into frame against
+ * the starfield, rather than a checklist of triggered animations.
+ */
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  reducedMotion,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  reducedMotion: boolean;
+}) {
+  if (reducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function App() {
   const [progress, setProgress] = useState(0.22);
   const [showRejected, setShowRejected] = useState(false);
@@ -61,14 +122,32 @@ function App() {
     return () => media.removeEventListener("change", update);
   }, []);
 
+  const orbit = useMoonOrbit();
   const activeStage = Math.min(stages.length - 1, Math.floor(progress * stages.length));
 
   return (
     <main className="app-shell">
       <div className="ambient-stars" aria-hidden="true" />
+      <div className="nebula-field" aria-hidden="true" />
+
+      <div className="moon-layer" aria-hidden="true">
+        <motion.div
+          className="moon-orbit-wrap"
+          style={
+            reducedMotion
+              ? { left: "44vw", top: "8vh" }
+              : { x: orbit.x, y: orbit.y, scale: orbit.scale, opacity: orbit.opacity }
+          }
+        >
+          <CesiumMoon reducedMotion={reducedMotion}>
+            <MoonScene progress={progress} reducedMotion={reducedMotion} />
+          </CesiumMoon>
+        </motion.div>
+      </div>
+
       <ScrollSatellite reducedMotion={reducedMotion} />
+
       <section className="hero" id="mission">
-        <CesiumMoon reducedMotion={reducedMotion}><MoonScene progress={progress} reducedMotion={reducedMotion} /></CesiumMoon>
         <nav className="top-nav" aria-label="Primary navigation">
           <a className="brand" href="#mission">field<span>SPACE</span></a>
           <div><a href="#results">EXP-000</a><a href="#quality">Quality</a><a href="#report">Report</a></div>
@@ -90,52 +169,66 @@ function App() {
       </section>
 
       <section className="bridge" aria-label="Scientific workflow">
-        <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
-        <div className="workflow">
-          {["OHRC observation", "LRO reference", "Feature correspondences", "Geometric verification", "Registration quality"].map((item, index) => <div key={item}><b>0{index + 1}</b><span>{item}</span></div>)}
-        </div>
+        <Reveal className="glass-panel" reducedMotion={reducedMotion}>
+          <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
+          <div className="workflow">
+            {["OHRC observation", "LRO reference", "Feature correspondences", "Geometric verification", "Registration quality"].map((item, index) => <div key={item}><b>0{index + 1}</b><span>{item}</span></div>)}
+          </div>
+        </Reveal>
       </section>
 
       <section className="results-shell" id="results">
-        <header className="section-header">
-          <div><p className="eyebrow">REAL-DATA BASELINE / {exp000.id}</p><h2>The scientific view</h2></div>
-          <span className="state-pill">NOT INDEPENDENTLY VALIDATED</span>
-        </header>
-        <div className="metric-strip">
-          <div><b>{exp000.rawMatches}</b><span>candidate correspondences</span></div>
-          <div><b>{exp000.verified}</b><span>geometrically consistent</span></div>
-          <div><b>{exp000.inlierRatio}</b><span>survived verification</span></div>
-          <div><b>{exp000.coverage}</b><span>spatial coverage</span></div>
-        </div>
-        <div className="evidence-grid">
-          <Raster label={exp000.source} />
-          <div className="correspondence-rail" aria-label="Four verified correspondences">
-            <p>VERIFIED<br />CORRESPONDENCES</p>
-            {[0, 1, 2, 3].map((item) => <span key={item} style={{ top: `${25 + item * 15}%` }} />)}
+        <Reveal className="glass-panel" reducedMotion={reducedMotion}>
+          <header className="section-header">
+            <div><p className="eyebrow">REAL-DATA BASELINE / {exp000.id}</p><h2>The scientific view</h2></div>
+            <span className="state-pill">NOT INDEPENDENTLY VALIDATED</span>
+          </header>
+          <div className="metric-strip">
+            <div><b>{exp000.rawMatches}</b><span>candidate correspondences</span></div>
+            <div><b>{exp000.verified}</b><span>geometrically consistent</span></div>
+            <div><b>{exp000.inlierRatio}</b><span>survived verification</span></div>
+            <div><b>{exp000.coverage}</b><span>spatial coverage</span></div>
           </div>
-          <Raster label={exp000.reference} reference />
-        </div>
-        <div className="explorer-controls">
-          <div><b>Correspondence explorer</b><span>These correspondences survived the geometric consistency check.</span></div>
-          <button className={showRejected ? "active" : ""} onClick={() => setShowRejected((value) => !value)}>{showRejected ? "Hide" : "Show"} {exp000.rejected} rejected</button>
-        </div>
-        {showRejected && <div className="rejected-note">Rejected correspondences are retained for inspection but are not control points and do not enter registration.</div>}
+          <div className="evidence-grid">
+            <Raster label={exp000.source} />
+            <div className="correspondence-rail" aria-label="Four verified correspondences">
+              <p>VERIFIED<br />CORRESPONDENCES</p>
+              {[0, 1, 2, 3].map((item) => <span key={item} style={{ top: `${25 + item * 15}%` }} />)}
+            </div>
+            <Raster label={exp000.reference} reference />
+          </div>
+          <div className="explorer-controls">
+            <div><b>Correspondence explorer</b><span>These correspondences survived the geometric consistency check.</span></div>
+            <button className={showRejected ? "active" : ""} onClick={() => setShowRejected((value) => !value)}>{showRejected ? "Hide" : "Show"} {exp000.rejected} rejected</button>
+          </div>
+          {showRejected && <div className="rejected-note">Rejected correspondences are retained for inspection but are not control points and do not enter registration.</div>}
+        </Reveal>
       </section>
 
       <section className="quality" id="quality">
-        <div className="quality-copy"><p className="eyebrow">QUALITY CERTIFICATE</p><h2>Clear about what exists.<br />Clear about what does not.</h2><p>EXP-000 demonstrates a real product path and controlled failure reporting. It does not establish independent registration accuracy.</p></div>
-        <dl className="certificate">
-          <div><dt>Source / reference</dt><dd>{exp000.source} / {exp000.reference}</dd></div>
-          <div><dt>Refinement</dt><dd>{exp000.refinement}</dd></div>
-          <div><dt>Registration</dt><dd>{exp000.registration}</dd></div>
-          <div><dt>Independent accuracy</dt><dd>{exp000.independentAccuracy}</dd></div>
-        </dl>
+        <Reveal className="quality-copy glass-panel" reducedMotion={reducedMotion}>
+          <p className="eyebrow">QUALITY CERTIFICATE</p><h2>Clear about what exists.<br />Clear about what does not.</h2><p>EXP-000 demonstrates a real product path and controlled failure reporting. It does not establish independent registration accuracy.</p>
+        </Reveal>
+        <Reveal className="glass-panel" delay={0.1} reducedMotion={reducedMotion}>
+          <dl className="certificate">
+            <div><dt>Source / reference</dt><dd>{exp000.source} / {exp000.reference}</dd></div>
+            <div><dt>Refinement</dt><dd>{exp000.refinement}</dd></div>
+            <div><dt>Registration</dt><dd>{exp000.registration}</dd></div>
+            <div><dt>Independent accuracy</dt><dd>{exp000.independentAccuracy}</dd></div>
+          </dl>
+        </Reveal>
       </section>
 
       <section className="report" id="report">
-        <div><p className="eyebrow">EXPORT / AUDIT TRAIL</p><h2>Built for a judge,<br />honest for a scientist.</h2></div>
-        <div className="report-card"><span className="report-mark">↗</span><b>EXP-000 registration report</b><p>Metrics, transformation, selected points, quality flags, and the limitations of this baseline.</p><button onClick={() => window.print()}>Print / save report</button></div>
-        <div className="technical"><b>Technical details</b><p>{exp000.sourceProduct}</p><p>{exp000.referenceProduct}</p><p>{exp000.residualNote}</p></div>
+        <Reveal reducedMotion={reducedMotion}>
+          <p className="eyebrow">EXPORT / AUDIT TRAIL</p><h2>Built for a judge,<br />honest for a scientist.</h2>
+        </Reveal>
+        <Reveal className="report-card glass-panel" delay={0.1} reducedMotion={reducedMotion}>
+          <span className="report-mark">↗</span><b>EXP-000 registration report</b><p>Metrics, transformation, selected points, quality flags, and the limitations of this baseline.</p><button onClick={() => window.print()}>Print / save report</button>
+        </Reveal>
+        <Reveal className="technical glass-panel" delay={0.15} reducedMotion={reducedMotion}>
+          <b>Technical details</b><p>{exp000.sourceProduct}</p><p>{exp000.referenceProduct}</p><p>{exp000.residualNote}</p>
+        </Reveal>
       </section>
       <footer><span>fieldSPACE / SIH26166</span><span>Scientific interface. Decorative orbit, real result state.</span></footer>
     </main>

@@ -21,10 +21,11 @@ const CRATERS = [
 ];
 
 export function MoonScene({ progress, reducedMotion }: MoonSceneProps) {
-  // Scrubbing the mission timeline reads as "approach": the moon grows
-  // and drifts slightly, independent of its own constant slow rotation.
-  const scale = 0.86 + progress * 0.3;
-  const shiftX = (0.5 - progress) * 40;
+  // Scrubbing the mission timeline still reads as a small "approach"
+  // wobble local to the moon body itself — independent of the larger
+  // elliptical scroll orbit applied by the parent wrapper in App.tsx.
+  const scale = 0.92 + progress * 0.16;
+  const shiftX = (0.5 - progress) * 18;
 
   return (
     <div className="moon-stage" aria-hidden="true">
