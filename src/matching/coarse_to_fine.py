@@ -21,6 +21,7 @@ from src.models.correspondence_set import Correspondence, CorrespondenceSet
 from src.models.registration_pair import RegistrationPair
 from src.representation._loader import load_strided_mask_window, load_strided_window
 from src.representation._types import RepresentationResult
+from src.representation.cross_sensor import build_cross_sensor_array
 from src.representation.gradient import build_gradient_array
 from src.representation.intensity import build_intensity_array
 from src.representation.structural import build_structural_array
@@ -411,6 +412,8 @@ def _build_representation(array: np.ndarray, rep_id: str | None) -> np.ndarray:
         return build_gradient_array(array)
     if rep_id == "structural":
         return build_structural_array(array)
+    if rep_id == "cross_sensor":
+        return build_cross_sensor_array(array)
     return build_intensity_array(array)
 
 
