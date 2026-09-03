@@ -260,7 +260,7 @@ export function A618OrbiterLayer({ reducedMotion }: A618OrbiterLayerProps) {
   }, [reducedMotion]);
 
   return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5 }}>
+    <div style={{ position: "absolute", inset: "-30%", pointerEvents: "none", zIndex: 5 }}>
       <canvas
         ref={canvasRef}
         className="a618-orbiter-canvas"
