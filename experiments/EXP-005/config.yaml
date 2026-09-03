@@ -1,0 +1,139 @@
+# EXP-005 exact configuration.
+#
+# Copied from the owning modules' unvalidated software defaults, which are
+# themselves inherited from EXP-000 / the EXP-001 SIFT arm so the comparison
+# is controlled.
+# These are NOT SIH thresholds, NOT a matcher freeze (D-007), and NOT a
+# selected lunar transform (D-010).
+# Do not copy these values into configs/default.yaml.
+#
+# Authoritative source: src/io/exp005/config.py.
+
+experiment_id: EXP-005
+inherits_fixed_configuration_from: EXP-000
+sift_baseline_experiment_id: EXP-001
+independent_variable: refinement_method_id
+matching_view_held_fixed: true
+pair_manifest_id: pair_02_mid_equatorial
+
+hypothesis: >
+  H1: On pair_02_mid_equatorial, with the EXP-001 SIFT configuration held
+  fixed, the existing ZNCC + parabolic refinement produces measurable
+  coordinate changes relative to identity passthrough and those changes
+  strictly reduce held-out image-space transfer error on the same
+  matcher-derived checkpoints.
+  H0: the existing refinement either does not change coordinates, or the
+  changes do not improve held-out geometric consistency.
+
+decision_rule: >
+  The independent variable is valid only if variant A uses
+  identity_passthrough and variant B uses zncc_parabolic_baseline on the
+  same selected control points (shared match, verification, and
+  control-point selection). Coordinate change is measured, not assumed.
+  Refinement is treated as improving held-out geometric consistency only
+  if B changes at least one coordinate and the same held-out checkpoint
+  RMSE is strictly lower for B than for A. Coordinate change alone is not
+  accuracy. Matcher-derived held-out points are not ground truth.
+  Independent accuracy remains NOT VALIDATED. One pair cannot validate
+  sub-pixel accuracy.
+
+# ---------------------------------------------------------------------------
+# Held constant across every variant
+# ---------------------------------------------------------------------------
+fixed:
+  pairs_source: data/manifests/demo_pairs.yaml
+  dataset_root_env: CHANDRAYAN_DATA_ROOT
+  matcher_id: sift
+
+  preprocessing:
+    applied_to_full_rasters: false
+    reason: full-raster float64 materialisation exceeds the 16777216-pixel cap
+    action: identity_passthrough
+    matching_view_stretch_still_applies: true
+
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    spatial_window: full_image_stride_decimation_not_a_cropped_window
+    coordinate_mapping: >
+      x_original = x_matching * x_scale; y_original = y_matching * y_scale;
+      x_scale = y_scale = stride
+    expected_pair_02_strides:
+      ohrc: 16
+      lroc: 8
+
+  representation:
+    routing: difficulty None/easy -> intensity
+    intensity: 2-98 percentile stretch
+
+  sift:
+    nfeatures: 0
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+    confidence_min: null
+
+  control_points:
+    grid_bins: 8
+    max_per_source_cell: 1
+    max_per_reference_cell: 1
+    max_points: null
+
+  refinement_shared_zncc_settings:
+    window_radius: 7
+    search_radius: 3
+    min_valid_pixel_fraction: 0.75
+    min_peak_zncc: 0.25
+    fine_half_width: 1.0
+    fine_step: 0.1
+
+  registration:
+    model_id: projective_2d_baseline
+    max_output_pixels: 16777216   # NOT raised by this experiment
+    diagnostic_crops_written: false
+
+  evaluation:
+    rmse: sqrt(mean(stored inlier verification residuals^2)); not accuracy
+    inlier_ratio_denominator: len(CorrespondenceSet.matches)
+    spatial_coverage: >
+      0.5 * (source_bbox_area / source_image_area +
+      reference_bbox_area / reference_image_area)
+    independent_ground_truth: false
+    independent_accuracy: NOT VALIDATED
+
+  held_out_validation:
+    design: >
+      same verified-inlier checkpoints scored on the transform fitted from
+      unrefined vs refined control points; k-fold on control-point
+      coordinates is recorded as a secondary split
+    folds: 5
+    rng_seed: 0
+    independent_accuracy: NOT VALIDATED
+
+# ---------------------------------------------------------------------------
+# The independent variable: existing refinement method_id
+# Fixed before the first real-data run and not revisited afterwards.
+# No new refinement algorithm.
+# ---------------------------------------------------------------------------
+variants:
+  A:
+    label: no_subpixel_refinement
+    method_id: identity_passthrough
+    role: ablation_no_refinement
+    callable: refine_points_with_settings(..., identity_passthrough)
+
+  B:
+    label: existing_zncc_parabolic_baseline
+    method_id: zncc_parabolic_baseline
+    role: same_modality_software_baseline
+    callable: refine_points(control_points, pair)
