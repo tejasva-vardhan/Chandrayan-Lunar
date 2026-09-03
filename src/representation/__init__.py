@@ -29,9 +29,15 @@ from src.representation._matching_view import (
     build_matching_mask,
     build_representation_array,
     determine_matching_view,
+    determine_pair_matching_views,
 )
 from src.representation._types import RepresentationResult
-from src.representation.settings import MatchingViewSettings, unvalidated_matching_view_defaults
+from src.representation.settings import (
+    SCALE_POLICY_COMMON_PHYSICAL_GSD,
+    SCALE_POLICY_PER_IMAGE_PIXEL_BUDGET,
+    MatchingViewSettings,
+    unvalidated_matching_view_defaults,
+)
 from src.routing import select_representation_id
 
 
@@ -82,8 +88,7 @@ def generate_representation_with_settings(
     if rep_id not in {"gradient", "structural", "intensity"}:
         rep_id = "intensity"
 
-    src_view = determine_matching_view(pair.source, settings)
-    ref_view = determine_matching_view(pair.reference, settings)
+    src_view, ref_view = determine_pair_matching_views(pair.source, pair.reference, settings)
     src_arr = build_representation_array(
         source_uri,
         rep_id,
@@ -142,6 +147,10 @@ def _validate_matching_shape(
 __all__ = [
     "MatchingViewSettings",
     "RepresentationResult",
+    "SCALE_POLICY_COMMON_PHYSICAL_GSD",
+    "SCALE_POLICY_PER_IMAGE_PIXEL_BUDGET",
+    "determine_matching_view",
+    "determine_pair_matching_views",
     "generate_representation",
     "generate_representation_with_settings",
     "unvalidated_matching_view_defaults",

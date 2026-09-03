@@ -1,0 +1,137 @@
+# EXP-002 exact configuration.
+#
+# Copied from the owning modules' unvalidated software defaults, which are
+# themselves inherited from EXP-000 so the comparison is controlled.
+# These are NOT SIH thresholds, NOT a matcher freeze (D-007), and NOT a
+# selected lunar transform (D-010).
+# Do not copy these values into configs/default.yaml.
+#
+# Authoritative source: src/io/exp002/config.py.
+
+experiment_id: EXP-002
+inherits_fixed_configuration_from: EXP-000
+independent_variable: matching_view_scale_policy
+pair_manifest_id: pair_01_equatorial
+
+hypothesis: >
+  H1: On pair_01_equatorial, replacing per-image pixel-budget matching-view
+  strides with a common physical/GSD-normalised matching scale increases
+  the number of geometrically verified SIFT correspondences beyond the
+  four-point projective DLT minimum, holding every other EXP-000 stage
+  constant.
+  H0: common-scale matching views do not move verified yield above that
+  minimum, which would mean residual matching-view scale is not the
+  demonstrated pair-01 correspondence bottleneck.
+
+decision_rule: >
+  Variant B counts as improving verified yield only if it produces strictly
+  more verified inliers than the geometric model's minimum sample size (4 for
+  projective_2d_baseline). A verified count of exactly 4 means RANSAC's
+  consensus set is the minimal sample itself. Four-point DLT residuals are
+  not accuracy. Independent accuracy remains NOT VALIDATED.
+
+# ---------------------------------------------------------------------------
+# Held constant across every variant
+# ---------------------------------------------------------------------------
+fixed:
+  pairs_source: data/manifests/demo_pairs.yaml
+  dataset_root_env: CHANDRAYAN_DATA_ROOT
+  matcher_id: sift
+
+  preprocessing:
+    applied_to_full_rasters: false
+    reason: full-raster float64 materialisation exceeds the 16777216-pixel cap
+    action: identity_passthrough
+    matching_view_stretch_still_applies: true
+
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    spatial_window: full_image_stride_decimation_not_a_cropped_window
+    coordinate_mapping: >
+      x_original = x_matching * x_scale; y_original = y_matching * y_scale;
+      x_scale = y_scale = stride
+
+  representation:
+    routing: difficulty None/easy -> intensity
+    intensity: 2-98 percentile stretch
+
+  sift:
+    nfeatures: 0
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+    confidence_min: null
+
+  control_points:
+    grid_bins: 8
+    max_per_source_cell: 1
+    max_per_reference_cell: 1
+    max_points: null
+
+  refinement:
+    method_id: zncc_parabolic_baseline
+    window_radius: 7
+    search_radius: 3
+    min_valid_pixel_fraction: 0.75
+    min_peak_zncc: 0.25
+    fine_half_width: 1.0
+    fine_step: 0.1
+
+  registration:
+    model_id: projective_2d_baseline
+    max_output_pixels: 16777216   # NOT raised by this experiment
+    diagnostic_crops_written: false
+
+  evaluation:
+    rmse: sqrt(mean(stored inlier verification residuals^2)); not accuracy
+    inlier_ratio_denominator: len(CorrespondenceSet.matches)
+    spatial_coverage: >
+      0.5 * (source_bbox_area / source_image_area +
+      reference_bbox_area / reference_image_area)
+    independent_ground_truth: false
+    independent_accuracy: NOT VALIDATED
+
+# ---------------------------------------------------------------------------
+# The independent variable: matching-view scale policy
+# Fixed before the first real-data run and not revisited afterwards.
+# ---------------------------------------------------------------------------
+variants:
+  A:
+    label: existing_exp000_matching_view_policy
+    scale_policy: per_image_pixel_budget
+    stride_rule: stride = ceil(sqrt(pixels / 4194304)) independently per image
+    expected_pair_01_strides:
+      ohrc: 15
+      lroc: 8
+    representation_callable: generate_representation(pair)
+    catalog_gsd_meters_by_instrument: []
+
+  B:
+    label: common_physical_gsd_matching_view
+    scale_policy: common_physical_gsd
+    stride_rule: >
+      target_gsd = max(gsd_i * pixel_budget_stride_i);
+      stride_i = max(pixel_budget_stride_i, round(target_gsd / gsd_i))
+    representation_callable: generate_representation_with_settings
+    catalog_gsd_meters_by_instrument:
+      - instrument: LRO_NAC
+        gsd_meters: 0.5
+        used_only_when_ingested_gsd_missing: true
+        written_onto_lunar_product: false
+        spice_used: false
+        provenance: >
+          LROC NAC mapping-orbit catalog GSD 0.5 m/pixel (10 µrad IFOV from
+          50 km). Pair-01 LROC is SCIENCE MISSION 2011-01-22 with
+          CROSSTRACK_SUMMING=1. The ingested LunarProduct.gsd_meters field
+          remains None.
