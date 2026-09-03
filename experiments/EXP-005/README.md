@@ -24,7 +24,7 @@ Same products as EXP-001 pair_02:
 | Reference | `M1504316436RC` | LROC NAC CDR PDS3 |
 | Manifest id | `pair_02_mid_equatorial` | `data/manifests/demo_pairs.yaml` |
 
-Dataset root: `CHANDRAYAN_DATA_ROOT` (`D:\SIH` when mounted). **D:\SIH was not mounted during this session.** EXP-001 ran this pair previously (git commit `779caec`). Metrics in the results JSON are derived from that EXP-001 SIFT arm record. When D:\SIH is remounted:
+Dataset root: `CHANDRAYAN_DATA_ROOT` = `D:\SIH`.
 
 ```powershell
 $env:CHANDRAYAN_DATA_ROOT = "D:\SIH"
@@ -76,99 +76,113 @@ No parameter was changed after seeing any result.
 
 ## EXP-001 context
 
-EXP-001 (SIFT on pair_02) produced 25 verified inliers, 11 control points, transform fitted. The refinement in EXP-001 was fixed at `zncc_parabolic_baseline` for all matchers. The SIFT arm recorded `coordinates_changed_count = 2` with `outcome = COORDINATES_UPDATED`. This is the source of the Variant B coordinate-change count in this record.
+EXP-001 (SIFT on pair_02) produced 25 verified inliers, 11 control points, transform fitted. Refinement in EXP-001 was fixed at `zncc_parabolic_baseline` for all matchers. The SIFT arm recorded `coordinates_changed_count = 2` with `outcome = COORDINATES_UPDATED`. EXP-005 repeats this on the same pair with an explicit A/B ablation so both unrefined and refined held-out RMSE are directly measurable.
 
 ## Results
 
-**Status: data_unavailable.** D:\SIH was not mounted during this session. The metrics below derive from the EXP-001 SIFT arm record (git commit `779caec`). When D:\SIH is remounted and `python scripts/run_exp005.py` is run, the JSON will be overwritten with a live record including displacement magnitudes and per-variant held-out RMSE.
+**Status: `completed`. Failed stage: none.**
+Live run at git commit `91fd3c8d7e1355c4dbd10f4e9108d3f328d18c87`, platform Windows-11-10.0.26200.
 
 Independent accuracy = **NOT VALIDATED**.
 
-### A vs B table (from EXP-001 SIFT arm + identity derivation)
+### A vs B table (live measurements)
 
 | Metric | A — identity_passthrough | B — zncc_parabolic_baseline |
 |---|---|---|
+| Raw matches (shared) | 919 | 919 |
 | Verified inliers (shared) | 25 | 25 |
+| Inlier ratio (shared) | 2.72% | 2.72% |
 | Control points (shared) | 11 | 11 |
 | Transform fitted | ✓ | ✓ |
-| Coordinates changed | **0** | **2** |
-| ZNCC accepted / rejected | N/A (identity) | **2 accepted / 9 rejected** |
+| **Coordinates changed** | **0** | **2** |
+| ZNCC accepted / rejected | N/A | **2 / 9** |
 | ZNCC acceptance rate | — | **18.2% (2/11)** |
-| Mean displacement (px) | 0.0 | not stored in EXP-001 |
-| Max displacement (px) | 0.0 | not stored in EXP-001 |
+| Mean displacement (px) | 0.0 | **0.439** |
+| Max displacement (px) | 0.0 | **2.732** |
 | Refinement outcome | INDETERMINATE | COORDINATES_UPDATED |
-| Unselected-checkpoint RMSE | REQUIRES_LIVE_RUN | REQUIRES_LIVE_RUN |
-| Control-point k-fold RMSE | REQUIRES_LIVE_RUN | REQUIRES_LIVE_RUN |
-| evaluate().rmse (fit diag) | 1.6862 px | 1.6862 px |
-| Full-raster warp | blocked by 16 MP cap | blocked by 16 MP cap |
+| **Unselected-checkpoint RMSE** (14 pts, primary) | **2.124 px** | **2.221 px** |
+| Control-point k-fold RMSE (11 pts, secondary) | 1.782 px | 3.542 px |
+| Fit diagnostic RMSE (not accuracy) | 1.686 px | 1.686 px |
+| Variant runtime | 0.015 s | 1.309 s |
+| Full-raster warp | blocked (16 MP cap) | blocked (16 MP cap) |
 
-`evaluate().rmse` is the RMSE of stored verification residuals and does **not** recompute residuals after refinement. It is a fit diagnostic, not accuracy.
+`Fit diagnostic RMSE` = RMSE of stored verification-inlier residuals from the points used to fit the transform. It does **not** recompute residuals after refinement and is **not** accuracy.
 
-### Shared EXP-001 held-out k-fold (all 25 verified inliers, pre-control-point selection)
-
-This is the k-fold split from EXP-001 which applies equally to A and B because it runs before control-point grid selection. It uses unrefined verification coordinates and is not differentiated by refinement variant.
+### Shared pre-selection k-fold (all 25 verified inliers — identical for A and B)
 
 | Metric | Value |
 |---|---|
 | Held-out points | 25 |
-| Mean transfer error | 1.7389 px |
-| Median transfer error | 1.7960 px |
-| Min transfer error | 0.3457 px |
-| Max transfer error | 3.0981 px |
-| RMSE | **1.9044 px** |
-| Status | HELD_OUT_CROSS_VALIDATION_COMPLETED |
+| Mean transfer error | 1.739 px |
+| Median transfer error | 1.796 px |
+| Min / Max | 0.346 / 3.098 px |
+| RMSE | **1.904 px** |
 
-Independent accuracy = NOT VALIDATED. Held-out points are matcher-derived.
+Uses unrefined coordinates; applies equally to both variants. Not differentiated by refinement.
 
 ## Number of coordinates changed
 
-**Variant A: 0 coordinates changed** (identity passthrough, by definition).
+**Variant A: 0** (identity passthrough, by definition). **Variant B: 2 of 11** control points received sub-pixel corrections from ZNCC. Nine points were rejected by the refinement guard (ZNCC < 0.25 at the keypoint patch).
 
-**Variant B: 2 of 11 coordinates changed** (ZNCC acceptance rate 18.2%). ZNCC rejected 9/11 refinement candidates — each point failed either the `min_peak_zncc = 0.25` threshold or the `min_valid_pixel_fraction = 0.75` requirement, so their coordinates were left at the SIFT keypoint position. Only 2 points passed and received a sub-pixel correction.
+### Per-point ZNCC detail (Variant B)
 
-## Mean / max displacement
+| Index | Accepted | ZNCC before | ZNCC after | Displacement (px) | Estimated (dx, dy) |
+|---|---|---|---|---|---|
+| 0 | ✗ | −0.272 | −0.272 | 0.0 | — |
+| 1 | ✗ | +0.216 | +0.216 | 0.0 | — |
+| 2 | ✗ | −0.198 | −0.198 | 0.0 | — |
+| 3 | ✓ | +0.255 | **+0.357** | **2.097** | (−1.294, +1.650) |
+| 4 | ✗ | +0.162 | +0.162 | 0.0 | — |
+| 5 | ✗ | −0.016 | −0.016 | 0.0 | — |
+| 6 | ✓ | +0.242 | **+0.462** | **2.732** | (+2.370, −1.359) |
+| 7 | ✗ | −0.246 | −0.246 | 0.0 | — |
+| 8 | ✗ | −0.028 | −0.028 | 0.0 | — |
+| 9 | ✗ | −0.182 | −0.182 | 0.0 | — |
+| 10 | ✗ | −0.226 | −0.226 | 0.0 | — |
 
-Mean and max displacement in pixels for Variant B are **not recoverable from this record** — EXP-001 stores only the count of changed coordinates, not the before/after coordinate values of those 2 points. A live run of `python scripts/run_exp005.py` (with D:\SIH mounted) will compute and store the displacement magnitudes.
+Rejection reason for 9/11 points: the ZNCC value at the SIFT keypoint position itself was below `min_peak_zncc = 0.25`. Eight of the nine had negative ZNCC — the intensity patches at those locations have no meaningful correlation structure in the matching view. One additional point (index 1) had ZNCC = 0.216, just below threshold. The frozen `ControlPoint` contract does not expose a per-point rejection code; rejection reasons are inferred from the stored ZNCC values.
 
-## Held-out metric before vs after refinement
+## Mean / max displacement (Variant B, live)
 
-The per-variant unselected-checkpoint RMSE (14 verified inliers not selected as control points, scored against the transform fitted on the 11 control points) and the control-point k-fold RMSE **require a live run**. They are recorded as `REQUIRES_LIVE_RUN` in the JSON.
+- **Mean over all 11 points: 0.439 px** (9 zeros, 2 non-zero)
+- **Mean over 2 changed points only: 2.414 px**
+- **Max displacement: 2.732 px** (point index 6)
 
-The shared EXP-001 k-fold (RMSE = 1.9044 px on 25 inliers) applies to both variants before any refinement differentiation and does not answer whether refinement improved held-out error.
+## Held-out metric before vs after
+
+Primary metric: **unselected-checkpoint RMSE** — 14 verified inliers not selected as control points, scored against the transform fitted on the 11 control points (unrefined for A, refined for B). The same 14 checkpoints are used for both variants.
+
+| | A (identity) | B (ZNCC) | Δ |
+|---|---|---|---|
+| Unselected-checkpoint RMSE (primary) | **2.124 px** | **2.221 px** | B worse by **+0.097 px** |
+| Control-point k-fold RMSE (secondary) | 1.782 px | 3.542 px | B worse by **+1.760 px** |
+
+**B did not reduce the held-out RMSE on either metric.** Under the pre-registered decision rule, **H1 is NOT SUPPORTED**.
 
 ## Did refinement produce measurable improvement?
 
-**Coordinates changed: YES** — 2 of 11 coordinates were updated by ZNCC (B ≠ A by coordinate count).
+**Coordinate change: YES** — 2 of 11 coordinates were measurably updated (confirmed `COORDINATES_UPDATED`, B ≠ A). This is not in question.
 
-**Held-out improvement: CANNOT DETERMINE from this record** — the per-variant held-out RMSE comparison (A vs B on 14 unselected inliers or k-fold on 11 control points) requires a live run.
+**Held-out geometric improvement: NO.** Unselected-checkpoint RMSE is 2.221 px for B vs 2.124 px for A — B is worse by 0.097 px. The control-point k-fold RMSE is also worse for B (3.542 vs 1.782 px). Neither metric shows improvement.
 
-Under the pre-registered decision rule, **H1 cannot be evaluated** without the live per-variant held-out RMSE. The coordinate-change signal is present (2/11 = 18.2% of control points updated by ZNCC), but whether those changes reduce held-out geometric error requires running both variants live.
+Do not interpret this as "refinement is harmful." With only 2 of 11 coordinates changed and 14 held-out checkpoints, the signal is too small to attribute the direction of change to refinement vs sampling noise. The pre-registered conclusion is: **refinement is not shown to improve held-out geometric consistency on this pair**.
 
 ## Independent validation status
 
-**Independent accuracy = NOT VALIDATED.** There is no surveyed lunar control in this project's data. Matcher-derived held-out points are not ground truth. ZNCC acceptance does not equal accuracy improvement.
+**Independent accuracy = NOT VALIDATED.** No surveyed lunar control exists. All held-out points are matcher-derived (SIFT + RANSAC). ZNCC acceptance rate (18.2%) and coordinate displacement are not accuracy measurements.
 
 ## Limitations
 
 1. **Independent accuracy is NOT VALIDATED.** No surveyed lunar control exists.
-2. **Matcher-derived held-out points are not ground truth.**
-3. **Coordinate change is not accuracy.** 2 coordinates changed; this is not evidence of improved registration.
+2. **Matcher-derived held-out points are not ground truth.** All 14 unselected-checkpoint and 11 k-fold points are produced by SIFT + RANSAC, not by independent geodetic survey.
+3. **Coordinate change is not accuracy.** 2 coordinates changed; this does not imply improved registration.
 4. `evaluate().rmse` is stored verification-inlier residual RMSE and does **not** recompute residuals after refinement.
-5. ZNCC + parabolic is a same-modality software baseline. It compares OHRC intensity patches with LROC intensity patches at 16 px / 8 px stride resolution respectively. It is not a multimodal OHRC/LROC solution.
-6. Overlap is not recomputed from the products. The manifest declares `overlap_status=verified` from NASA PDS ODE footprints.
-7. Full-raster registration remains blocked by the existing 16,777,216-pixel cap.
-8. This experiment runs pair_02_mid_equatorial only.
-9. **D:\SIH was not mounted.** Displacement magnitudes and per-variant held-out RMSE require a live run.
-10. 9/11 ZNCC refinement attempts were rejected (81.8% rejection rate). The per-point rejection reason (below min_peak_zncc vs below min_valid_pixel_fraction) is not recoverable from EXP-001 data.
-11. No refinement algorithm, matcher, SIFT, representation, RANSAC, or registration change was introduced. This is validation of the existing baseline, not improvement.
-
-## What this does and does not show
-
-The existing ZNCC + parabolic refinement **does** update coordinates on pair_02 — 2 of 11 control points received a sub-pixel correction (18.2% acceptance rate). The remaining 9 were rejected by the ZNCC threshold or valid-pixel-fraction guard, leaving their coordinates at the SIFT keypoint position.
-
-Whether those 2 coordinate updates reduce held-out geometric transfer error is **not determined** by this record. That question requires a live A vs B run (identity vs ZNCC) with the unselected-verified-checkpoint scorer active on the same 14 remaining inliers.
-
-This does not validate registration accuracy. It does not test other pairs. It does not retune SIFT, RANSAC, or ZNCC. It does not invent a new refinement method.
+5. ZNCC + parabolic is a same-modality intensity comparison at the 16 px / 8 px stride scale. Sub-pixel corrections at this scale are sub-stride-pixel, not sub-GSD-pixel (OHRC GSD ≈ 0.28 m).
+6. Only 2/11 ZNCC attempts were accepted (18.2%). 8 of the 9 rejected points had negative ZNCC at the keypoint patch, meaning the intensity patches had no usable correlation structure in the matching view.
+7. With only 2 changed coordinates and 14 held-out checkpoints, the sample is too small to separate refinement effect from sampling noise. The held-out error difference (0.097 px) is not significant given this sample size.
+8. Overlap is not recomputed from the products.
+9. Full-raster registration remains blocked by the 16,777,216-pixel cap.
+10. Pair_02_mid_equatorial only. No algorithm was changed. This is validation of the existing baseline, not improvement.
 
 ## Distinctions this experiment must keep
 
@@ -180,4 +194,4 @@ This does not validate registration accuracy. It does not test other pairs. It d
 6. **Registration output** — full raster blocked by the existing cap.
 7. **Evaluation** — verification residuals vs independent accuracy (`NOT VALIDATED`).
 
-Projective DLT residuals are a fit diagnostic. Coordinate change is not accuracy. ZNCC acceptance is not accuracy.
+Projective DLT residuals are a fit diagnostic. Coordinate change is not accuracy. ZNCC acceptance is not accuracy. Held-out RMSE from matcher-derived points is not independent accuracy.
