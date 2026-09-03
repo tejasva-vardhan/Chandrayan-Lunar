@@ -34,6 +34,10 @@ data/external/
 # Pipeline outputs
 outputs/
 
+# Local API working directory (uploads / jobs)
+outputs/api/
+
+
 # EXP-000 diagnostic rasters (lightweight JSON records may be committed)
 experiments/EXP-000/artifacts/
 
