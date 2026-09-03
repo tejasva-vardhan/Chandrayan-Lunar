@@ -6,13 +6,25 @@ import shutil
 import threading
 import time
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
+from api.catalog import (
+    PAIR_01_MANIFEST_ID,
+    catalog_product_id,
+    instrument_hint_for,
+    public_path_label,
+    resolve_data_root_products,
+    resolve_exp000_paths,
+)
 from api.errors import ApiError, classify_pipeline_exception
+from api.preprocess_guard import PREPROCESS_IDENTITY_FLAG, guarded_preprocess
 from api.schemas import (
+    CatalogStatusResponse,
+    Exp000PairResponse,
     JobResultResponse,
     JobStatus,
     JobStatusResponse,
@@ -22,6 +34,7 @@ from api.schemas import (
     VisualizationResponse,
 )
 from api.serialization import result_to_dto
+from src.ingestion.data_root import DATA_ROOT_ENV, PAIR_01_LROC_ID, PAIR_01_OHRC_ID, DataRootError
 from src.io.exports import ExportManifest
 from src.models.registration_pair import RegistrationPair
 from src.models.registration_result import RegistrationResult
@@ -29,6 +42,10 @@ from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, Scien
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_WORK_ROOT = _REPO_ROOT / "outputs" / "api"
+
+# Formats accepted by default ingest_product (LROC PDS3 .IMG, OHRC PDS4 .zip/.xml).
+ALLOWED_UPLOAD_SUFFIXES = {".img", ".zip", ".xml"}
+MAX_UPLOAD_BYTES = 8 * 1024 * 1024 * 1024  # 8 GiB hard cap for multipart uploads
 
 
 @dataclass
@@ -49,6 +66,7 @@ class _JobRecord:
     updated_at: str = field(default_factory=lambda: _now())
     runtime_seconds: float | None = None
     wall_start: float | None = None
+    warnings: list[str] = field(default_factory=list)
 
 
 def _now() -> str:
@@ -78,7 +96,82 @@ class RegistrationService:
 
     def list_products(self) -> list[ProductSummary]:
         with self._lock:
-            return list(self._products.values())
+            return [self._public_summary(item) for item in self._products.values()]
+
+    def list_catalog(self) -> CatalogStatusResponse:
+        """List demo_pairs products found under CHANDRAYAN_DATA_ROOT."""
+
+        try:
+            root, found = resolve_data_root_products()
+        except DataRootError as exc:
+            return CatalogStatusResponse(
+                data_root_configured=False,
+                product_count=0,
+                products=[],
+                message=str(exc),
+            )
+        if root is None:
+            return CatalogStatusResponse(
+                data_root_configured=False,
+                product_count=0,
+                products=[],
+                message=(
+                    f"{DATA_ROOT_ENV} is not set. Configure it to enable "
+                    "SELECT EXISTING PRODUCT from the local SIH dataset."
+                ),
+            )
+        products = [
+            self._ensure_catalog_product(logical_id, path, data_root=root)
+            for logical_id, path in found
+        ]
+        return CatalogStatusResponse(
+            data_root_configured=True,
+            product_count=len(products),
+            products=[self._public_summary(item) for item in products],
+            message=(
+                None
+                if products
+                else "Data root is configured but no declared products were found."
+            ),
+        )
+
+    def resolve_exp000_pair(self) -> Exp000PairResponse:
+        """Register the real EXP-000 pair_01 products from the data root."""
+
+        try:
+            root, ohrc, lroc = resolve_exp000_paths()
+        except DataRootError as exc:
+            return Exp000PairResponse(available=False, message=str(exc))
+        if root is None:
+            return Exp000PairResponse(
+                available=False,
+                message=(
+                    f"{DATA_ROOT_ENV} is not set. "
+                    "Set it to the external SIH dataset root to load the real EXP-000 pair."
+                ),
+            )
+        if ohrc is None or lroc is None:
+            missing = []
+            if ohrc is None:
+                missing.append("OHRC pair_01 product")
+            if lroc is None:
+                missing.append("LROC pair_01 product")
+            return Exp000PairResponse(
+                available=False,
+                message=(
+                    f"EXP-000 products not found under {DATA_ROOT_ENV}: "
+                    + ", ".join(missing)
+                ),
+            )
+        source = self._ensure_catalog_product(PAIR_01_OHRC_ID, ohrc, data_root=root)
+        reference = self._ensure_catalog_product(PAIR_01_LROC_ID, lroc, data_root=root)
+        return Exp000PairResponse(
+            available=True,
+            pair_id=PAIR_01_MANIFEST_ID,
+            source=self._public_summary(source),
+            reference=self._public_summary(reference),
+            message=None,
+        )
 
     def register_local_path(self, path: Path, *, origin: str = "path") -> ProductSummary:
         resolved = Path(path).expanduser().resolve()
@@ -94,36 +187,82 @@ class RegistrationService:
             path=str(resolved),
             origin=origin if origin in {"upload", "path", "data_root"} else "path",
             filename=resolved.name,
+            logical_id=resolved.name,
+            instrument_hint=instrument_hint_for(resolved.stem),
         )
         with self._lock:
             self._products[product_id] = summary
-        return summary
+        return self._public_summary(summary)
 
     def store_upload(self, *, filename: str, data: bytes) -> ProductUploadResponse:
-        if not filename.strip():
-            raise ApiError(code="invalid_input", message="Uploaded file must have a name.")
+        safe_name = self._validate_upload_filename(filename)
         if not data:
             raise ApiError(code="invalid_input", message="Uploaded file is empty.")
-        product_id = f"upload-{uuid.uuid4().hex[:12]}"
-        target_dir = self.products_dir / product_id
-        target_dir.mkdir(parents=True, exist_ok=True)
-        safe_name = Path(filename).name
-        target = target_dir / safe_name
-        target.write_bytes(data)
-        summary = ProductSummary(
-            product_id=product_id,
-            path=str(target.resolve()),
-            origin="upload",
-            filename=safe_name,
-        )
-        with self._lock:
-            self._products[product_id] = summary
-        return ProductUploadResponse(
-            product_id=product_id,
-            stored_path=str(target.resolve()),
-            filename=safe_name,
-            bytes=len(data),
-        )
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise ApiError(
+                code="invalid_input",
+                message=f"Uploaded file exceeds the {MAX_UPLOAD_BYTES} byte limit.",
+            )
+        product_id, target = self._prepare_upload_target(safe_name)
+        try:
+            target.write_bytes(data)
+            return self._commit_upload(product_id, target, safe_name, len(data))
+        except Exception:
+            shutil.rmtree(target.parent, ignore_errors=True)
+            raise
+
+    def store_upload_stream(
+        self, *, filename: str, stream: BinaryIO, chunk_size: int = 1024 * 1024
+    ) -> ProductUploadResponse:
+        """Stream an upload to disk without holding the full raster in memory."""
+
+        safe_name = self._validate_upload_filename(filename)
+        product_id, target = self._prepare_upload_target(safe_name)
+        size = 0
+        try:
+            with target.open("wb") as out:
+                while True:
+                    chunk = stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    if size > MAX_UPLOAD_BYTES:
+                        raise ApiError(
+                            code="invalid_input",
+                            message=f"Uploaded file exceeds the {MAX_UPLOAD_BYTES} byte limit.",
+                        )
+                    out.write(chunk)
+            if size == 0:
+                raise ApiError(code="invalid_input", message="Uploaded file is empty.")
+            return self._commit_upload(product_id, target, safe_name, size)
+        except Exception:
+            shutil.rmtree(target.parent, ignore_errors=True)
+            raise
+
+    def store_upload_chunks(
+        self, *, filename: str, chunks: Iterator[bytes]
+    ) -> ProductUploadResponse:
+        safe_name = self._validate_upload_filename(filename)
+        product_id, target = self._prepare_upload_target(safe_name)
+        size = 0
+        try:
+            with target.open("wb") as out:
+                for chunk in chunks:
+                    if not chunk:
+                        continue
+                    size += len(chunk)
+                    if size > MAX_UPLOAD_BYTES:
+                        raise ApiError(
+                            code="invalid_input",
+                            message=f"Uploaded file exceeds the {MAX_UPLOAD_BYTES} byte limit.",
+                        )
+                    out.write(chunk)
+            if size == 0:
+                raise ApiError(code="invalid_input", message="Uploaded file is empty.")
+            return self._commit_upload(product_id, target, safe_name, size)
+        except Exception:
+            shutil.rmtree(target.parent, ignore_errors=True)
+            raise
 
     def create_job(
         self,
@@ -322,7 +461,7 @@ class RegistrationService:
         record = self._require_job(job_id)
         self._touch(record, status="running", wall_start=time.perf_counter(), current_stage=None)
         captured: dict[str, Any] = {"pair": None}
-        pipeline = ScientificPipeline(self._capturing_ops(captured))
+        pipeline = ScientificPipeline(self._capturing_ops(captured, record))
 
         def on_stage(stage: str) -> None:
             completed = list(record.completed_stages)
@@ -379,13 +518,17 @@ class RegistrationService:
                 },
             )
 
-    def _capturing_ops(self, captured: dict[str, Any]) -> PipelineOperations:
+    def _capturing_ops(self, captured: dict[str, Any], record: _JobRecord) -> PipelineOperations:
         from src.pipeline.orchestrator import default_operations
 
         base = self._ops or default_operations()
 
         def preprocess(pair: RegistrationPair) -> RegistrationPair:
-            out = base.preprocess(pair)
+            def on_identity(warning: str) -> None:
+                record.warnings.append(warning)
+                captured["preprocess_identity"] = True
+
+            out = guarded_preprocess(pair, base.preprocess, on_identity=on_identity)
             captured["pair"] = out
             return out
 
@@ -421,5 +564,111 @@ class RegistrationService:
         for flag in result.quality_flags:
             if flag not in notes:
                 notes.append(flag)
+        if any("identity passthrough" in warning for warning in record.warnings):
+            notes.append(PREPROCESS_IDENTITY_FLAG)
         if notes:
             dto.quality_flags = list(dict.fromkeys([*dto.quality_flags, *notes]))
+        if record.warnings and dto.evaluation_limitation is None:
+            dto.evaluation_limitation = record.warnings[0]
+        elif record.warnings:
+            dto.evaluation_limitation = (
+                f"{dto.evaluation_limitation} | {record.warnings[0]}"
+                if dto.evaluation_limitation
+                else record.warnings[0]
+            )
+
+    def _ensure_catalog_product(
+        self,
+        logical_id: str,
+        path: Path,
+        *,
+        data_root: Path,
+    ) -> ProductSummary:
+        product_id = catalog_product_id(logical_id)
+        resolved = path.expanduser().resolve()
+        summary = ProductSummary(
+            product_id=product_id,
+            path=str(resolved),
+            origin="data_root",
+            filename=path.name,
+            logical_id=logical_id,
+            instrument_hint=instrument_hint_for(logical_id),
+        )
+        with self._lock:
+            self._products[product_id] = summary
+        # Attach public label only on copies returned to callers.
+        _ = data_root
+        return summary
+
+    def _public_summary(self, summary: ProductSummary) -> ProductSummary:
+        """Return a copy safe for HTTP (no absolute local filesystem paths)."""
+
+        if summary.origin == "data_root":
+            try:
+                root, _ = resolve_data_root_products()
+            except DataRootError:
+                root = None
+            label = public_path_label(Path(summary.path), data_root=root)
+            return summary.model_copy(update={"path": label})
+        if summary.origin == "upload":
+            return summary.model_copy(
+                update={"path": f"<upload>/{summary.filename or summary.product_id}"}
+            )
+        # Explicit path inputs may still be needed by power-user clients; redact to basename.
+        return summary.model_copy(update={"path": Path(summary.path).name})
+
+    def begin_upload(self, filename: str) -> tuple[str, Path]:
+        """Validate filename and reserve an on-disk upload target."""
+
+        safe_name = self._validate_upload_filename(filename)
+        return self._prepare_upload_target(safe_name)
+
+    def finish_upload(
+        self, *, product_id: str, target: Path, filename: str, nbytes: int
+    ) -> ProductUploadResponse:
+        if nbytes <= 0:
+            raise ApiError(code="invalid_input", message="Uploaded file is empty.")
+        return self._commit_upload(product_id, target, filename, nbytes)
+
+    def _validate_upload_filename(self, filename: str) -> str:
+        if not filename or not filename.strip():
+            raise ApiError(code="invalid_input", message="Uploaded file must have a name.")
+        safe_name = Path(filename).name
+        suffix = Path(safe_name).suffix.lower()
+        if suffix not in ALLOWED_UPLOAD_SUFFIXES:
+            allowed = ", ".join(sorted(ALLOWED_UPLOAD_SUFFIXES))
+            raise ApiError(
+                code="unsupported_product",
+                message=(
+                    f"Unsupported upload extension {suffix!r}. "
+                    f"Accepted product packages: {allowed} "
+                    "(OHRC PDS4 .zip/.xml with sibling imagery, or LROC PDS3 .IMG)."
+                ),
+            )
+        return safe_name
+
+    def _prepare_upload_target(self, safe_name: str) -> tuple[str, Path]:
+        product_id = f"upload-{uuid.uuid4().hex[:12]}"
+        target_dir = self.products_dir / product_id
+        target_dir.mkdir(parents=True, exist_ok=True)
+        return product_id, target_dir / safe_name
+
+    def _commit_upload(
+        self, product_id: str, target: Path, safe_name: str, nbytes: int
+    ) -> ProductUploadResponse:
+        summary = ProductSummary(
+            product_id=product_id,
+            path=str(target.resolve()),
+            origin="upload",
+            filename=safe_name,
+            logical_id=Path(safe_name).stem,
+            instrument_hint=instrument_hint_for(Path(safe_name).stem),
+        )
+        with self._lock:
+            self._products[product_id] = summary
+        return ProductUploadResponse(
+            product_id=product_id,
+            stored_path=f"<upload>/{safe_name}",
+            filename=safe_name,
+            bytes=nbytes,
+        )

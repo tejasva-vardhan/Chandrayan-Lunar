@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { A618OrbiterLayer } from "./components/A618OrbiterLayer";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
+import { RegistrationConsole } from "./components/RegistrationConsole";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
 import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
 import { OverlayViewer } from "./components/workspace/OverlayViewer";
@@ -242,7 +243,7 @@ function App() {
           <a className="brand" href="#mission">field<span>SPACE</span></a>
           <div className="top-nav-links">
             <a href="#run">Run</a>
-            <a href="#results">{results.isLive ? "Live result" : "EXP-000"}</a>
+            <a href="#results">{results.isLive ? "Live result" : "Fixture"}</a>
             <a href="#quality">Quality</a>
             <a href="#report">Report</a>
           </div>
@@ -282,29 +283,50 @@ function App() {
           </aside>
         </section>
 
-        {/* ── WORKSPACE ── */}
-        <RegistrationWorkspace 
+        {/* ── WORKSPACE (live API) ── */}
+        <RegistrationWorkspace
           onResults={(view) => {
             setResults(view);
             setShowRejected(false);
             if (view.isLive) {
               document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
             }
-          }} 
+          }}
         />
+
+        <section className="results-shell advanced-console" aria-label="Advanced path console">
+          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
+            <details className="advanced-path-details">
+              <summary>Advanced: local server path inputs</summary>
+              <RegistrationConsole
+                onResults={(view) => {
+                  setResults(view);
+                  setShowRejected(false);
+                  if (view.isLive) {
+                    document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+              />
+            </details>
+          </Reveal>
+        </section>
 
         <section className="results-shell" id="results">
           <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
             <header className="section-header">
               <div>
                 <p className="eyebrow">
-                  {results.isLive ? "LIVE PIPELINE RESULT / " : "REAL-DATA BASELINE / "}
+                  {results.isLive
+                    ? "LIVE PIPELINE RESULT / "
+                    : "STATIC / REGRESSION FIXTURE / "}
                   {results.id}
                 </p>
                 <h2>The scientific view</h2>
               </div>
               <span className="state-pill">
-                {results.isLive ? "LIVE · NOT INDEPENDENTLY VALIDATED" : "NOT INDEPENDENTLY VALIDATED"}
+                {results.isLive
+                  ? "LIVE · NOT INDEPENDENTLY VALIDATED"
+                  : "STATIC FIXTURE · NOT INDEPENDENTLY VALIDATED"}
               </span>
             </header>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ImageInput, ImageState } from "./ImageInput";
 import { PairConfiguration } from "./PairConfiguration";
-import { PipelineVisualization, PipelineStageName } from "./PipelineVisualization";
+import { PipelineVisualization } from "./PipelineVisualization";
 import { RunAction, RunState } from "./RunAction";
 import { api as client } from "../../api/client";
 import { ApiClientError } from "../../api/types";
@@ -19,7 +19,9 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
   const [refFile, setRefFile] = useState<File | null>(null);
 
   const [runState, setRunState] = useState<RunState>("disabled");
-  const [activeStage, setActiveStage] = useState<PipelineStageName | null>(null);
+  const [activeStage, setActiveStage] = useState<string | null>(null);
+  const [completedStages, setCompletedStages] = useState<string[]>([]);
+  const [allStages, setAllStages] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const pollRef = useRef<number | null>(null);
@@ -51,7 +53,13 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
       try {
         const status = await client.getJob(jobId);
         if (status.current_stage) {
-          setActiveStage(status.current_stage.toUpperCase() as PipelineStageName);
+          setActiveStage(status.current_stage);
+        }
+        if (status.stages) {
+          setAllStages(status.stages);
+        }
+        if (status.completed_stages) {
+          setCompletedStages(status.completed_stages);
         }
 
         if (status.status === "completed" || status.status === "failed") {
@@ -101,7 +109,8 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
   const handleRun = async () => {
     setRunState("running");
     setErrorMsg(null);
-    setActiveStage("INGEST");
+    setActiveStage("ingest_product");
+    setCompletedStages([]);
     
     try {
       let sourceProductId: string | undefined;
@@ -123,7 +132,6 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
         throw new Error("Both source and reference files are required.");
       }
 
-      setActiveStage("CHARACTERIZE");
       const created = await client.createJob(body);
       
       await pollUntilDone(created.job_id);
@@ -141,6 +149,7 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
     setRefFile(null);
     setRunState("disabled");
     setActiveStage(null);
+    setCompletedStages([]);
     setErrorMsg(null);
   };
 
@@ -180,6 +189,8 @@ export function RegistrationWorkspace({ onResults }: RegistrationWorkspaceProps)
           <PipelineVisualization 
             status={runState === "idle" || runState === "disabled" ? "idle" : runState}
             currentStage={activeStage} 
+            stages={allStages.length > 0 ? allStages : ["ingest_product", "characterize_pair", "preprocess", "generate_representation", "match", "verify_matches", "select_control_points", "refine_points", "register", "evaluate"]}
+            completedStages={completedStages}
           />
           {errorMsg && (
             <div style={{ marginTop: "16px", padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "4px", color: "var(--critical)", fontSize: "13px", fontFamily: "var(--mono)" }}>

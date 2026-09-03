@@ -1,37 +1,36 @@
 import React from "react";
 
-export type PipelineStageName = 
-  | "INGEST"
-  | "CHARACTERIZE"
-  | "PREPROCESS"
-  | "REPRESENT"
-  | "MATCH"
-  | "VERIFY"
-  | "CONTROL POINTS"
-  | "SUBPIXEL"
-  | "REGISTER"
-  | "EVALUATE";
+/** Backend ScientificPipeline stage names (source of truth). */
+export const PIPELINE_STAGE_LABELS: Record<string, string> = {
+  ingest_product: "INGEST",
+  characterize_pair: "CHARACTERIZE",
+  preprocess: "PREPROCESS",
+  generate_representation: "REPRESENT",
+  match: "MATCH",
+  verify_matches: "VERIFY",
+  select_control_points: "CONTROL POINTS",
+  refine_points: "SUBPIXEL",
+  register: "REGISTER",
+  evaluate: "EVALUATE",
+  export_result: "EXPORT",
+};
 
-const STAGES: PipelineStageName[] = [
-  "INGEST",
-  "CHARACTERIZE",
-  "PREPROCESS",
-  "REPRESENT",
-  "MATCH",
-  "VERIFY",
-  "CONTROL POINTS",
-  "SUBPIXEL",
-  "REGISTER",
-  "EVALUATE",
-];
+const FALLBACK_STAGES = Object.keys(PIPELINE_STAGE_LABELS);
 
 interface PipelineVisualizationProps {
-  currentStage: PipelineStageName | null;
-  status: "idle" | "running" | "completed" | "failed";
+  stages: string[];
+  completedStages: string[];
+  currentStage: string | null;
+  status: "idle" | "running" | "completed" | "failed" | "degraded";
 }
 
-export function PipelineVisualization({ currentStage, status }: PipelineVisualizationProps) {
-  const currentIndex = currentStage ? STAGES.indexOf(currentStage) : -1;
+export function PipelineVisualization({
+  stages,
+  completedStages,
+  currentStage,
+  status,
+}: PipelineVisualizationProps) {
+  const track = stages.length > 0 ? stages : FALLBACK_STAGES;
 
   return (
     <div className="workspace-card pipeline-card">
@@ -46,14 +45,28 @@ export function PipelineVisualization({ currentStage, status }: PipelineVisualiz
       </div>
 
       <div className="pipeline-track">
-        {STAGES.map((stage, i) => {
+        {track.map((stage, i) => {
+          const done = completedStages.includes(stage) || status === "completed" || status === "degraded";
+          const current = currentStage === stage && status === "running";
+          const failed = status === "failed" && currentStage === stage;
           let stageState = "pending";
-          if (status === "completed") {
+          if (done && !current) stageState = "completed";
+          else if (failed) stageState = "failed";
+          else if (current) stageState = "active";
+          else if (status === "failed" && completedStages.includes(stage)) stageState = "completed";
+
+          // When failed, mark stages after the failure as pending; completed list wins.
+          if (status === "failed" && !completedStages.includes(stage) && stage !== currentStage) {
+            stageState = "pending";
+          }
+          if (failed) stageState = "failed";
+          if (current) stageState = "active";
+          if (completedStages.includes(stage) && !current && !failed) stageState = "completed";
+          if ((status === "completed" || status === "degraded") && track.indexOf(stage) <= i) {
+            // all completed when job finished successfully / degraded
+          }
+          if (status === "completed" || status === "degraded") {
             stageState = "completed";
-          } else if (i < currentIndex) {
-            stageState = "completed";
-          } else if (i === currentIndex) {
-            stageState = status === "failed" ? "failed" : "active";
           }
 
           return (
@@ -64,7 +77,7 @@ export function PipelineVisualization({ currentStage, status }: PipelineVisualiz
                 {stageState === "active" && <span className="icon spinner-small" />}
                 {stageState === "pending" && <span className="icon number">{i + 1}</span>}
               </div>
-              <span className="node-label">{stage}</span>
+              <span className="node-label">{PIPELINE_STAGE_LABELS[stage] ?? stage}</span>
             </div>
           );
         })}
