@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { A618OrbiterLayer } from "./components/A618OrbiterLayer";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
-import { OrbitalModel } from "./components/OrbitalModel";
+import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
 import { exp000 } from "./data/exp000";
 
 const stages = [
@@ -43,22 +44,25 @@ function Raster({
   );
 }
 
-/** Scroll-driven orbital model that floats down the right edge */
+import { A618Satellite } from "./components/A618Satellite";
+
+/** Fixed 3D A-618 Satellite HUD that remains pinned on screen across all scroll sections */
 function ScrollOrbital({ reducedMotion }: { reducedMotion: boolean }) {
-  const { scrollY } = useScroll();
-  const x       = useTransform(scrollY, [0, 600, 1200], ["0vw", "4vw", "14vw"]);
-  const y       = useTransform(scrollY, [0, 600, 1200], ["0vh", "20vh", "50vh"]);
-  const rotate  = useTransform(scrollY, [0, 1200], [0, 40]);
-  const scale   = useTransform(scrollY, [0, 700, 1200], [1, 0.88, 0.45]);
-  const opacity = useTransform(scrollY, [0, 900, 1200], [1, 1, 0]);
+  const { scrollYProgress } = useScroll();
+  const rotate = useTransform(scrollYProgress, [0, 1], [0, 90]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.95, 0.92]);
 
   return (
     <motion.div
       className="scroll-orbital"
-      aria-hidden="true"
-      style={reducedMotion ? undefined : { x, y, rotate, scale, opacity }}
+      aria-label="A-618 Lunar Orbiter Spacecraft"
+      style={reducedMotion ? undefined : { rotate, scale }}
     >
-      <OrbitalModel reducedMotion={reducedMotion} />
+      <div className="a618-tag">
+        <span className="a618-dot" />
+        <span>A-618 ORBITER</span>
+      </div>
+      <A618Satellite reducedMotion={reducedMotion} />
     </motion.div>
   );
 }
@@ -132,6 +136,7 @@ function Reveal({
 }
 
 function App() {
+  const [viewMode, setViewMode]         = useState<"solar" | "mission">("solar");
   const [progress, setProgress]         = useState(0.0);
   const [showRejected, setShowRejected] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -190,114 +195,146 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <div className="ambient-stars" aria-hidden="true" />
-      <div className="nebula-field"  aria-hidden="true" />
+    <>
+      {viewMode === "solar" && (
+        <SolarSystemEntrance
+          onEnterLunarMission={() => setViewMode("mission")}
+          reducedMotion={reducedMotion}
+        />
+      )}
 
-      {/* Dynamic scroll-driven Moon: moves with the page and expands into specific lunar fields */}
-      <div className="moon-layer" aria-hidden="true">
-        <motion.div
-          className="moon-orbit-wrap"
-          style={
-            reducedMotion
-              ? undefined
-              : {
-                  x: orbit.x,
-                  y: orbit.y,
-                  scale: orbit.scale,
-                  opacity: orbit.opacity,
-                }
-          }
-        >
-          <CesiumMoon progress={progress} reducedMotion={reducedMotion}>
-            <MoonScene
-              progress={progress}
-              reducedMotion={reducedMotion}
-              focusedTarget={focusedTarget}
-            />
-          </CesiumMoon>
-        </motion.div>
-      </div>
+      <motion.main
+        className="app-shell"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: viewMode === "mission" ? 1 : 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        style={{ pointerEvents: viewMode === "mission" ? "auto" : "none" }}
+      >
+        <div className="ambient-stars" aria-hidden="true" />
+        <div className="nebula-field"  aria-hidden="true" />
 
-      {/* Lunar Telemetry HUD Overlay */}
-      <aside className="moon-telemetry-hud" aria-label="Lunar telemetry and targeting coordinates">
-        <div className="telemetry-badge">
-          <span className="telemetry-dot" />
-          <span className="telemetry-title">{hudTitle}</span>
+        {/* Dynamic scroll-driven Moon: moves with the page and expands into specific lunar fields */}
+        <div className="moon-layer" aria-hidden="true">
+          <motion.div
+            className="moon-orbit-wrap"
+            style={
+              reducedMotion
+                ? undefined
+                : {
+                    x: orbit.x,
+                    y: orbit.y,
+                    scale: orbit.scale,
+                    opacity: orbit.opacity,
+                  }
+            }
+          >
+            <CesiumMoon progress={progress} reducedMotion={reducedMotion}>
+              <MoonScene
+                progress={progress}
+                reducedMotion={reducedMotion}
+                focusedTarget={focusedTarget}
+              />
+            </CesiumMoon>
+            {/* 3D A-618 Spacecraft actively hovering and orbiting the Moon */}
+            <A618OrbiterLayer reducedMotion={reducedMotion} />
+          </motion.div>
         </div>
-        <div className="telemetry-coords">
-          <span>{hudCoords}</span>
-          <span className={`telemetry-zoom ${hudIsExpanded ? "is-expanded" : ""}`}>
-            {hudStatus}
-          </span>
-        </div>
-      </aside>
 
-      {/* Orbital model replaces the satellite */}
-      <ScrollOrbital reducedMotion={reducedMotion} />
+        {/* Lunar Telemetry HUD Overlay */}
+        <aside className="moon-telemetry-hud" aria-label="Lunar telemetry and targeting coordinates">
+          <div className="telemetry-badge">
+            <span className="telemetry-dot" />
+            <span className="telemetry-title">{hudTitle}</span>
+          </div>
+          <div className="telemetry-coords">
+            <span>{hudCoords}</span>
+            <span className={`telemetry-zoom ${hudIsExpanded ? "is-expanded" : ""}`}>
+              {hudStatus}
+            </span>
+          </div>
+        </aside>
 
-      {/* ── HERO ── */}
-      <section className="hero" id="mission">
+        {/* Pinned Top Navigation across all sections */}
         <nav className="top-nav" aria-label="Primary navigation">
           <a className="brand" href="#mission">field<span>SPACE</span></a>
-          <div><a href="#results">EXP-000</a><a href="#quality">Quality</a><a href="#report">Report</a></div>
-          <span className="nav-status">BASELINE REPLAY</span>
+          <div className="top-nav-links">
+            <a href="#results">EXP-000</a>
+            <a href="#quality">Quality</a>
+            <a href="#report">Report</a>
+          </div>
+          <div className="nav-actions">
+            <button
+              className="orbit-switch-btn"
+              onClick={() => setViewMode("solar")}
+              title="Return to Solar System overview"
+            >
+              ↺ Solar View
+            </button>
+            <span className="nav-status">BASELINE REPLAY</span>
+          </div>
         </nav>
 
-        <div className="hero-content-left">
-          <p className="eyebrow">SIH26166 / MULTIMODAL LUNAR CORRESPONDENCE</p>
-          <h1>Follow the signal.<br /><em>Inspect the evidence.</em></h1>
-          <p className="hero-lede">
-            A cinematic, scroll-driven mission view that resolves into an auditable
-            OHRC × LRO NAC image-correspondence experiment.
-          </p>
-          <a className="primary-button" href="#results">Explore EXP-000 <span>↓</span></a>
-        </div>
-
-        <aside className="mission-control" aria-label="Mission timeline">
-          <p>MISSION TIMELINE</p>
-          <strong>0{activeStage + 1} / 0{stages.length}</strong>
-          <span>{stages[activeStage]}</span>
-          <input
-            aria-label="Mission timeline scrubber"
-            type="range" min="0" max="100"
-            value={Math.round(progress * 100)}
-            onChange={(e) => setProgress(Number(e.target.value) / 100)}
-          />
-        </aside>
-      </section>
-
-      {/* ── WORKFLOW ── */}
-      <section className="bridge" aria-label="Scientific workflow">
-        <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
-          <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
-          <div className="workflow">
-            {["OHRC PDS4 ingest", "LRO NAC PDS3 ingest", "SIFT baseline matching", "RANSAC verification", "Control-point refinement", "Projective DLT fit", "Evaluation &amp; export"].map((item, i) => (
-              <div key={item}><b>0{i + 1}</b><span dangerouslySetInnerHTML={{ __html: item }} /></div>
-            ))}
+        {/* ── HERO ── */}
+        <section className="hero" id="mission">
+          <div className="hero-content-left">
+            <p className="eyebrow">SIH26166 / MULTIMODAL LUNAR CORRESPONDENCE</p>
+            <h1>Follow the signal.<br /><em>Inspect the evidence.</em></h1>
+            <p className="hero-lede">
+              A cinematic, scroll-driven mission view that resolves into an auditable
+              OHRC × LRO NAC image-correspondence experiment.
+            </p>
+            <a className="primary-button" href="#results">Explore EXP-000 <span>↓</span></a>
           </div>
-        </Reveal>
-      </section>
 
-      {/* ── RESULTS ── */}
-      <section className="results-shell" id="results">
-        <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
-          <header className="section-header">
-            <div>
-              <p className="eyebrow">REAL-DATA BASELINE / {exp000.id}</p>
-              <h2>The scientific view</h2>
+          <aside className="mission-control" aria-label="Mission timeline">
+            <p>MISSION TIMELINE</p>
+            <strong>0{activeStage + 1} / 0{stages.length}</strong>
+            <span>{stages[activeStage]}</span>
+            <input
+              aria-label="Mission timeline scrubber"
+              type="range" min="0" max="100"
+              value={Math.round(progress * 100)}
+              onChange={(e) => setProgress(Number(e.target.value) / 100)}
+            />
+          </aside>
+        </section>
+
+        {/* ── WORKFLOW ── */}
+        <section className="bridge" aria-label="Scientific workflow">
+          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
+            <p className="eyebrow">FROM ORBIT TO EVIDENCE</p>
+            <div className="workflow">
+              {["OHRC PDS4 ingest", "LRO NAC PDS3 ingest", "SIFT baseline matching", "RANSAC verification", "Control-point refinement", "Projective DLT fit", "Evaluation &amp; export"].map((item, i) => (
+                <div key={item}><b>0{i + 1}</b><span dangerouslySetInnerHTML={{ __html: item }} /></div>
+              ))}
             </div>
-            <span className="state-pill">NOT INDEPENDENTLY VALIDATED</span>
-          </header>
+          </Reveal>
+        </section>
 
-          <div className="metric-strip">
-            <div><b>{exp000.rawMatches}</b><span>candidate correspondences</span></div>
-            <div><b>{exp000.verified}</b><span>geometric inliers</span></div>
-            <div><b>{exp000.inlierRatio}</b><span>inlier ratio</span></div>
-            <div><b>{exp000.coverage}</b><span>spatial coverage</span></div>
-            <div><b>{exp000.rmse}</b><span>verification RMSE</span></div>
-            <div><b>{exp000.runtimeSeconds.toFixed(1)} s</b><span>pipeline runtime</span></div>
-          </div>
+        {/* ── RESULTS ── */}
+        <section className="results-shell" id="results">
+          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
+            <header className="section-header">
+              <div>
+                <p className="eyebrow">REAL-DATA BASELINE / {exp000.id}</p>
+                <h2>The scientific view</h2>
+              </div>
+              <span className="state-pill">NOT INDEPENDENTLY VALIDATED</span>
+            </header>
+
+            <div className="metric-strip">
+              <div><b>{exp000.rawMatches}</b><span>candidate correspondences</span></div>
+              <div><b>{exp000.verified}</b><span>geometric inliers</span></div>
+              <div><b>{exp000.inlierRatio}</b><span>inlier ratio</span></div>
+              <div><b>{exp000.coverage}</b><span>spatial coverage</span></div>
+              <div>
+                <b className="metric-val-formatted">
+                  9.41 × 10<sup>-10</sup> <span className="metric-unit">px</span>
+                </b>
+                <span>verification RMSE</span>
+              </div>
+              <div><b>{exp000.runtimeSeconds.toFixed(1)} s</b><span>pipeline runtime</span></div>
+            </div>
 
           {/* Image dimensions */}
           <div className="dims-strip">
@@ -386,8 +423,7 @@ function App() {
           <h2>Clear about what exists.<br />Clear about what does not.</h2>
           <p>EXP-000 demonstrates a real product path and controlled failure reporting. It does not establish independent registration accuracy.</p>
           <div
-            className="chip-interactive"
-            style={{ marginTop: 20 }}
+            className="geographic-target-card"
             onMouseEnter={() => setFocusedTarget({ lon: 25.24, lat: -84.9, zoomMultiplier: 0.88 })}
             onMouseLeave={() => setFocusedTarget(null)}
             onClick={() => setFocusedTarget({ lon: 25.24, lat: -84.9, zoomMultiplier: 0.88 })}
@@ -395,8 +431,13 @@ function App() {
             tabIndex={0}
             title="Focus Moon camera directly on South Polar crater basin"
           >
-            <span className="chip chip-region">Target South Pole ⊕</span>
-            <span>Polar cold-trap terrain · lat -84.90° · lon 25.24°</span>
+            <div className="target-card-header">
+              <span className="target-tag">South Polar Cold Trap</span>
+              <span className="target-coords">84.90°S · 25.24°E</span>
+            </div>
+            <div className="target-card-action">
+              Focus camera on polar region ↗
+            </div>
           </div>
         </Reveal>
         <Reveal className="glass-panel panel-right" delay={0.1} reducedMotion={reducedMotion}>
@@ -436,7 +477,8 @@ function App() {
         <span>fieldSPACE / SIH26166</span>
         <span>Scientific interface. Real EXP-000 result values.</span>
       </footer>
-    </main>
+    </motion.main>
+    </>
   );
 }
 
