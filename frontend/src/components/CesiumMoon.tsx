@@ -2,14 +2,16 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Cesium3DTileset, Ellipsoid, HeadingPitchRange, Ion, Viewer } from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
-type CesiumMoonProps = { children: ReactNode; reducedMotion: boolean };
+type CesiumMoonProps = { children: ReactNode; progress?: number; reducedMotion: boolean };
 
 const moonAssetId = 2684829;
 
-export function CesiumMoon({ children, reducedMotion }: CesiumMoonProps) {
+export function CesiumMoon({ children, progress = 0, reducedMotion }: CesiumMoonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const token = import.meta.env.VITE_CESIUM_ION_TOKEN?.trim();
   const [available, setAvailable] = useState(Boolean(token));
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -82,9 +84,18 @@ export function CesiumMoon({ children, reducedMotion }: CesiumMoonProps) {
         const orbitMoon = () => {
           if (reducedMotion) return;
           const nextStep = (requestedRotation - appliedRotation) * .16;
-          if (Math.abs(nextStep) < .000001) return;
-          viewer?.camera.rotateRight(nextStep);
-          appliedRotation += nextStep;
+          if (Math.abs(nextStep) >= .000001) {
+            viewer?.camera.rotateRight(nextStep);
+            appliedRotation += nextStep;
+          }
+          // Zoom into equatorial field during results (progress 0.35 -> 0.7)
+          const p = progressRef.current;
+          const zoomWeight = Math.sin(Math.PI * Math.max(0, Math.min(1, (p - 0.2) / 0.6)));
+          const targetRange = 6_200_000 - zoomWeight * 3_400_000;
+          const currentRange = viewer?.camera.positionCartographic.height ?? 6_200_000;
+          if (Math.abs(targetRange - currentRange) > 50_000) {
+            viewer?.camera.zoomIn((currentRange - targetRange) * 0.05);
+          }
         };
         window.addEventListener("scroll", onScroll, { passive: true });
         viewer.scene.postRender.addEventListener(orbitMoon);

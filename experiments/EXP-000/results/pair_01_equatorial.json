@@ -85,61 +85,61 @@
   "failed_stage": null,
   "memory": {
     "characterize_pair": {
-      "tracemalloc_current_bytes": 211622,
+      "tracemalloc_current_bytes": 353451,
       "tracemalloc_delta_bytes": 2862,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_peak_bytes": 180194376
     },
     "evaluate": {
-      "tracemalloc_current_bytes": 2298022,
-      "tracemalloc_delta_bytes": 2434,
-      "tracemalloc_peak_bytes": 2775234246
+      "tracemalloc_current_bytes": 2424883,
+      "tracemalloc_delta_bytes": 2375,
+      "tracemalloc_peak_bytes": 2674321234
     },
     "export_result": {
-      "tracemalloc_current_bytes": 2309106,
-      "tracemalloc_delta_bytes": 10862,
-      "tracemalloc_peak_bytes": 2775234246
+      "tracemalloc_current_bytes": 2435894,
+      "tracemalloc_delta_bytes": 10792,
+      "tracemalloc_peak_bytes": 2674321234
     },
     "generate_representation": {
-      "tracemalloc_current_bytes": 42819336,
-      "tracemalloc_delta_bytes": 42606509,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 42923097,
+      "tracemalloc_delta_bytes": 42568224,
+      "tracemalloc_peak_bytes": 180194376
     },
     "ingest_product": {
-      "tracemalloc_current_bytes": 205045,
-      "tracemalloc_delta_bytes": 204877,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 346411,
+      "tracemalloc_delta_bytes": 346243,
+      "tracemalloc_peak_bytes": 180194376
     },
     "match": {
-      "tracemalloc_current_bytes": 43007001,
-      "tracemalloc_delta_bytes": 185613,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 43110893,
+      "tracemalloc_delta_bytes": 185690,
+      "tracemalloc_peak_bytes": 180194376
     },
     "preprocess": {
-      "tracemalloc_current_bytes": 212827,
-      "tracemalloc_delta_bytes": 733,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 354873,
+      "tracemalloc_delta_bytes": 950,
+      "tracemalloc_peak_bytes": 180194376
     },
-    "process_tracemalloc_current_bytes": 2310638,
-    "process_tracemalloc_peak_bytes": 2775234246,
+    "process_tracemalloc_current_bytes": 2437373,
+    "process_tracemalloc_peak_bytes": 2674321234,
     "refine_points": {
-      "tracemalloc_current_bytes": 2287266,
-      "tracemalloc_delta_bytes": 65818,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2414202,
+      "tracemalloc_delta_bytes": 92763,
+      "tracemalloc_peak_bytes": 180194376
     },
     "register": {
-      "tracemalloc_current_bytes": 2290357,
-      "tracemalloc_delta_bytes": 2275,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2417375,
+      "tracemalloc_delta_bytes": 2357,
+      "tracemalloc_peak_bytes": 180194376
     },
     "select_control_points": {
-      "tracemalloc_current_bytes": 2220296,
+      "tracemalloc_current_bytes": 2320287,
       "tracemalloc_delta_bytes": 3216,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_peak_bytes": 180194376
     },
     "verify_matches": {
-      "tracemalloc_current_bytes": 2216360,
-      "tracemalloc_delta_bytes": 719767,
-      "tracemalloc_peak_bytes": 180188824
+      "tracemalloc_current_bytes": 2316351,
+      "tracemalloc_delta_bytes": 715866,
+      "tracemalloc_peak_bytes": 180194376
     }
   },
   "output_files": {
@@ -150,18 +150,18 @@
   },
   "pair_manifest_id": "pair_01_equatorial",
   "runtime_seconds": {
-    "characterize_pair": 0.0007488999981433153,
-    "evaluate": 0.00046280003152787685,
-    "export_result": 0.016615699976682663,
-    "generate_representation": 0.8466535999905318,
-    "ingest_product": 46.30942089995369,
-    "match": 4.536851099925116,
-    "preprocess": 0.00040300004184246063,
-    "refine_points": 0.06590580008924007,
-    "register": 0.004964299965649843,
-    "select_control_points": 0.0006559998728334904,
-    "total": 93.35133980005048,
-    "verify_matches": 0.9808185000438243
+    "characterize_pair": 0.00016993700410239398,
+    "evaluate": 0.0023827110053389333,
+    "export_result": 0.002543723996495828,
+    "generate_representation": 0.7830215229987516,
+    "ingest_product": 18.025082945998292,
+    "match": 5.976123528002063,
+    "preprocess": 0.00016745099856052548,
+    "refine_points": 0.0302267099978053,
+    "register": 0.0018818390017258935,
+    "select_control_points": 0.00014631399972131476,
+    "total": 32.62238043299294,
+    "verify_matches": 0.371967858998687
   },
   "scientific_interpretation": {
     "control_points": 4,
@@ -222,14 +222,14 @@
         "control_point_count": 4,
         "inlier_count": 4,
         "inlier_ratio": 0.1111111111111111,
-        "rmse": 4.396175201142959e-10,
+        "rmse": 9.411170017846372e-10,
         "spatial_coverage": 0.2323628740965652
       },
       "projective_dlt_fit_residuals_on_control_points_pixels": [
-        3.6391154978887343e-11,
-        7.438449083241633e-10,
-        3.531838563312267e-11,
-        1.0594926253091495e-09
+        2.1832609280241383e-11,
+        6.67100569294862e-11,
+        6.175248009852286e-10,
+        1.0685335825100887e-09
       ],
       "projective_dlt_minimum_points": 4,
       "verification_rmse_is_not_independent_accuracy": true
@@ -409,7 +409,7 @@
             2755.046630859375,
             46909.37109375
           ],
-          "residual": 4.547473508864641e-13,
+          "residual": 2.4011349128057346e-11,
           "source_xy": [
             6776.732025146484,
             1502.691421508789
@@ -418,22 +418,10 @@
         },
         {
           "reference_xy": [
-            4815.919921875,
-            34148.9765625
-          ],
-          "residual": 2.918557019457742e-10,
-          "source_xy": [
-            4780.683746337891,
-            36690.380859375
-          ],
-          "uncertainty": null
-        },
-        {
-          "reference_xy": [
             3351.7021484375,
             46137.8828125
           ],
-          "residual": 4.5128903485228404e-10,
+          "residual": 4.520335062978315e-11,
           "source_xy": [
             2723.1930541992188,
             50364.9462890625
@@ -442,10 +430,22 @@
         },
         {
           "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 8.570398816817102e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
             2777.611083984375,
             27404.564453125
           ],
-          "residual": 6.958537960192885e-10,
+          "residual": 1.6750127156545145e-09,
           "source_xy": [
             8727.270812988281,
             7150.919952392578
@@ -461,7 +461,7 @@
         "control_points_inside_count": 2,
         "control_points_inside_indices": [
           0,
-          2
+          1
         ],
         "control_points_inside_reference_xy": [
           [
@@ -481,13 +481,13 @@
         "interpretation": "Diagnostic crop only. Full-raster registration remains blocked by the existing 16777216-pixel cap. Fit residuals on the same control points used to estimate projective DLT are not independent accuracy. Placement maximises control-point inclusion inside the capped window.",
         "path_name": "diagnostic_registered_crop.npy",
         "produced": true,
-        "projective_fit_residual_max": 1.0594926253091495e-09,
-        "projective_fit_residual_min": 3.531838563312267e-11,
+        "projective_fit_residual_max": 1.0685335825100887e-09,
+        "projective_fit_residual_min": 2.1832609280241383e-11,
         "projective_fit_residuals_pixels": [
-          3.6391154978887343e-11,
-          7.438449083241633e-10,
-          3.531838563312267e-11,
-          1.0594926253091495e-09
+          2.1832609280241383e-11,
+          6.67100569294862e-11,
+          6.175248009852286e-10,
+          1.0685335825100887e-09
         ],
         "window": {
           "col": 0,
@@ -507,18 +507,18 @@
         "parameters": {
           "matrix": [
             [
-              -0.28298198376922096,
-              -0.03761121824236753,
-              2759.6012062653426
+              -0.2829819837692223,
+              -0.03761121824236759,
+              2759.6012062653444
             ],
             [
-              -4.86561165285652,
-              -0.6506446409659564,
-              47323.27100291675
+              -4.8656116528565105,
+              -0.6506446409659541,
+              47323.27100291653
             ],
             [
-              -0.00010244723578370573,
-              -1.3754848458587858e-05,
+              -0.00010244723578370613,
+              -1.3754848458587867e-05,
               1.0
             ]
           ],
@@ -534,7 +534,7 @@
             2755.046630859375,
             46909.37109375
           ],
-          "residual": 4.547473508864641e-13,
+          "residual": 2.4011349128057346e-11,
           "source_xy": [
             6776.732025146484,
             1502.691421508789
@@ -543,22 +543,10 @@
         },
         {
           "reference_xy": [
-            4815.919921875,
-            34148.9765625
-          ],
-          "residual": 2.918557019457742e-10,
-          "source_xy": [
-            4780.683746337891,
-            36690.380859375
-          ],
-          "uncertainty": null
-        },
-        {
-          "reference_xy": [
             3351.7021484375,
             46137.8828125
           ],
-          "residual": 4.5128903485228404e-10,
+          "residual": 4.520335062978315e-11,
           "source_xy": [
             2723.1930541992188,
             50364.9462890625
@@ -567,10 +555,22 @@
         },
         {
           "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 8.570398816817102e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
             2777.611083984375,
             27404.564453125
           ],
-          "residual": 6.958537960192885e-10,
+          "residual": 1.6750127156545145e-09,
           "source_xy": [
             8727.270812988281,
             7150.919952392578
@@ -582,8 +582,8 @@
     "verify_matches": {
       "filtered_count": 0,
       "inlier_ratio": 0.1111111111111111,
-      "inlier_residual_max": 6.958537960192885e-10,
-      "inlier_residual_min": 4.547473508864641e-13,
+      "inlier_residual_max": 1.6750127156545145e-09,
+      "inlier_residual_min": 2.4011349128057346e-11,
       "raw_match_count": 36,
       "rejected_count": 32,
       "residual_meaning": "verification_image_space_transfer_error_pixels",
