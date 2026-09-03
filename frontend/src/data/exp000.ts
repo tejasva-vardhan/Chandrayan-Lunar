@@ -1,4 +1,5 @@
-// Real benchmark values from EXP-000 run — do not replace with placeholders.
+// STATIC / REGRESSION FIXTURE — historical EXP-000 observation values.
+// Do not display these as the result of a live uploaded-image registration run.
 export const exp000 = {
   id: "EXP-000 / pair_01_equatorial",
   source: "Chandrayaan-2 OHRC",
