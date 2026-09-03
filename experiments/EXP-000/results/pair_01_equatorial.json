@@ -267,14 +267,14 @@
         "control_point_count": 4,
         "inlier_count": 4,
         "inlier_ratio": 0.1111111111111111,
-        "rmse": 4.396175201142959e-10,
+        "rmse": 9.411170017846372e-10,
         "spatial_coverage": 0.2323628740965652
       },
       "projective_dlt_fit_residuals_on_control_points_pixels": [
-        3.6391154978887343e-11,
-        7.438449083241633e-10,
-        3.531838563312267e-11,
-        1.0594926253091495e-09
+        2.1832609280241383e-11,
+        6.67100569294862e-11,
+        6.175248009852286e-10,
+        1.0685335825100887e-09
       ],
       "projective_dlt_minimum_points": 4,
       "verification_rmse_is_not_independent_accuracy": true
@@ -456,7 +456,7 @@
             2755.046630859375,
             46909.37109375
           ],
-          "residual": 4.547473508864641e-13,
+          "residual": 2.4011349128057346e-11,
           "source_xy": [
             6776.732025146484,
             1502.691421508789
@@ -465,22 +465,10 @@
         },
         {
           "reference_xy": [
-            4815.919921875,
-            34148.9765625
-          ],
-          "residual": 2.918557019457742e-10,
-          "source_xy": [
-            4780.683746337891,
-            36690.380859375
-          ],
-          "uncertainty": null
-        },
-        {
-          "reference_xy": [
             3351.7021484375,
             46137.8828125
           ],
-          "residual": 4.5128903485228404e-10,
+          "residual": 4.520335062978315e-11,
           "source_xy": [
             2723.1930541992188,
             50364.9462890625
@@ -489,10 +477,22 @@
         },
         {
           "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 8.570398816817102e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
             2777.611083984375,
             27404.564453125
           ],
-          "residual": 6.958537960192885e-10,
+          "residual": 1.6750127156545145e-09,
           "source_xy": [
             8727.270812988281,
             7150.919952392578
@@ -508,7 +508,7 @@
         "control_points_inside_count": 2,
         "control_points_inside_indices": [
           0,
-          2
+          1
         ],
         "control_points_inside_reference_xy": [
           [
@@ -528,13 +528,13 @@
         "interpretation": "Diagnostic crop only. Full-raster registration remains blocked by the existing 16777216-pixel cap. Fit residuals on the same control points used to estimate projective DLT are not independent accuracy. Placement maximises control-point inclusion inside the capped window.",
         "path_name": "diagnostic_registered_crop.npy",
         "produced": true,
-        "projective_fit_residual_max": 1.0594926253091495e-09,
-        "projective_fit_residual_min": 3.531838563312267e-11,
+        "projective_fit_residual_max": 1.0685335825100887e-09,
+        "projective_fit_residual_min": 2.1832609280241383e-11,
         "projective_fit_residuals_pixels": [
-          3.6391154978887343e-11,
-          7.438449083241633e-10,
-          3.531838563312267e-11,
-          1.0594926253091495e-09
+          2.1832609280241383e-11,
+          6.67100569294862e-11,
+          6.175248009852286e-10,
+          1.0685335825100887e-09
         ],
         "window": {
           "col": 0,
@@ -554,18 +554,18 @@
         "parameters": {
           "matrix": [
             [
-              -0.28298198376922096,
-              -0.03761121824236753,
-              2759.6012062653426
+              -0.2829819837692223,
+              -0.03761121824236759,
+              2759.6012062653444
             ],
             [
-              -4.86561165285652,
-              -0.6506446409659564,
-              47323.27100291675
+              -4.8656116528565105,
+              -0.6506446409659541,
+              47323.27100291653
             ],
             [
-              -0.00010244723578370573,
-              -1.3754848458587858e-05,
+              -0.00010244723578370613,
+              -1.3754848458587867e-05,
               1.0
             ]
           ],
@@ -581,7 +581,7 @@
             2755.046630859375,
             46909.37109375
           ],
-          "residual": 4.547473508864641e-13,
+          "residual": 2.4011349128057346e-11,
           "source_xy": [
             6776.732025146484,
             1502.691421508789
@@ -590,22 +590,10 @@
         },
         {
           "reference_xy": [
-            4815.919921875,
-            34148.9765625
-          ],
-          "residual": 2.918557019457742e-10,
-          "source_xy": [
-            4780.683746337891,
-            36690.380859375
-          ],
-          "uncertainty": null
-        },
-        {
-          "reference_xy": [
             3351.7021484375,
             46137.8828125
           ],
-          "residual": 4.5128903485228404e-10,
+          "residual": 4.520335062978315e-11,
           "source_xy": [
             2723.1930541992188,
             50364.9462890625
@@ -614,10 +602,22 @@
         },
         {
           "reference_xy": [
+            4815.919921875,
+            34148.9765625
+          ],
+          "residual": 8.570398816817102e-10,
+          "source_xy": [
+            4780.683746337891,
+            36690.380859375
+          ],
+          "uncertainty": null
+        },
+        {
+          "reference_xy": [
             2777.611083984375,
             27404.564453125
           ],
-          "residual": 6.958537960192885e-10,
+          "residual": 1.6750127156545145e-09,
           "source_xy": [
             8727.270812988281,
             7150.919952392578
@@ -629,8 +629,8 @@
     "verify_matches": {
       "filtered_count": 0,
       "inlier_ratio": 0.1111111111111111,
-      "inlier_residual_max": 6.958537960192885e-10,
-      "inlier_residual_min": 4.547473508864641e-13,
+      "inlier_residual_max": 1.6750127156545145e-09,
+      "inlier_residual_min": 2.4011349128057346e-11,
       "raw_match_count": 36,
       "rejected_count": 32,
       "residual_meaning": "verification_image_space_transfer_error_pixels",

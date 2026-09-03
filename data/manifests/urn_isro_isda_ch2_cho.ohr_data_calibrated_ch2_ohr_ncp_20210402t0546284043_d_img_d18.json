@@ -1,0 +1,38 @@
+{
+  "product": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 78175,
+      "band_count": 1
+    },
+    "gsd_meters": 0.26,
+    "acquisition_time": "2021-04-02T05:46:28.404300Z",
+    "radiometric_state": "Calibrated",
+    "coordinates": {
+      "crs": "Selenographic",
+      "bbox": [
+        23.371989,
+        0.224735,
+        23.495434,
+        1.068878
+      ]
+    },
+    "valid_pixel_ratio": 1.0,
+    "raster_uri": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_raster.npy",
+    "mask_uri": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_mask.npy",
+    "provenance": {
+      "source_uri": "ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+      "reader": "pds4_stream_reader",
+      "checksum": "c4d89f11e9f6660c345349e453f6a0f4",
+      "software_commit": "107c3f0c7aac843374e9296eb8d879a07dd70eed",
+      "notes": "Successfully ingested from ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+    }
+  },
+  "source_path": "/home/shashwat/SIH/Equitorial - 0.65, 23.43/ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+  "raster_path": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_raster.npy",
+  "mask_path": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20210402t0546284043_d_img_d18_mask.npy",
+  "processing_state": "ingested"
+}
