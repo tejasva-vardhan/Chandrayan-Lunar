@@ -1,0 +1,78 @@
+.moon-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moon-rig {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  animation: moonBob 9s ease-in-out infinite;
+  will-change: transform;
+}
+.moon-rig.is-still {
+  animation: none;
+}
+
+/* Subtle idle motion: a slow vertical drift + a couple of degrees of tilt.
+   This is layered on top of (not a substitute for) the elliptical scroll
+   orbit applied by the parent wrapper in App.tsx — that wrapper carries
+   the large scroll-driven translate, this rig only ever does the small
+   idle wobble, so the two never fight over the same transform. */
+@keyframes moonBob {
+  0%, 100% { translate: 0 0; rotate: -1.1deg; }
+  50%      { translate: 0 -14px; rotate: 1.1deg; }
+}
+
+.moon-glow {
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 62% 34%, rgba(201, 255, 94, 0.16), transparent 60%);
+  filter: blur(6px);
+}
+
+.moon-svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 40px 90px rgba(0, 0, 0, 0.55));
+}
+
+/* Continuous rotation: the crater layer spins slowly inside a circular
+   clip, so the moon reads as a body turning on its axis rather than a
+   flat disc spinning in-plane. Kept slow (140s/rev) to stay "subtle". */
+.crater-field {
+  animation: rotateMoon 140s linear infinite;
+  transform-origin: 200px 200px;
+}
+
+.ring-orbit {
+  position: absolute;
+  inset: -9%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ring-orbit svg {
+  width: 100%;
+  height: 100%;
+  animation: rotateMoon 60s linear infinite reverse;
+}
+
+@keyframes rotateMoon {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moon-rig,
+  .crater-field,
+  .ring-orbit svg {
+    animation: none !important;
+  }
+}
