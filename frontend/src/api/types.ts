@@ -9,6 +9,32 @@ export interface ProductUploadResponse {
   bytes: number;
 }
 
+export interface ProductSummary {
+  product_id: string;
+  path: string;
+  origin: "upload" | "path" | "data_root";
+  filename: string | null;
+  logical_id: string | null;
+  instrument_hint: string | null;
+}
+
+export interface CatalogStatusResponse {
+  data_root_configured: boolean;
+  data_root_env: string;
+  product_count: number;
+  products: ProductSummary[];
+  message: string | null;
+}
+
+export interface Exp000PairResponse {
+  available: boolean;
+  pair_id: string;
+  experiment_id: string;
+  source: ProductSummary | null;
+  reference: ProductSummary | null;
+  message: string | null;
+}
+
 export interface CreateJobRequest {
   source_product_id?: string;
   reference_product_id?: string;
@@ -22,7 +48,12 @@ export interface JobStatusResponse {
   current_stage: string | null;
   completed_stages: string[];
   stages: string[];
-  error: { code?: string; message?: string; failed_stage?: string | null; details?: Record<string, unknown> } | null;
+  error: {
+    code?: string;
+    message?: string;
+    failed_stage?: string | null;
+    details?: Record<string, unknown>;
+  } | null;
   created_at: string;
   updated_at: string;
   runtime_seconds: number | null;
@@ -91,7 +122,12 @@ export interface JobResultResponse {
   job_id: string;
   status: JobStatus;
   result: RegistrationResultDTO | null;
-  error: { code?: string; message?: string; failed_stage?: string | null; details?: Record<string, unknown> } | null;
+  error: {
+    code?: string;
+    message?: string;
+    failed_stage?: string | null;
+    details?: Record<string, unknown>;
+  } | null;
 }
 
 export interface ApiErrorBody {

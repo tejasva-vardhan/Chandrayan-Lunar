@@ -1,8 +1,11 @@
 import type {
   ApiErrorBody,
+  CatalogStatusResponse,
   CreateJobRequest,
+  Exp000PairResponse,
   JobResultResponse,
   JobStatusResponse,
+  ProductSummary,
   ProductUploadResponse,
 } from "./types";
 import { ApiClientError } from "./types";
@@ -57,6 +60,12 @@ export function createApiClient(baseUrl: string = DEFAULT_BASE) {
         body: form,
       });
     },
+
+    listProducts: () => request<ProductSummary[]>("/products"),
+
+    listCatalog: () => request<CatalogStatusResponse>("/products/catalog"),
+
+    getExp000Pair: () => request<Exp000PairResponse>("/products/exp000"),
 
     createJob: (body: CreateJobRequest) =>
       request<JobStatusResponse>("/registration/jobs", {
