@@ -76,7 +76,10 @@ API listens on `http://127.0.0.1:8000` by default.
 Useful endpoints (master spec demo API):
 
 - `GET /health`
-- `POST /products` (multipart upload)
+- `POST /products` (multipart upload: OHRC `.zip`/`.xml` or LROC `.IMG`)
+- `GET /products` (session uploads)
+- `GET /products/catalog` (declared products under `CHANDRAYAN_DATA_ROOT`)
+- `GET /products/exp000` (resolve real EXP-000 pair_01 paths)
 - `POST /registration/jobs`
 - `GET /registration/jobs/{id}`
 - `GET /registration/jobs/{id}/result`
@@ -110,12 +113,15 @@ cd frontend
 npm run dev
 ```
 
-Open the UI, enter the mission view, use **Run registration** with:
+Open the UI, enter the mission view, use **Run registration** in the workspace with:
 
 - uploaded OHRC PDS4 / LROC PDS3 products, or
-- local absolute paths readable by the API process (for example products under `CHANDRAYAN_DATA_ROOT`).
+- **Select Existing** products discovered under `CHANDRAYAN_DATA_ROOT`, or
+- **Load EXP-000 Real Pair** (pair_01 from the data root), or
+- advanced local absolute paths readable by the API process.
 
 Unsupported files return a clear backend error. The API never substitutes mock Chandrayaan-2 data.
+The static EXP-000 numbers in the results panel are an explicitly labelled regression fixture until a live job completes.
 
 ### Tests / lint
 
