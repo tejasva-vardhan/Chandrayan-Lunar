@@ -101,42 +101,65 @@ class ScientificPipeline:
         source_path: Path,
         reference_path: Path,
         output_dir: Path,
+        *,
+        on_stage: Callable[[str], None] | None = None,
     ) -> tuple[RegistrationResult, ExportManifest]:
+        """Run frozen stages in order.
+
+        ``on_stage`` is an optional integration hook (HTTP wrapper / UI progress).
+        It is not a pipeline operation and does not alter scientific contracts.
+        """
+
+        def _stage(name: str) -> None:
+            if on_stage is not None:
+                on_stage(name)
+
+        _stage("ingest_product")
         source = _expect(self.ops.ingest_product(source_path), LunarProduct, "ingest_product")
         reference = _expect(self.ops.ingest_product(reference_path), LunarProduct, "ingest_product")
+        _stage("characterize_pair")
         pair = _expect(
             self.ops.characterize_pair(source, reference),
             RegistrationPair,
             "characterize_pair",
         )
+        _stage("preprocess")
         pair = _expect(self.ops.preprocess(pair), RegistrationPair, "preprocess")
+        _stage("generate_representation")
         representation = self.ops.generate_representation(pair)
+        _stage("match")
         correspondences = _expect(
             self.ops.match(pair, representation), CorrespondenceSet, "match"
         )
+        _stage("verify_matches")
         verified = _expect(
             self.ops.verify_matches(correspondences, pair),
             CorrespondenceSet,
             "verify_matches",
         )
+        _stage("select_control_points")
         control_points = _expect_control_points(
             self.ops.select_control_points(verified, pair),
             "select_control_points",
         )
+        _stage("refine_points")
         refined = _expect_control_points(
             self.ops.refine_points(control_points, pair),
             "refine_points",
         )
+        _stage("register")
         registered = _expect(
             self.ops.register(pair, refined, verified),
             RegistrationResult,
             "register",
         )
+        _stage("evaluate")
         evaluated = _expect(
             self.ops.evaluate(registered, pair),
             RegistrationResult,
             "evaluate",
         )
+        _stage("export_result")
         manifest = _expect(
             self.ops.export_result(evaluated, pair, output_dir),
             ExportManifest,
