@@ -1,0 +1,69 @@
+# PS-closing phase 1 exact configuration.
+# Authoritative source: src/io/ps_correspondence/config.py.
+# Not EXP-007. Not SIH thresholds. Not a matcher freeze (D-007).
+
+record_id: PS-CORRESPONDENCE
+inherits_fixed_configuration_from: EXP-000
+sift_baseline_experiment_id: EXP-001
+independent_variable: correspondence_generation_path
+primary_pair_manifest_id: pair_02_mid_equatorial
+follow_up_pair_manifest_id: pair_01_equatorial
+
+hypothesis: >
+  H1: On pair_02_mid_equatorial, coarse-to-fine tiled multi-scale SIFT
+  recovers more verified inliers and maintains or improves 8x8 occupancy
+  versus the EXP-001 single matching-view SIFT baseline.
+  H0: it does not, or the transform becomes unstable, or runtime is
+  pathological.
+
+decision_rule: >
+  B is SUPPORTED only if verified inliers strictly increase, source and
+  reference occupied cells are each >= A's, both transforms fit from more
+  than 4 inliers, and B match runtime is at most 12x A's. Raw match count
+  is not success. Inlier ratio is reported, not gated. Do not retune.
+
+fixed:
+  matcher_family: sift
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    expected_pair_02_strides:
+      ohrc: 16
+      lroc: 8
+  sift:
+    nfeatures: 0
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+  runtime_factor_limit: 12.0
+
+variants:
+  A:
+    label: exp001_sift_single_matching_view
+    protocol_id: sift_single_matching_view
+    callable: match(pair, representation)
+  B:
+    label: sift_coarse_to_fine_tiled_multiscale
+    protocol_id: sift_coarse_to_fine_tiled_multiscale
+    callable: run_coarse_to_fine_sift(pair, representation)
+    coarse_to_fine:
+      fine_stride_factor: 0.5
+      max_pixels_per_tile: 4194304
+      max_fine_tiles: 4
+      bbox_expand_fraction: 0.25
+      tile_overlap_fraction: 0.125
+      reference_margin_fraction: 0.20
+      reference_margin_min_px: 256
+      max_matches_per_tile: 200
+      dedup_radius_px: 8.0
+      coarse_min_inliers: 5
+      min_tile_matching_side: 32

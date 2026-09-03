@@ -248,3 +248,30 @@ Transform remained stable. Runtime was acceptable. No follow-up pair was run.
 7. **Evaluation** — verification residuals vs independent accuracy (`NOT VALIDATED`).
 
 Projective DLT residuals are a fit diagnostic. Reciprocal agreement is not accuracy. Occupied-cell count is not proof of uniform overlap coverage. Held-out RMSE from matcher-derived points is not independent accuracy.
+
+## Next correspondence core (PS-closing phase 1)
+
+EXP-006 does **not** continue into EXP-007. Reciprocal SIFT was NOT SUPPORTED. The remaining correspondence bottleneck named here is still **single matching-view stride**: pair_02 OHRC 16 / LROC 8 discards texture before SIFT runs, and one-way vs reciprocal protocol changes cannot recover it.
+
+**Selected mechanism (one path):** coarse-to-fine tiled multi-scale SIFT.
+
+1. Coarse: frozen EXP-001 matching view + one-way SIFT (control A).
+2. Fit the existing projective RANSAC baseline on those coarse matches to get a search prior. This is candidate generation, not a change to downstream verification.
+3. Tile the expanded coarse-inlier bbox and rematch SIFT at half the coarse stride (`fine_stride_factor=0.5`) on corresponding windows.
+4. Union coarse matches with new fine matches (coarse set is never dropped). Downstream `verify_matches` is unchanged.
+
+**Why this, not the obvious alternatives**
+
+| Option | Why not |
+|---|---|
+| Another SIFT / Lowe / reciprocal tweak | Already rejected by EXP-001 and EXP-006 |
+| Matcher swap (ORB/RIFT) | EXP-001: pair variation >> matcher variation |
+| ASIFT affine warps on the same coarse view | Costly; does not restore discarded fine pixels |
+| LightGlue / LoFTR | Heavyweight learned stack; blocked in EXP-001 |
+| Full-image finer stride | Exceeds the 4,194,304-pixel matching-view budget |
+
+**Expected cost:** 1 coarse SIFT + ≤4 fine tiles, each ≤ the existing pixel budget. Match runtime target ≤ 12× control A.
+
+**Hypothesis:** searching/matching at multiple spatial scales and then verifying candidates geometrically recovers more reliable and spatially distributed correspondences than the single matching-view SIFT baseline.
+
+Implementation and A/B record: `src/matching/coarse_to_fine.py`, `experiments/PS-CORRESPONDENCE/`.

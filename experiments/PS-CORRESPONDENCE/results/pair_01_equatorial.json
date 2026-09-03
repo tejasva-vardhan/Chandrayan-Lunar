@@ -1,0 +1,1491 @@
+{
+  "comparison": {
+    "rows": [
+      {
+        "control_point_count": 4,
+        "deterministic": true,
+        "held_out_rmse": null,
+        "inlier_ratio": 0.1111111111111111,
+        "match_rss_delta_bytes": 17137664,
+        "match_runtime_seconds": 4.846259800018743,
+        "matcher_id": "sift",
+        "protocol_id": "sift_single_matching_view",
+        "raw_matches": 36,
+        "reference_occupied_cells": 4,
+        "residual_max": 6.958537960192885e-10,
+        "residual_median": 3.7157236839902915e-10,
+        "residual_rmse": 4.396175201142959e-10,
+        "source_concentration": 0.25,
+        "source_max_matches_per_cell": 1,
+        "source_occupied_cells": 4,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "variant": "A",
+        "variant_runtime_seconds": 9.77888139989227,
+        "verified_inliers": 4,
+        "verified_match_coverage": 0.2323628740965652
+      },
+      {
+        "control_point_count": 4,
+        "deterministic": true,
+        "held_out_rmse": null,
+        "inlier_ratio": 0.1111111111111111,
+        "match_rss_delta_bytes": 1261568,
+        "match_runtime_seconds": 4.50673110014759,
+        "matcher_id": "sift_coarse_to_fine",
+        "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+        "raw_matches": 36,
+        "reference_occupied_cells": 4,
+        "residual_max": 6.958537960192885e-10,
+        "residual_median": 3.7157236839902915e-10,
+        "residual_rmse": 4.396175201142959e-10,
+        "source_concentration": 0.25,
+        "source_max_matches_per_cell": 1,
+        "source_occupied_cells": 4,
+        "transform_fitted": true,
+        "transform_status": "fitted_full_raster_blocked_by_pixel_cap",
+        "variant": "B",
+        "variant_runtime_seconds": 10.25641469983384,
+        "verified_inliers": 4,
+        "verified_match_coverage": 0.2323628740965652
+      }
+    ],
+    "spatial_delta": {
+      "source_cells_gained": [],
+      "source_cells_lost": [],
+      "source_cells_shared": [
+        4,
+        5,
+        27,
+        41
+      ]
+    }
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "lroc_found": true,
+    "lroc_product_id": "M150368601RC",
+    "lroc_source_name": "M150368601RC.IMG",
+    "ohrc_found": true,
+    "ohrc_product_id": "ch2_ohr_ncp_20210402T0546284043_d_img_d18",
+    "ohrc_source_name": "ch2_ohr_ncp_20210402T0546284043_d_img_d18"
+  },
+  "decision_rule": "The independent variable is valid only if variant A is frozen match() one-way SIFT on the shared RepresentationResult and variant B is run_coarse_to_fine_sift on that same representation. B is SUPPORTED only if: (1) verified inliers strictly increase, (2) source and reference 8x8 occupied-cell counts are each >= A's, (3) both variants fit a transform from more than 4 verified inliers, (4) B match-stage runtime is at most 12x A's. Raw match count is not success. Inlier ratio is reported, not gated, because B is allowed to add local candidates. Bounding-box coverage and Clark-Evans R are reported, not gated. Matcher-derived held-out RMSE is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If H1 fails, report NOT SUPPORTED and do not retune.",
+  "failed_stage": null,
+  "fixed_configuration": {
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_reference_cell": 1,
+      "max_per_source_cell": 1,
+      "max_points": null
+    },
+    "diagnostic_registration_crop": {
+      "max_output_pixels": 16777216,
+      "note": "Full-raster warp remains blocked by the existing 16777216-pixel cap. Window size starts at preferred_side and grows to leftover budget. Placement maximises finite control-point inclusion inside that cap and does not change the fitted transform or original-image correspondence coordinates.",
+      "preferred_side_px": 2048,
+      "strategy": "bounded_reference_window_maximum_control_point_cover"
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "inlier_ratio_denominator": "len(CorrespondenceSet.matches)",
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy",
+      "spatial_coverage": "0.5 * (source_cp_bbox_area / source_image_area + reference_cp_bbox_area / reference_image_area)"
+    },
+    "expected_pair_01_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "expected_pair_02_strides": {
+      "lroc": 8,
+      "ohrc": 16
+    },
+    "experiment_id": "EXP-000",
+    "follow_up_pair_manifest_id": "pair_01_equatorial",
+    "footprint_source": "NASA PDS ODE",
+    "held_constant": [
+      "input products and pair manifest for a given pair",
+      "SIFT detector and descriptor (EXP-001 SIFT arm)",
+      "Lowe ratio 0.75 and min_matches 4",
+      "coarse matching-view policy per_image_pixel_budget",
+      "matching-view pixel budget 4,194,304",
+      "downsample_method stride_decimation",
+      "preprocessing identity passthrough above the 16,777,216-pixel cap",
+      "intensity representation routing",
+      "downstream geometric model projective_2d_baseline",
+      "downstream estimator ransac_style_baseline",
+      "verification residual_limit 3.0, max_trials 500, rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "refinement zncc_parabolic_baseline",
+      "registration model and the 16,777,216-pixel output cap"
+    ],
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences per variant",
+      "folds": 5,
+      "independent_accuracy": "NOT VALIDATED",
+      "rng_seed": 0
+    },
+    "independent_variable": "correspondence_generation_path",
+    "inherited_from": "EXP-000",
+    "matcher_family": "sift",
+    "matcher_id": "sift",
+    "matching_view": {
+      "coordinate_mapping": "x_original = x_matching * x_scale; y_original = y_matching * y_scale; x_scale = y_scale = stride",
+      "downsample_method": "stride_decimation",
+      "max_pixels_per_image": 4194304,
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window"
+    },
+    "matching_view_held_fixed_for_control": true,
+    "preprocessing": {
+      "clip_to_output_range": false,
+      "denoise_kernel_size": 3,
+      "enable_contrast_normalization": false,
+      "enable_denoise": false,
+      "enable_intensity_normalization": true,
+      "enable_scale_normalization": false,
+      "intensity_high_percentile": 98.0,
+      "intensity_low_percentile": 2.0,
+      "output_high": 1.0,
+      "output_low": 0.0
+    },
+    "primary_pair_manifest_id": "pair_02_mid_equatorial",
+    "record_id": "PS-CORRESPONDENCE",
+    "refinement": {
+      "fine_half_width": 1.0,
+      "fine_step": 0.1,
+      "method_id": "zncc_parabolic_baseline",
+      "min_peak_zncc": 0.25,
+      "min_valid_pixel_fraction": 0.75,
+      "search_radius": 3,
+      "window_radius": 7
+    },
+    "registration": {
+      "max_output_pixels": 16777216,
+      "model_id": "projective_2d_baseline",
+      "role": "software_baseline_not_d010_lunar_model"
+    },
+    "representation_routing": "select_representation_id: difficulty None/easy -> intensity; characterize_pair currently leaves difficulty unset",
+    "runtime_factor_limit": 12.0,
+    "sift": {
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "min_matches": 4,
+      "n_octave_layers": 3,
+      "nfeatures": 0,
+      "ratio_threshold": 0.75,
+      "sigma": 1.6
+    },
+    "sift_baseline_experiment_id": "EXP-001",
+    "spatial_grid": {
+      "extent": "full_product_image_dimensions_not_point_bbox",
+      "grid_bins": 8,
+      "same_grid_as_control_point_selection": true,
+      "total_cells": 64
+    },
+    "verification": {
+      "confidence_min": null,
+      "estimator_id": "ransac_style_baseline",
+      "max_trials": 500,
+      "model_id": "projective_2d_baseline",
+      "residual_limit": 3.0,
+      "rng_seed": 0
+    }
+  },
+  "hypothesis": "H1: On pair_02_mid_equatorial, a coarse-to-fine tiled multi-scale SIFT path that searches at half the matching-view stride inside the coarse geometric overlap, then uses the same downstream geometric verification, recovers more verified inliers and maintains or improves 8x8 occupancy versus the EXP-001 single matching-view SIFT baseline. H0: multi-scale tiled search does not improve verified quality and spatial occupancy, or the transform becomes unstable, or runtime is pathological.",
+  "inherited_from": "EXP-000",
+  "interpretation": {
+    "critical_measurements_missing": false,
+    "decision": "NOT SUPPORTED",
+    "decision_reason": "verified inliers did not increase (4 <= 4); a variant is at or below the projective DLT minimum (4), so the fit is unfalsifiable",
+    "decision_rule": "The independent variable is valid only if variant A is frozen match() one-way SIFT on the shared RepresentationResult and variant B is run_coarse_to_fine_sift on that same representation. B is SUPPORTED only if: (1) verified inliers strictly increase, (2) source and reference 8x8 occupied-cell counts are each >= A's, (3) both variants fit a transform from more than 4 verified inliers, (4) B match-stage runtime is at most 12x A's. Raw match count is not success. Inlier ratio is reported, not gated, because B is allowed to add local candidates. Bounding-box coverage and Clark-Evans R are reported, not gated. Matcher-derived held-out RMSE is not accuracy. Independent accuracy remains NOT VALIDATED. Missing critical measurements make the decision INDETERMINATE. If H1 fails, report NOT SUPPORTED and do not retune.",
+    "expected_protocols": {
+      "A": "sift_single_matching_view",
+      "B": "sift_coarse_to_fine_tiled_multiscale"
+    },
+    "expected_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "hypothesis_supported": false,
+    "independent_accuracy": "NOT VALIDATED",
+    "independent_validation_status": "NOT VALIDATED",
+    "independent_variable_applied": true,
+    "inlier_ratio_is_not_gated": true,
+    "limitations": [
+      "Independent accuracy is NOT VALIDATED.",
+      "Matcher-derived held-out points are not ground truth.",
+      "Raw match count is not a success criterion.",
+      "Inlier ratio is reported, not gated.",
+      "Occupied-cell ratio is an engineering diagnostic, not a frozen SIH uniformity score.",
+      "Overlap is not recomputed from the products.",
+      "Full-raster registration remains blocked by the 16,777,216-pixel cap.",
+      "If H1 is not supported, parameters are not retuned."
+    ],
+    "model_min_samples": 4,
+    "observed_strides": {
+      "lroc": 8,
+      "ohrc": 15
+    },
+    "quality_improved": false,
+    "quality_reason": "verified inliers did not increase (4 <= 4)",
+    "raw_match_count_is_not_success": true,
+    "reference_occupied_cells_by_variant": {
+      "A": 4,
+      "B": 4
+    },
+    "runtime_acceptable": true,
+    "runtime_reason": "B match runtime 4.507s is within 12x A (4.846s)",
+    "source_occupied_cells_by_variant": {
+      "A": 4,
+      "B": 4
+    },
+    "spatial_maintained_or_improved": true,
+    "spatial_reason": "source occupied cells 4 -> 4, reference occupied cells 4 -> 4",
+    "transform_reason": "a variant is at or below the projective DLT minimum (4), so the fit is unfalsifiable",
+    "transform_stable": false,
+    "verified_inliers_by_variant": {
+      "A": 4,
+      "B": 4
+    }
+  },
+  "memory": {
+    "characterize_pair": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 82149376,
+      "process_rss_delta_bytes": 4096,
+      "tracemalloc_current_bytes": 662744,
+      "tracemalloc_stage_peak_bytes": 663987
+    },
+    "generate_representation": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 123957248,
+      "process_rss_delta_bytes": 41807872,
+      "tracemalloc_current_bytes": 42181912,
+      "tracemalloc_stage_peak_bytes": 83464336
+    },
+    "ingest_product": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 82145280,
+      "process_rss_delta_bytes": 946176,
+      "tracemalloc_current_bytes": 659002,
+      "tracemalloc_stage_peak_bytes": 180796496
+    },
+    "preprocess": {
+      "memory_source": "psutil_process_rss",
+      "process_rss_bytes": 82149376,
+      "process_rss_delta_bytes": 0,
+      "tracemalloc_current_bytes": 664294,
+      "tracemalloc_stage_peak_bytes": 666544
+    },
+    "process_rss_bytes": 102838272,
+    "process_tracemalloc_current_bytes": 846859,
+    "process_tracemalloc_peak_bytes": 42477530
+  },
+  "pair_manifest_id": "pair_01_equatorial",
+  "record_id": "PS-CORRESPONDENCE",
+  "reproducibility": {
+    "git_commit": "071666b89a3c302e9d75ad42c2ad9d093020f2eb",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3"
+  },
+  "runtime_seconds": {
+    "characterize_pair": 0.017615400021895766,
+    "generate_representation": 5.455292999977246,
+    "ingest_product": 98.48998979991302,
+    "preprocess": 0.00043720006942749023,
+    "total": 124.07277059997432
+  },
+  "safety_limit_events": [
+    {
+      "action": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "event": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "source_pixels": 938100000,
+      "stage": "preprocess"
+    }
+  ],
+  "sift_baseline_experiment_id": "EXP-001",
+  "stages": {
+    "characterize_pair": {
+      "characterization": {
+        "difficulty": null,
+        "gsd_ratio": null,
+        "modality": "OHRC/LRO_NAC",
+        "quality_flags": [
+          "multimodal_pair"
+        ],
+        "sensor_pair": "OHRC/LRO_NAC",
+        "sun_angle_difference_degrees": null
+      },
+      "pair_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18__M150368601RC"
+    },
+    "generate_representation": {
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "reference_matching_view": {
+        "ingested_gsd_meters": null,
+        "matching_pixel_count": 4132224,
+        "matching_shape": [
+          6528,
+          633
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          52224,
+          5064
+        ],
+        "policy": "stride_decimation",
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0
+      },
+      "representation_id": "intensity",
+      "shared_across_variants": true,
+      "source_matching_view": {
+        "ingested_gsd_meters": 0.26,
+        "matching_pixel_count": 4169600,
+        "matching_shape": [
+          5212,
+          800
+        ],
+        "max_pixels_per_image": 4194304,
+        "original_shape": [
+          78175,
+          12000
+        ],
+        "policy": "stride_decimation",
+        "stride": 15,
+        "x_scale": 15.0,
+        "y_scale": 15.0
+      }
+    },
+    "ingest_product": {
+      "reference": {
+        "dimensions": {
+          "height_px": 52224,
+          "pixel_count": 264462336,
+          "width_px": 5064
+        },
+        "gsd_meters": null,
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "product_id": "M150368601RC",
+        "valid_pixel_ratio": 0.9873617693522907
+      },
+      "source": {
+        "dimensions": {
+          "height_px": 78175,
+          "pixel_count": 938100000,
+          "width_px": 12000
+        },
+        "gsd_meters": 0.26,
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20210402t0546284043_d_img_d18",
+        "valid_pixel_ratio": 1.0
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "cap_pixels": 16777216,
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "reference_pixels": 264462336,
+      "software_defaults_not_executed_on_full_rasters": {
+        "clip_to_output_range": false,
+        "denoise_kernel_size": 3,
+        "enable_contrast_normalization": false,
+        "enable_denoise": false,
+        "enable_intensity_normalization": true,
+        "enable_scale_normalization": false,
+        "intensity_high_percentile": 98.0,
+        "intensity_low_percentile": 2.0,
+        "output_high": 1.0,
+        "output_low": 0.0
+      },
+      "source_pixels": 938100000
+    }
+  },
+  "status": "completed",
+  "variant_configuration": {
+    "A": {
+      "callable": "match(pair, representation)",
+      "label": "exp001_sift_single_matching_view",
+      "protocol_id": "sift_single_matching_view",
+      "role": "control_existing_sift_baseline"
+    },
+    "B": {
+      "callable": "run_coarse_to_fine_sift(pair, representation)",
+      "coarse_to_fine": {
+        "bbox_expand_fraction": 0.25,
+        "coarse_min_inliers": 5,
+        "dedup_radius_px": 8.0,
+        "fine_stride_factor": 0.5,
+        "max_fine_tiles": 4,
+        "max_matches_per_tile": 200,
+        "max_pixels_per_tile": 4194304,
+        "min_tile_matching_side": 32,
+        "reference_margin_fraction": 0.2,
+        "reference_margin_min_px": 256,
+        "tile_overlap_fraction": 0.125
+      },
+      "label": "sift_coarse_to_fine_tiled_multiscale",
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "role": "candidate_correspondence_core"
+    }
+  },
+  "variants": {
+    "A": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 4,
+          "inlier_count": 4,
+          "inlier_ratio": 0.1111111111111111,
+          "rmse": 4.396175201142959e-10,
+          "spatial_coverage": 0.2323628740965652
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "geometry_inspection": {
+        "inliers": [
+          {
+            "reference_xy": [
+              3351.7021484375,
+              46137.8828125
+            ],
+            "residual": 4.5128903485228404e-10,
+            "source_xy": [
+              2723.1930541992188,
+              50364.9462890625
+            ]
+          },
+          {
+            "reference_xy": [
+              4815.919921875,
+              34148.9765625
+            ],
+            "residual": 2.918557019457742e-10,
+            "source_xy": [
+              4780.683746337891,
+              36690.380859375
+            ]
+          },
+          {
+            "reference_xy": [
+              2755.046630859375,
+              46909.37109375
+            ],
+            "residual": 4.547473508864641e-13,
+            "source_xy": [
+              6776.732025146484,
+              1502.691421508789
+            ]
+          },
+          {
+            "reference_xy": [
+              2777.611083984375,
+              27404.564453125
+            ],
+            "residual": 6.958537960192885e-10,
+            "source_xy": [
+              8727.270812988281,
+              7150.919952392578
+            ]
+          }
+        ],
+        "note": "coordinates are original-image pixels; occupancy is the full-image 8x8 grid, not the inlier bounding box",
+        "points_recorded": 4,
+        "points_truncated": false,
+        "source_cell_counts_row_major": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "source_occupied_cols": 4,
+        "source_occupied_rows": 3,
+        "verified_inlier_count": 4
+      },
+      "match": {
+        "coarse_to_fine_diagnostics": null,
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift",
+        "protocol_id": "sift_single_matching_view",
+        "raw_match_count": 36,
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 36,
+          "raw_match_count_second": 36,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity"
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "4 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 4,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 145084416,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42414625,
+          "tracemalloc_stage_peak_bytes": 42415820
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 141099008,
+          "process_rss_delta_bytes": 17137664,
+          "tracemalloc_current_bytes": 42323342,
+          "tracemalloc_stage_peak_bytes": 95025444
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144261120,
+          "process_rss_delta_bytes": 3162112,
+          "tracemalloc_current_bytes": 42351774,
+          "tracemalloc_stage_peak_bytes": 95043934
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 145063936,
+          "process_rss_delta_bytes": 221184,
+          "tracemalloc_current_bytes": 42409300,
+          "tracemalloc_stage_peak_bytes": 42698293
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 145084416,
+          "process_rss_delta_bytes": 20480,
+          "tracemalloc_current_bytes": 42411865,
+          "tracemalloc_stage_peak_bytes": 42421623
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144842752,
+          "process_rss_delta_bytes": 4096,
+          "tracemalloc_current_bytes": 42393800,
+          "tracemalloc_stage_peak_bytes": 42394995
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 144838656,
+          "process_rss_delta_bytes": 577536,
+          "tracemalloc_current_bytes": 42390460,
+          "tracemalloc_stage_peak_bytes": 42394576
+        }
+      },
+      "protocol_id": "sift_single_matching_view",
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 4,
+        "limitation": "INDETERMINATE means zero coordinates changed; the frozen ControlPoint contract has no per-point outcome field, so already-optimal cannot be distinguished from no measurable improvement. This is not a successful refinement.",
+        "outcome": "INDETERMINATE",
+        "output_count": 4
+      },
+      "register": {
+        "control_points_used_for_fit": 4,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": true,
+        "minimal_sample_warning": "the transform was fitted from exactly 4 points, the projective DLT minimum, so its fit residuals are an algebraic identity and carry no information about registration accuracy",
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "evaluate": 0.00019249995239078999,
+        "match": 4.846259800018743,
+        "match_repeat": 4.048827100079507,
+        "refine_points": 0.04029239993542433,
+        "register": 0.0026499000377953053,
+        "select_control_points": 0.010420500067993999,
+        "variant_total": 9.77888139989227,
+        "verify_matches": 0.8302391998004168
+      },
+      "select_control_points": {
+        "control_point_count": 4,
+        "points": [
+          {
+            "reference_xy": [
+              2755.046630859375,
+              46909.37109375
+            ],
+            "residual": 4.547473508864641e-13,
+            "source_xy": [
+              6776.732025146484,
+              1502.691421508789
+            ]
+          },
+          {
+            "reference_xy": [
+              4815.919921875,
+              34148.9765625
+            ],
+            "residual": 2.918557019457742e-10,
+            "source_xy": [
+              4780.683746337891,
+              36690.380859375
+            ]
+          },
+          {
+            "reference_xy": [
+              3351.7021484375,
+              46137.8828125
+            ],
+            "residual": 4.5128903485228404e-10,
+            "source_xy": [
+              2723.1930541992188,
+              50364.9462890625
+            ]
+          },
+          {
+            "reference_xy": [
+              2777.611083984375,
+              27404.564453125
+            ],
+            "residual": 6.958537960192885e-10,
+            "source_xy": [
+              8727.270812988281,
+              7150.919952392578
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 4,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.9864515172409064,
+          "concentration": 0.25,
+          "max_matches_per_cell": 1,
+          "mean_nearest_neighbour_px": 4010.492132155079,
+          "occupied_cells": 4,
+          "occupied_cols": 3,
+          "occupied_fraction": 0.0625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 1.2931798170733255,
+          "concentration": 0.25,
+          "max_matches_per_cell": 1,
+          "mean_nearest_neighbour_px": 9902.013053711631,
+          "occupied_cells": 4,
+          "occupied_cols": 4,
+          "occupied_fraction": 0.0625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.2323628740965652,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 4,
+          "reference_occupied_fraction": 0.0625,
+          "source_occupied_cells": 4,
+          "source_occupied_fraction": 0.0625,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 0,
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "reason": "every verified inlier was selected as a control point, so no unselected checkpoint set remains",
+        "status": "NOT_POSSIBLE_NO_INDEPENDENT_CHECKPOINTS",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": true,
+      "uses_shared_representation": true,
+      "variant_id": "A",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": 0.1111111111111111,
+        "inlier_residual_max": 6.958537960192885e-10,
+        "inlier_residual_min": 4.547473508864641e-13,
+        "inliers_above_model_minimum": 0,
+        "model_min_samples": 4,
+        "raw_match_count": 36,
+        "rejected_count": 32,
+        "residual_distribution": {
+          "count": 4,
+          "max": 6.958537960192885e-10,
+          "mean": 3.5986332004205835e-10,
+          "median": 3.7157236839902915e-10,
+          "min": 4.547473508864641e-13,
+          "not_accuracy": true,
+          "p95": 6.591690818442378e-10,
+          "rmse": 4.396175201142959e-10,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 4,
+          "raw": 0,
+          "rejected": 32
+        },
+        "verified_inlier_count": 4
+      }
+    },
+    "B": {
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 4,
+          "inlier_count": 4,
+          "inlier_ratio": 0.1111111111111111,
+          "rmse": 4.396175201142959e-10,
+          "spatial_coverage": 0.2323628740965652
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on the points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "failed_stage": null,
+      "geometry_inspection": {
+        "inliers": [
+          {
+            "reference_xy": [
+              3351.7021484375,
+              46137.8828125
+            ],
+            "residual": 4.5128903485228404e-10,
+            "source_xy": [
+              2723.1930541992188,
+              50364.9462890625
+            ]
+          },
+          {
+            "reference_xy": [
+              4815.919921875,
+              34148.9765625
+            ],
+            "residual": 2.918557019457742e-10,
+            "source_xy": [
+              4780.683746337891,
+              36690.380859375
+            ]
+          },
+          {
+            "reference_xy": [
+              2755.046630859375,
+              46909.37109375
+            ],
+            "residual": 4.547473508864641e-13,
+            "source_xy": [
+              6776.732025146484,
+              1502.691421508789
+            ]
+          },
+          {
+            "reference_xy": [
+              2777.611083984375,
+              27404.564453125
+            ],
+            "residual": 6.958537960192885e-10,
+            "source_xy": [
+              8727.270812988281,
+              7150.919952392578
+            ]
+          }
+        ],
+        "note": "coordinates are original-image pixels; occupancy is the full-image 8x8 grid, not the inlier bounding box",
+        "points_recorded": 4,
+        "points_truncated": false,
+        "source_cell_counts_row_major": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "source_occupied_cols": 4,
+        "source_occupied_rows": 3,
+        "verified_inlier_count": 4
+      },
+      "match": {
+        "coarse_to_fine_diagnostics": {
+          "coarse_raw_matches": 36,
+          "coarse_verified_inliers": 4,
+          "fine_matches_added": 0,
+          "fine_raw_matches": 0,
+          "fine_stage": "skipped_insufficient_coarse_inliers",
+          "reference_coarse_stride": 8,
+          "source_coarse_stride": 15,
+          "union_raw_matches": 36
+        },
+        "coordinates": "original_image_pixels_after_matching_view_scale",
+        "matcher_id": "sift_coarse_to_fine",
+        "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+        "raw_match_count": 36,
+        "repeat_stability": {
+          "coordinates_equal": true,
+          "deterministic": true,
+          "raw_counts_equal": true,
+          "raw_match_count_first": 36,
+          "raw_match_count_second": 36,
+          "repeat_count": 2
+        },
+        "representation_id": "intensity"
+      },
+      "matcher_held_out_validation": {
+        "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+        "effective_folds": 0,
+        "held_out_point_count": 0,
+        "held_out_transfer_error_pixels": null,
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "minimum_required": 5,
+        "model_id": "projective_2d_baseline",
+        "model_min_samples": 4,
+        "reason": "4 verified correspondences cannot be split into a fit set of at least 4 and a non-empty held-out set. A verified count equal to 4 is the model's minimum sample size, so nothing is left to withhold.",
+        "requested_folds": 5,
+        "rng_seed": 0,
+        "status": "NOT_POSSIBLE_INSUFFICIENT_VERIFIED_CORRESPONDENCES",
+        "verified_correspondences_available": 4,
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "matcher_id": "sift_coarse_to_fine",
+      "memory": {
+        "evaluate": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147439616,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42468602,
+          "tracemalloc_stage_peak_bytes": 42469797
+        },
+        "match": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 145317888,
+          "process_rss_delta_bytes": 1261568,
+          "tracemalloc_current_bytes": 42381342,
+          "tracemalloc_stage_peak_bytes": 95057334
+        },
+        "match_repeat": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147288064,
+          "process_rss_delta_bytes": 1970176,
+          "tracemalloc_current_bytes": 42428094,
+          "tracemalloc_stage_peak_bytes": 95102062
+        },
+        "refine_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147439616,
+          "process_rss_delta_bytes": 151552,
+          "tracemalloc_current_bytes": 42463342,
+          "tracemalloc_stage_peak_bytes": 42754739
+        },
+        "register": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147439616,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42465842,
+          "tracemalloc_stage_peak_bytes": 42475552
+        },
+        "select_control_points": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147288064,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42457014,
+          "tracemalloc_stage_peak_bytes": 42458209
+        },
+        "verify_matches": {
+          "memory_source": "psutil_process_rss",
+          "process_rss_bytes": 147288064,
+          "process_rss_delta_bytes": 0,
+          "tracemalloc_current_bytes": 42454262,
+          "tracemalloc_stage_peak_bytes": 42458298
+        }
+      },
+      "protocol_id": "sift_coarse_to_fine_tiled_multiscale",
+      "refine_points": {
+        "coordinates_changed_count": 0,
+        "input_count": 4,
+        "limitation": "INDETERMINATE means zero coordinates changed; the frozen ControlPoint contract has no per-point outcome field, so already-optimal cannot be distinguished from no measurable improvement. This is not a successful refinement.",
+        "outcome": "INDETERMINATE",
+        "output_count": 4
+      },
+      "register": {
+        "control_points_used_for_fit": 4,
+        "full_raster_warp_blocked": true,
+        "max_output_pixels": 16777216,
+        "minimal_sample_fit": true,
+        "minimal_sample_warning": "the transform was fitted from exactly 4 points, the projective DLT minimum, so its fit residuals are an algebraic identity and carry no information about registration accuracy",
+        "model_name": "projective_2d_baseline",
+        "quality_flags": [
+          "registration_output_too_large"
+        ],
+        "registered_source_uri": null,
+        "transform_fitted": true
+      },
+      "runtime_seconds": {
+        "evaluate": 0.00016529997810721397,
+        "match": 4.50673110014759,
+        "match_repeat": 5.061561499955133,
+        "refine_points": 0.023179000010713935,
+        "register": 0.0019628999289125204,
+        "select_control_points": 0.00019910000264644623,
+        "variant_total": 10.25641469983384,
+        "verify_matches": 0.6626157998107374
+      },
+      "select_control_points": {
+        "control_point_count": 4,
+        "points": [
+          {
+            "reference_xy": [
+              2755.046630859375,
+              46909.37109375
+            ],
+            "residual": 4.547473508864641e-13,
+            "source_xy": [
+              6776.732025146484,
+              1502.691421508789
+            ]
+          },
+          {
+            "reference_xy": [
+              4815.919921875,
+              34148.9765625
+            ],
+            "residual": 2.918557019457742e-10,
+            "source_xy": [
+              4780.683746337891,
+              36690.380859375
+            ]
+          },
+          {
+            "reference_xy": [
+              3351.7021484375,
+              46137.8828125
+            ],
+            "residual": 4.5128903485228404e-10,
+            "source_xy": [
+              2723.1930541992188,
+              50364.9462890625
+            ]
+          },
+          {
+            "reference_xy": [
+              2777.611083984375,
+              27404.564453125
+            ],
+            "residual": 6.958537960192885e-10,
+            "source_xy": [
+              8727.270812988281,
+              7150.919952392578
+            ]
+          }
+        ],
+        "selection_succeeded": true
+      },
+      "spatial_distribution": {
+        "extent_rule": "full_product_image_dimensions_not_point_bbox",
+        "grid_bins": 8,
+        "limitation": "occupied-cell ratio and Clark-Evans R are experiment diagnostics, not proof of uniform coverage of the true OHRC/LROC overlap; overlap is not recomputed from the products",
+        "point_count": 4,
+        "reference": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "clark_evans_r": 0.9864515172409064,
+          "concentration": 0.25,
+          "max_matches_per_cell": 1,
+          "mean_nearest_neighbour_px": 4010.492132155079,
+          "occupied_cells": 4,
+          "occupied_cols": 3,
+          "occupied_fraction": 0.0625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "source": {
+          "cell_counts_row_major": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clark_evans_r": 1.2931798170733255,
+          "concentration": 0.25,
+          "max_matches_per_cell": 1,
+          "mean_nearest_neighbour_px": 9902.013053711631,
+          "occupied_cells": 4,
+          "occupied_cols": 4,
+          "occupied_fraction": 0.0625,
+          "occupied_rows": 3,
+          "spans_multiple_cols": true,
+          "spans_multiple_rows": true
+        },
+        "spans_usable_overlap_proxy": true,
+        "total_cells": 64,
+        "uniformity_metric": "clark_evans_R = mean_nn / (0.5 * sqrt(image_area / n)); R<1 clustered, R~1 random, R>1 dispersed. No edge correction.",
+        "verified_match_coverage": 0.2323628740965652,
+        "verified_match_occupancy": {
+          "grid_bins": 8,
+          "reference_occupied_cells": 4,
+          "reference_occupied_fraction": 0.0625,
+          "source_occupied_cells": 4,
+          "source_occupied_fraction": 0.0625,
+          "total_cells": 64
+        }
+      },
+      "status": "completed",
+      "unselected_verified_checkpoints": {
+        "checkpoint_count": 0,
+        "checkpoint_transfer_error_pixels": null,
+        "design": "transform fitted from selected control points, scored on verified inliers that were not selected as control points. Checkpoint identities are identical across refinement variants.",
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "reason": "every verified inlier was selected as a control point, so no unselected checkpoint set remains",
+        "status": "NOT_POSSIBLE_NO_INDEPENDENT_CHECKPOINTS",
+        "units": "original image pixels (reference frame transfer error)",
+        "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists"
+      },
+      "uses_frozen_match_surface": false,
+      "uses_shared_representation": true,
+      "variant_id": "B",
+      "verify_matches": {
+        "exceeds_model_minimum": false,
+        "inlier_ratio": 0.1111111111111111,
+        "inlier_residual_max": 6.958537960192885e-10,
+        "inlier_residual_min": 4.547473508864641e-13,
+        "inliers_above_model_minimum": 0,
+        "model_min_samples": 4,
+        "raw_match_count": 36,
+        "rejected_count": 32,
+        "residual_distribution": {
+          "count": 4,
+          "max": 6.958537960192885e-10,
+          "mean": 3.5986332004205835e-10,
+          "median": 3.7157236839902915e-10,
+          "min": 4.547473508864641e-13,
+          "not_accuracy": true,
+          "p95": 6.591690818442378e-10,
+          "rmse": 4.396175201142959e-10,
+          "units": "verification_image_space_transfer_error_pixels"
+        },
+        "residual_meaning": "verification_image_space_transfer_error_pixels",
+        "status_counts": {
+          "filtered": 0,
+          "inlier": 4,
+          "raw": 0,
+          "rejected": 32
+        },
+        "verified_inlier_count": 4
+      }
+    }
+  },
+  "warnings": [
+    "preprocess identity passthrough: full-raster preprocess would materialise source_pixels=938100000 and reference_pixels=264462336 as float64, which exceeds the existing 16777216-pixel engineering cap. Matching-view intensity representation still applies 2-98 percentile stretch."
+  ]
+}
