@@ -110,7 +110,7 @@ Possible only where verified count ≥ 5, which is why ten of twelve arms report
 
 | Pair | Matcher | Held-out points | RMSE | Median | Max |
 |---|---|---|---|---|---|
-| pair_02_mid_equatorial | SIFT | 25 | 1.904 px | 1.860 px | 3.098 px |
+| pair_02_mid_equatorial | SIFT | 25 | 1.904 px | 1.796 px | 3.098 px |
 | pair_02_mid_equatorial | ORB | 24 | 2.222 px | 2.004 px | 3.966 px |
 
 ### Cross-matcher checkpoints
@@ -120,10 +120,10 @@ Each fitted transform scored against correspondences a *different* matcher found
 | Pair | Transform from | Checkpoints | RMSE | Median |
 |---|---|---|---|---|
 | pair_01_equatorial | SIFT | 4 (ORB) | **35,694.96 px** | 34,577 px |
-| pair_02_mid_equatorial | SIFT | 24 (ORB) | 62.95 px | 60.50 px |
+| pair_02_mid_equatorial | SIFT | 24 (ORB) | 62.95 px | 42.77 px |
 | pair_02_mid_equatorial | ORB | 25 (SIFT) | 61.32 px | 58.74 px |
-| pair_04_south_pole | SIFT | 4 (ORB) | **60,414.88 px** | 58,986 px |
-| pair_04_south_pole | ORB | 4 (SIFT) | **20,782.68 px** | 20,062 px |
+| pair_04_south_pole | SIFT | 4 (ORB) | **60,414.88 px** | 20,779 px |
+| pair_04_south_pole | ORB | 4 (SIFT) | **20,782.68 px** | 18,512 px |
 
 **This is the most important measurement in the experiment.** On pair 01 both SIFT and ORB reported verification residuals of order 1e-10 px, yet their two transforms disagree by **35,695 pixels**. Two "perfect" four-point fits of the same scene are mutually inconsistent by tens of thousands of pixels. The near-zero residual EXP-000 reported carries no information about correctness.
 
