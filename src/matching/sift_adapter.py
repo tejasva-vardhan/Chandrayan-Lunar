@@ -113,6 +113,16 @@ def run_sift(
         # Return empty set — not a crash condition, caller should handle LOW_CONFIDENCE.
         return empty_set(pair, MATCHER_ID, representation)
 
+    if src_arr.ndim != 2 or ref_arr.ndim != 2:
+        raise ValueError("SIFT baseline requires two-dimensional representation arrays")
+    if src_arr.size == 0 or ref_arr.size == 0:
+        # OpenCV raises on empty input. An empty representation is a valid
+        # no-data outcome at this stage, so preserve the pipeline's empty-set
+        # failure behaviour instead of leaking an OpenCV implementation error.
+        return empty_set(pair, MATCHER_ID, representation)
+    if not np.isfinite(src_arr).all() or not np.isfinite(ref_arr).all():
+        raise ValueError("SIFT baseline representation arrays must contain finite values")
+
     # Convert to uint8 for SIFT.
     src_u8 = to_uint8(src_arr)
     ref_u8 = to_uint8(ref_arr)
