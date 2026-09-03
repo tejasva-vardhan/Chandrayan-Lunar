@@ -1,0 +1,446 @@
+{
+  "experiment_id": "EXP-005",
+  "pair_manifest_id": "pair_02_mid_equatorial",
+  "status": "data_unavailable",
+  "run_note": "The pair_02_mid_equatorial raw products (OHRC ch2_ohr_ncp_20250612T2229094979_d_img_d18 and LROC M1504316436RC) are stored on D:\\SIH, which was not mounted during this session. The EXP-005 runner (scripts/run_exp005.py) requires those products. The metrics below are sourced from the EXP-001 SIFT arm record (experiments/EXP-001/results/pair_02_mid_equatorial.json), which ran the identical frozen pipeline including zncc_parabolic_baseline refinement. When D:\\SIH is remounted, run: $env:CHANDRAYAN_DATA_ROOT = 'D:\\SIH'; python scripts/run_exp005.py to populate a live record.",
+  "data_source": "EXP-001 pair_02_mid_equatorial SIFT arm (git_commit 779caec98ad4eafda13c3cf3edf5d16768ff3d2a)",
+  "failed_stage": null,
+  "hypothesis": "H1: On pair_02_mid_equatorial, with the EXP-001 SIFT configuration held fixed, the existing ZNCC + parabolic refinement produces measurable coordinate changes relative to identity passthrough and those changes strictly reduce held-out image-space transfer error on the same matcher-derived checkpoints. H0: the existing refinement either does not change coordinates, or the changes do not improve held-out geometric consistency.",
+  "decision_rule": "Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate AND the same held-out checkpoint RMSE is strictly lower for B than for A. Coordinate change alone is not accuracy.",
+  "inherited_from": "EXP-000",
+  "sift_baseline_experiment_id": "EXP-001",
+  "fixed_configuration": {
+    "experiment_id": "EXP-005",
+    "inherited_from": "EXP-000",
+    "independent_variable": "refinement_method_id",
+    "held_constant": [
+      "input products and pair manifest",
+      "matching-view policy (stride_decimation, 4,194,304 pixels per image)",
+      "preprocessing (identity passthrough above the 16,777,216-pixel cap)",
+      "representation routing and intensity percentile stretch",
+      "coordinate mapping back to original image pixels",
+      "geometric model projective_2d_baseline",
+      "robust estimator ransac_style_baseline",
+      "verification residual_limit 3.0",
+      "RANSAC max_trials 500",
+      "rng_seed 0",
+      "control-point selection grid_bins 8, max 1 point per cell",
+      "registration model and the 16,777,216-pixel output cap",
+      "evaluation metric definitions",
+      "Lowe ratio threshold 0.75 and min_matches 4"
+    ],
+    "matching_view": {
+      "max_pixels_per_image": 4194304,
+      "downsample_method": "stride_decimation",
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
+      "expected_pair_02_strides": {"ohrc": 16, "lroc": 8}
+    },
+    "sift": {
+      "nfeatures": 0,
+      "n_octave_layers": 3,
+      "contrast_threshold": 0.04,
+      "edge_threshold": 10.0,
+      "sigma": 1.6,
+      "ratio_threshold": 0.75,
+      "min_matches": 4
+    },
+    "verification": {
+      "model_id": "projective_2d_baseline",
+      "estimator_id": "ransac_style_baseline",
+      "residual_limit": 3.0,
+      "max_trials": 500,
+      "rng_seed": 0,
+      "confidence_min": null
+    },
+    "control_points": {
+      "grid_bins": 8,
+      "max_per_source_cell": 1,
+      "max_per_reference_cell": 1,
+      "max_points": null
+    },
+    "refinement_shared_zncc_settings": {
+      "window_radius": 7,
+      "search_radius": 3,
+      "min_valid_pixel_fraction": 0.75,
+      "min_peak_zncc": 0.25,
+      "fine_half_width": 1.0,
+      "fine_step": 0.1
+    },
+    "registration": {
+      "model_id": "projective_2d_baseline",
+      "max_output_pixels": 16777216
+    },
+    "evaluation": {
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth": false,
+      "rmse": "sqrt(mean(stored inlier verification residuals^2)); not independent accuracy"
+    },
+    "held_out_validation": {
+      "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+      "folds": 5,
+      "rng_seed": 0,
+      "independent_accuracy": "NOT VALIDATED",
+      "note": "held-out transfer error is not independent accuracy; there is no surveyed lunar control"
+    }
+  },
+  "variant_configuration": {
+    "A": {
+      "label": "no_subpixel_refinement",
+      "method_id": "identity_passthrough",
+      "role": "ablation_no_refinement",
+      "callable": "refine_points_with_settings(..., identity_passthrough)"
+    },
+    "B": {
+      "label": "existing_zncc_parabolic_baseline",
+      "method_id": "zncc_parabolic_baseline",
+      "role": "same_modality_software_baseline",
+      "callable": "refine_points(control_points, pair)"
+    }
+  },
+  "dataset": {
+    "data_root_env": "CHANDRAYAN_DATA_ROOT",
+    "footprint_source": "NASA PDS ODE",
+    "ohrc_product_id": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "lroc_product_id": "M1504316436RC",
+    "ohrc_found": true,
+    "lroc_found": true,
+    "ohrc_source_name": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+    "lroc_source_name": "M1504316436RC.IMG"
+  },
+  "shared_stages": {
+    "source": "EXP-001 SIFT arm, git_commit 779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
+    "ingest_product": {
+      "source": {
+        "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+        "instrument": "OHRC",
+        "mission": "Chandrayaan-2",
+        "dimensions": {"height_px": 79780, "width_px": 12000, "pixel_count": 957360000},
+        "gsd_meters": 0.28,
+        "valid_pixel_ratio": 1.0
+      },
+      "reference": {
+        "product_id": "M1504316436RC",
+        "instrument": "LRO_NAC",
+        "mission": "LRO",
+        "dimensions": {"height_px": 52224, "width_px": 5064, "pixel_count": 264462336},
+        "gsd_meters": null,
+        "valid_pixel_ratio": 0.9873617693522907
+      }
+    },
+    "preprocess": {
+      "applied": "identity_passthrough",
+      "reason": "full_raster_materialization_exceeds_engineering_pixel_cap",
+      "cap_pixels": 16777216,
+      "source_pixels": 957360000,
+      "reference_pixels": 264462336
+    },
+    "generate_representation": {
+      "representation_id": "intensity",
+      "source_matching_view": {
+        "original_shape": [79780, 12000],
+        "matching_shape": [4987, 750],
+        "stride": 16,
+        "x_scale": 16.0,
+        "y_scale": 16.0,
+        "max_pixels_per_image": 4194304,
+        "policy": "stride_decimation"
+      },
+      "reference_matching_view": {
+        "original_shape": [52224, 5064],
+        "matching_shape": [6528, 633],
+        "stride": 8,
+        "x_scale": 8.0,
+        "y_scale": 8.0,
+        "max_pixels_per_image": 4194304,
+        "policy": "stride_decimation"
+      },
+      "coordinate_mapping": "x_original = x_matching * stride; y_original = y_matching * stride",
+      "spatial_window": "full_image_stride_decimation_not_a_cropped_window",
+      "shared_across_variants": true
+    },
+    "match": {
+      "matcher_id": "sift",
+      "representation_id": "intensity",
+      "raw_match_count": 919,
+      "coordinates": "original_image_pixels_after_matching_view_scale",
+      "shared_across_variants": true
+    },
+    "verify_matches": {
+      "raw_match_count": 919,
+      "verified_inlier_count": 25,
+      "rejected_count": 894,
+      "inlier_ratio": 0.02720348204570185,
+      "model_min_samples": 4,
+      "inliers_above_model_minimum": 21,
+      "exceeds_model_minimum": true,
+      "inlier_residual_min": 0.3047142941734978,
+      "inlier_residual_max": 2.653533215225044,
+      "residual_meaning": "verification_image_space_transfer_error_pixels",
+      "shared_across_variants": true
+    },
+    "select_control_points": {
+      "control_point_count": 11,
+      "selection_succeeded": true,
+      "shared_across_variants": true,
+      "note": "spatial grid 8x8, max 1 per cell; all 11 points are the pre-refinement coordinates passed to both variants"
+    },
+    "matcher_held_out_validation": {
+      "design": "k-fold split of verified correspondences; transform refitted on the complement of each fold and scored on the fold itself",
+      "model_id": "projective_2d_baseline",
+      "requested_folds": 5,
+      "effective_folds": 5,
+      "folds_used": 5,
+      "folds_skipped": 0,
+      "held_out_point_count": 25,
+      "held_out_transfer_error_pixels": {
+        "count": 25,
+        "mean": 1.7388797941585585,
+        "median": 1.7959947582848357,
+        "min": 0.34569302673882957,
+        "max": 3.0980838888403253,
+        "rmse": 1.9043709874947647
+      },
+      "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+      "units": "original image pixels (reference frame transfer error)",
+      "independent_accuracy": "NOT VALIDATED",
+      "independent_ground_truth_used": false,
+      "why_not_independent_accuracy": "held-out points are matcher-derived and were selected by the same RANSAC consensus as the fitting points, so their errors are correlated with the fit; no surveyed lunar control exists",
+      "note": "This split is on verified correspondences and does not use refined coordinates. It is the EXP-001 SIFT control on this pair, identical for A and B. It is not independent accuracy."
+    }
+  },
+  "variants": {
+    "A": {
+      "variant_id": "A",
+      "matcher_id": "sift",
+      "method_id": "identity_passthrough",
+      "uses_shared_correspondences": true,
+      "uses_shared_control_points": true,
+      "refine_points": {
+        "method_id": "identity_passthrough",
+        "outcome": "INDETERMINATE",
+        "coordinates_changed_count": 0,
+        "input_count": 11,
+        "output_count": 11,
+        "mean_displacement_pixels": 0.0,
+        "max_displacement_pixels": 0.0,
+        "limitation": "Variant A is the identity passthrough ablation. Zero coordinates changed by definition. INDETERMINATE means no refinement was applied; this is the intended control, not a failure."
+      },
+      "zncc_acceptance": {
+        "note": "ZNCC acceptance is not computed for identity_passthrough; no template comparison is performed.",
+        "accepted_count": null,
+        "rejected_count": null,
+        "status": "NOT_APPLICABLE_identity_passthrough"
+      },
+      "register": {
+        "transform_fitted": true,
+        "model_name": "projective_2d_baseline",
+        "control_points_used_for_fit": 11,
+        "minimal_sample_fit": false,
+        "full_raster_warp_blocked": true,
+        "quality_flags": ["registration_output_too_large"],
+        "registered_source_uri": null
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on points used to fit the transform; this is a fit diagnostic, not accuracy"
+      },
+      "control_point_held_out": {
+        "note": "Variant A uses unrefined coordinates (same as EXP-001 pre-refinement). k-fold on 11 control points with 4-point minimum: 11 < 5 (min_required = model_min_samples + 1), so k-fold is possible. EXP-001 SIFT held-out on 25 verified inliers (not just control points) gives RMSE = 1.9044 px. Control-point subset k-fold was not run in EXP-001 and requires a live run.",
+        "status": "REQUIRES_LIVE_RUN",
+        "independent_accuracy": "NOT VALIDATED"
+      },
+      "unselected_verified_checkpoints": {
+        "note": "14 verified inliers (25 total - 11 control points) could serve as unselected checkpoints. These were not scored in EXP-001 and require a live run.",
+        "status": "REQUIRES_LIVE_RUN",
+        "independent_accuracy": "NOT VALIDATED"
+      },
+      "status": "derived_from_exp001"
+    },
+    "B": {
+      "variant_id": "B",
+      "matcher_id": "sift",
+      "method_id": "zncc_parabolic_baseline",
+      "uses_shared_correspondences": true,
+      "uses_shared_control_points": true,
+      "refine_points": {
+        "method_id": "zncc_parabolic_baseline",
+        "outcome": "COORDINATES_UPDATED",
+        "coordinates_changed_count": 2,
+        "input_count": 11,
+        "output_count": 11,
+        "mean_displacement_pixels": null,
+        "max_displacement_pixels": null,
+        "mean_displacement_among_changed_pixels": null,
+        "limitation": "EXP-001 stores the count of changed coordinates (2) and the post-refinement coordinates but not the pre-refinement coordinates of the changed points, so mean and max displacement cannot be computed from this record. A live EXP-005 run is required for displacement magnitudes."
+      },
+      "zncc_acceptance": {
+        "accepted_count": 2,
+        "rejected_count": 9,
+        "acceptance_rate": 0.18181818181818182,
+        "note": "Inferred from EXP-001 coordinates_changed_count=2 out of 11 input points. The 9 rejected points were accepted by the frozen refine_points() but their parabolic peaks either fell below min_peak_zncc=0.25 or the valid-pixel fraction was below 0.75, so their coordinates were not updated. Exact ZNCC values per point require a live run.",
+        "status": "INFERRED_FROM_EXP001_COUNT"
+      },
+      "register": {
+        "transform_fitted": true,
+        "model_name": "projective_2d_baseline",
+        "control_points_used_for_fit": 11,
+        "minimal_sample_fit": false,
+        "full_raster_warp_blocked": true,
+        "quality_flags": ["registration_output_too_large"],
+        "registered_source_uri": null
+      },
+      "evaluate": {
+        "independent_accuracy": "NOT VALIDATED",
+        "independent_ground_truth_used": false,
+        "metrics": {
+          "control_point_count": 11,
+          "inlier_count": 25,
+          "inlier_ratio": 0.02720348204570185,
+          "rmse": 1.686182317045492,
+          "spatial_coverage": 0.505643792898762
+        },
+        "rmse_meaning": "RMSE of stored verification inlier residuals on points used to fit the transform; this is a fit diagnostic, not accuracy; this RMSE is NOT recomputed after refinement and therefore does not measure refinement accuracy"
+      },
+      "control_point_held_out": {
+        "note": "k-fold on 11 refined control points requires a live run; not in EXP-001 record.",
+        "status": "REQUIRES_LIVE_RUN",
+        "independent_accuracy": "NOT VALIDATED"
+      },
+      "unselected_verified_checkpoints": {
+        "note": "14 unselected verified inliers could be scored against the transform fitted on 11 refined control points. This was not computed in EXP-001 and requires a live run.",
+        "status": "REQUIRES_LIVE_RUN",
+        "independent_accuracy": "NOT VALIDATED"
+      },
+      "held_out_validation_from_exp001": {
+        "design": "k-fold split of all 25 verified correspondences (not just the 11 control points). This is the EXP-001 held-out split with zncc_parabolic_baseline in the pipeline.",
+        "held_out_point_count": 25,
+        "held_out_transfer_error_pixels": {
+          "count": 25,
+          "mean": 1.7388797941585585,
+          "median": 1.7959947582848357,
+          "min": 0.34569302673882957,
+          "max": 3.0980838888403253,
+          "rmse": 1.9043709874947647
+        },
+        "status": "HELD_OUT_CROSS_VALIDATION_COMPLETED",
+        "units": "original image pixels (reference frame transfer error)",
+        "independent_accuracy": "NOT VALIDATED",
+        "note": "This held-out split is on all verified correspondences before control-point grid selection. It is the same split as the matcher_held_out_validation above and applies equally to both A and B because control points were selected from the same verified set before any refinement differentiation occurred in this re-analysis."
+      },
+      "status": "derived_from_exp001"
+    }
+  },
+  "comparison": {
+    "rows": [
+      {
+        "variant": "A",
+        "method_id": "identity_passthrough",
+        "verified_inliers": 25,
+        "control_point_count": 11,
+        "coordinates_changed_count": 0,
+        "mean_displacement_pixels": 0.0,
+        "max_displacement_pixels": 0.0,
+        "accepted_count": null,
+        "rejected_count": null,
+        "unselected_checkpoint_rmse": "REQUIRES_LIVE_RUN",
+        "control_point_held_out_rmse": "REQUIRES_LIVE_RUN",
+        "transform_status": "fitted",
+        "refinement_status": "INDETERMINATE"
+      },
+      {
+        "variant": "B",
+        "method_id": "zncc_parabolic_baseline",
+        "verified_inliers": 25,
+        "control_point_count": 11,
+        "coordinates_changed_count": 2,
+        "mean_displacement_pixels": "NOT_STORED_IN_EXP001",
+        "max_displacement_pixels": "NOT_STORED_IN_EXP001",
+        "accepted_count": 2,
+        "rejected_count": 9,
+        "unselected_checkpoint_rmse": "REQUIRES_LIVE_RUN",
+        "control_point_held_out_rmse": "REQUIRES_LIVE_RUN",
+        "transform_status": "fitted",
+        "refinement_status": "COORDINATES_UPDATED"
+      }
+    ]
+  },
+  "interpretation": {
+    "primary_metric": "held_out_checkpoint_rmse_strictly_lower_after_measurable_coordinate_change",
+    "decision_rule": "Refinement is treated as improving held-out geometric consistency only if B changes at least one coordinate AND the same held-out checkpoint RMSE is strictly lower for B than for A.",
+    "verified_inliers": 25,
+    "control_point_count": 11,
+    "method_ids_by_variant": {
+      "A": "identity_passthrough",
+      "B": "zncc_parabolic_baseline"
+    },
+    "coordinates_changed_count_by_variant": {
+      "A": 0,
+      "B": 2
+    },
+    "mean_displacement_pixels_by_variant": {
+      "A": 0.0,
+      "B": "NOT_STORED_IN_EXP001"
+    },
+    "max_displacement_pixels_by_variant": {
+      "A": 0.0,
+      "B": "NOT_STORED_IN_EXP001"
+    },
+    "held_out_rmse_by_variant": {
+      "A": "REQUIRES_LIVE_RUN",
+      "B": "REQUIRES_LIVE_RUN"
+    },
+    "independent_variable_applied": true,
+    "identity_left_coordinates_unchanged": true,
+    "coordinates_changed": true,
+    "held_out_comparable": false,
+    "held_out_improved": false,
+    "hypothesis_supported": false,
+    "coordinate_change_is_not_accuracy": true,
+    "matcher_derived_held_out_is_not_ground_truth": true,
+    "independent_accuracy": "NOT VALIDATED",
+    "independent_validation_status": "NOT VALIDATED",
+    "four_point_dlt_residuals_are_not_accuracy": true,
+    "partial_findings_from_exp001": {
+      "zncc_changes_coordinates": true,
+      "changed_count": 2,
+      "total_control_points": 11,
+      "acceptance_rate": "2/11 (18.2%)",
+      "rejection_rate": "9/11 (81.8%)",
+      "displacement_magnitude": "NOT_STORED_IN_EXP001",
+      "held_out_rmse_comparable_before_vs_after": false,
+      "reason_not_comparable": "EXP-001 k-fold ran on all 25 verified inliers equally for all matchers; per-variant unrefined vs refined held-out scoring requires a live EXP-005 run"
+    },
+    "limitations": [
+      "Independent accuracy is NOT VALIDATED. There is no surveyed lunar control.",
+      "Matcher-derived held-out points are not ground truth.",
+      "Coordinate change is not accuracy.",
+      "evaluate().rmse is stored verification-inlier residual RMSE and does not recompute residuals after refinement.",
+      "ZNCC + parabolic is a same-modality software baseline, not a multimodal OHRC/LROC solution.",
+      "Overlap is not recomputed from the products. The manifest declares overlap_status=verified from NASA PDS ODE footprints.",
+      "Full-raster registration remains blocked by the existing 16,777,216-pixel cap.",
+      "This experiment runs pair_02_mid_equatorial only.",
+      "No refinement algorithm, matcher, SIFT, representation, RANSAC, or registration change was introduced.",
+      "The held-out RMSE for A vs B cannot be compared from this record. The unselected-checkpoint scorer (14 remaining inliers) and control-point k-fold scorer require a live EXP-005 run with D:\\SIH mounted.",
+      "Displacement magnitude (mean and max pixels) is not stored in EXP-001. Only the count of changed coordinates (2/11) is known from this record.",
+      "9/11 ZNCC refinement attempts were rejected (acceptance rate 18.2%). The reason per point (below min_peak_zncc threshold vs below min_valid_pixel_fraction) is not recoverable from EXP-001 data.",
+      "D:\\SIH was not mounted during this session. Run python scripts/run_exp005.py with the drive mounted to obtain a complete live record."
+    ]
+  },
+  "reproducibility": {
+    "exp001_git_commit": "779caec98ad4eafda13c3cf3edf5d16768ff3d2a",
+    "numpy_version": "2.5.2",
+    "opencv_version": "5.0.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.14.3",
+    "note": "Reproducibility values from EXP-001 run. EXP-005 was not independently executed in this session."
+  }
+}
