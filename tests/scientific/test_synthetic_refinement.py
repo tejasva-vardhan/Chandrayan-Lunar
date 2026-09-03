@@ -21,8 +21,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.models import ControlPoint, LunarProduct, RegistrationPair
+from src.control_points import ControlPointSettings, select_control_points_with_settings
+from src.models import (
+    ControlPoint,
+    Correspondence,
+    CorrespondenceSet,
+    LunarProduct,
+    RegistrationPair,
+)
 from src.refinement import RefinementSettings, refine_points, refine_points_with_settings
+from src.registration.estimation import eligible_control_points, estimate_matrix
+from src.registration.models import Affine2DBaseline
 
 pytestmark = pytest.mark.scientific
 
@@ -289,3 +298,78 @@ def test_output_remains_finite_and_population_is_unchanged(tmp_path: Path) -> No
         assert math.isfinite(out.source_xy[0]) and math.isfinite(out.source_xy[1])
         assert math.isfinite(out.reference_xy[0]) and math.isfinite(out.reference_xy[1])
         assert out.residual == inp.residual
+
+
+def _apply_matrix(matrix: np.ndarray, point: tuple[float, float]) -> np.ndarray:
+    homogeneous = matrix @ np.array([point[0], point[1], 1.0])
+    return homogeneous[:2] / homogeneous[2]
+
+
+def test_spatial_selection_survives_refinement_and_supports_an_ablation_fit(
+    tmp_path: Path,
+) -> None:
+    """Compare all verified points with the selected subset on known synthetic data.
+
+    This is an engineering ablation utility only. It checks that refinement
+    preserves the selected spatial population and that both point populations
+    can support a finite affine fit. It does not rank either population or
+    claim scientific registration superiority.
+    """
+    dx, dy = 0.35, -0.25
+    source = _periodic_texture(96, 96)
+    pair = _pair(tmp_path, source, _fourier_translate(source, dx, dy))
+    locations = [(float(x), float(y)) for x in (20, 48, 76) for y in (20, 48, 76)]
+    # Extra high-confidence center points exercise the spatial selector's
+    # one-point-per-cell limit without changing the known synthetic transform.
+    locations.extend([(48.0, 48.0)] * 8)
+    correspondences = CorrespondenceSet(
+        pair_id=pair.pair_id,
+        matcher_id="synthetic",
+        matches=[
+            Correspondence(
+                source_xy=point,
+                reference_xy=(point[0] + dx, point[1] + dy),
+                confidence=0.99,
+                residual=0.1,
+                status="inlier",
+            )
+            for point in locations
+        ],
+    )
+    selected = select_control_points_with_settings(
+        correspondences,
+        pair,
+        ControlPointSettings(
+            grid_bins=3,
+            max_per_source_cell=1,
+            max_per_reference_cell=1,
+        ),
+    )
+    refined = refine_points(selected, pair)
+
+    assert len(selected) == len(refined) == 9
+    assert {point.source_xy for point in refined} == {
+        (float(x), float(y)) for x in (20, 48, 76) for y in (20, 48, 76)
+    }
+
+    all_points = [
+        ControlPoint(
+            source_xy=item.source_xy,
+            reference_xy=item.reference_xy,
+            residual=item.residual,
+        )
+        for item in correspondences.matches
+    ]
+    model = Affine2DBaseline()
+    all_matrix = estimate_matrix(eligible_control_points(all_points), model)
+    selected_matrix = estimate_matrix(eligible_control_points(refined), model)
+
+    assert all_matrix is not None
+    assert selected_matrix is not None
+    expected = np.array([60.0 + dx, 36.0 + dy])
+    # Both fits are evaluated against the known synthetic generating model;
+    # neither fit is asserted to be better than the other.
+    assert np.linalg.norm(_apply_matrix(all_matrix, (60.0, 36.0)) - expected) <= 1e-9
+    assert np.linalg.norm(_apply_matrix(selected_matrix, (60.0, 36.0)) - expected) <= (
+        SOFTWARE_TEST_TOLERANCE_PX
+    )
