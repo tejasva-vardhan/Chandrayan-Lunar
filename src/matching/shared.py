@@ -7,10 +7,13 @@ how matching-view coordinates are mapped back to original image pixels, and
 how native distances are normalised into ``Correspondence.confidence``.
 
 These functions are the SIFT adapter's original private helpers, promoted so
-the other adapters cannot drift from them. Behaviour is unchanged; the SIFT
-baseline must still reproduce the EXP-000 counts exactly, which
-``tests/integration/test_exp001_real_pipeline.py`` asserts against the
-committed EXP-000 record.
+the other adapters cannot drift from them. Behaviour is unchanged: the SIFT
+baseline still reproduces the EXP-000 counts exactly on pair_01_equatorial
+(36 raw, 4 verified, inlier ratio 0.1111, coverage 0.23236), recorded in
+experiments/EXP-001/results/pair_01_equatorial.json. That reproduction needs the
+external dataset, so it is a run-time check rather than a committed test;
+``tests/unit/test_matcher_portfolio.py`` pins the offline half by asserting the
+portfolio's SIFT arm is identical to the frozen ``match()`` path.
 """
 
 from __future__ import annotations
