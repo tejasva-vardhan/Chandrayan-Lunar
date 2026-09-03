@@ -25,6 +25,33 @@ class ProductSummary(BaseModel):
     path: str
     origin: Literal["upload", "path", "data_root"]
     filename: str | None = None
+    logical_id: str | None = None
+    instrument_hint: str | None = None
+
+
+class CatalogStatusResponse(BaseModel):
+    """Availability of products under CHANDRAYAN_DATA_ROOT (no arbitrary FS browse)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    data_root_configured: bool
+    data_root_env: str = "CHANDRAYAN_DATA_ROOT"
+    product_count: int = 0
+    products: list[ProductSummary] = Field(default_factory=list)
+    message: str | None = None
+
+
+class Exp000PairResponse(BaseModel):
+    """Resolved EXP-000 / pair_01_equatorial source+reference from the data root."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    available: bool
+    pair_id: str = "pair_01_equatorial"
+    experiment_id: str = "EXP-000"
+    source: ProductSummary | None = None
+    reference: ProductSummary | None = None
+    message: str | None = None
 
 
 class CreateJobRequest(BaseModel):
