@@ -181,3 +181,10 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     service: str = "sih26166-api"
     pipeline_stages: list[str]
+
+
+class VisualizationResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reference_url: str
+    registered_source_url: str

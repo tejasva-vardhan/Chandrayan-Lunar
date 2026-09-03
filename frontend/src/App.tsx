@@ -6,6 +6,7 @@ import { MoonScene } from "./components/MoonScene";
 import { RegistrationConsole } from "./components/RegistrationConsole";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
 import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
+import { OverlayViewer } from "./components/workspace/OverlayViewer";
 import { baselineResultsView, type ResultsViewModel } from "./api/resultsView";
 import type { DisplayPoint } from "./api/resultsView";
 
@@ -117,6 +118,7 @@ function App() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [focusedTarget, setFocusedTarget] = useState<{ lon: number; lat: number; zoomMultiplier?: number } | null>(null);
   const [results, setResults] = useState<ResultsViewModel>(() => baselineResultsView());
+  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -411,47 +413,68 @@ function App() {
             )}
           </div>
 
-          <div className="evidence-grid">
-            <Raster
-              label={results.source}
-              points={results.points}
-              onHoverPoint={(index) => {
-                if (index !== null && CP_POINTS[index]) {
-                  setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
-                } else {
-                  setFocusedTarget(null);
-                }
-              }}
-            />
-            <div className="correspondence-rail" aria-label="Verified correspondences">
-              <p>VERIFIED<br />CORRESPONDENCES</p>
-              {results.points.slice(0, 4).map((_, item) => (
-                <span
-                  key={item}
-                  style={{ top: `${22 + item * 16}%` }}
-                  onMouseEnter={() => {
-                    if (CP_POINTS[item]) {
-                      setFocusedTarget({ lon: CP_POINTS[item].lon, lat: CP_POINTS[item].lat, zoomMultiplier: 0.82 });
-                    }
-                  }}
-                  onMouseLeave={() => setFocusedTarget(null)}
-                  title={`Inspect Verified Point CP-0${item + 1}`}
-                />
-              ))}
-            </div>
-            <Raster
-              label={results.reference}
-              points={results.points}
-              reference
-              onHoverPoint={(index) => {
-                if (index !== null && CP_POINTS[index]) {
-                  setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
-                } else {
-                  setFocusedTarget(null);
-                }
-              }}
-            />
+          <div className="view-toggle-controls" style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "24px" }}>
+            <button 
+              className={`secondary-button ${!showOverlay ? "active" : ""}`} 
+              onClick={() => setShowOverlay(false)}
+              style={!showOverlay ? { borderColor: "var(--signal)", color: "var(--signal)", background: "rgba(56, 189, 248, 0.1)" } : {}}
+            >
+              Split Correspondences
+            </button>
+            <button 
+              className={`secondary-button ${showOverlay ? "active" : ""}`} 
+              onClick={() => setShowOverlay(true)}
+              style={showOverlay ? { borderColor: "var(--signal)", color: "var(--signal)", background: "rgba(56, 189, 248, 0.1)" } : {}}
+            >
+              Registration Overlay
+            </button>
           </div>
+
+          {!showOverlay ? (
+            <div className="evidence-grid">
+              <Raster
+                label={results.source}
+                points={results.points}
+                onHoverPoint={(index) => {
+                  if (index !== null && CP_POINTS[index]) {
+                    setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
+                  } else {
+                    setFocusedTarget(null);
+                  }
+                }}
+              />
+              <div className="correspondence-rail" aria-label="Verified correspondences">
+                <p>VERIFIED<br />CORRESPONDENCES</p>
+                {results.points.slice(0, 4).map((_, item) => (
+                  <span
+                    key={item}
+                    style={{ top: `${22 + item * 16}%` }}
+                    onMouseEnter={() => {
+                      if (CP_POINTS[item]) {
+                        setFocusedTarget({ lon: CP_POINTS[item].lon, lat: CP_POINTS[item].lat, zoomMultiplier: 0.82 });
+                      }
+                    }}
+                    onMouseLeave={() => setFocusedTarget(null)}
+                    title={`Inspect Verified Point CP-0${item + 1}`}
+                  />
+                ))}
+              </div>
+              <Raster
+                label={results.reference}
+                points={results.points}
+                reference
+                onHoverPoint={(index) => {
+                  if (index !== null && CP_POINTS[index]) {
+                    setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
+                  } else {
+                    setFocusedTarget(null);
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <OverlayViewer />
+          )}
 
           <div className="explorer-controls">
             <div>
