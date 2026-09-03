@@ -280,6 +280,10 @@ representative data only (D-012) and is not evaluator compliance.
 - Per-band stretch is not IIRS spectral reduction (v3 §14).
 - No orientation correction, no scale-aware resampling, no photometric
   model, no illumination normalization beyond the optional contrast hook.
+  Matching-time illumination normalization lives in
+  `src/representation/illumination.py` (see
+  ILLUMINATION_REPRESENTATION_DESIGN_V1); it is also an engineering
+  baseline and does not solve lunar Sun-angle variation.
 - `valid_pixel_ratio` on the product is not recomputed (ingestion metadata
   is preserved).
 - Pixel origin remains undefined (Freeze v1 §8).

@@ -13,9 +13,16 @@ from pathlib import Path
 import numpy as np
 
 from src.models.lunar_product import LunarProduct
-from src.representation._loader import inspect_array_shape, load_array, load_valid_mask
+from src.representation._loader import (
+    inspect_array_shape,
+    load_array,
+    load_numeric_array,
+    load_valid_mask,
+)
 from src.representation.cross_sensor import build_cross_sensor_array
 from src.representation.gradient import build_gradient_array
+from src.representation.illumination import build_illumination_array
+from src.representation.illumination_settings import REPRESENTATION_ID as ILLUMINATION_ID
 from src.representation.intensity import build_intensity_array
 from src.representation.settings import (
     SCALE_POLICY_COMMON_PHYSICAL_GSD,
@@ -30,8 +37,12 @@ def build_representation_array(
     representation_id: str,
     *,
     stride: int = 1,
+    product_mask: np.ndarray | None = None,
 ) -> np.ndarray:
     """Load one raster and build the requested representation."""
+    if representation_id == ILLUMINATION_ID:
+        img = load_numeric_array(raster_uri, stride=stride)
+        return build_illumination_array(img, product_mask)
     img = load_array(raster_uri, stride=stride)
     if representation_id == "gradient":
         return build_gradient_array(img)
