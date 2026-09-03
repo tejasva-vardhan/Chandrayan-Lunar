@@ -1,0 +1,158 @@
+# EXP-006 exact configuration.
+#
+# Copied from the owning modules' unvalidated software defaults, which are
+# themselves inherited from EXP-000 / the EXP-001 SIFT arm so the comparison
+# is controlled.
+# These are NOT SIH thresholds, NOT a matcher freeze (D-007), and NOT a
+# selected lunar transform (D-010).
+# Do not copy these values into configs/default.yaml.
+#
+# Authoritative source: src/io/exp006/config.py.
+
+experiment_id: EXP-006
+inherits_fixed_configuration_from: EXP-000
+sift_baseline_experiment_id: EXP-001
+independent_variable: correspondence_validation_protocol
+matching_view_held_fixed: true
+primary_pair_manifest_id: pair_02_mid_equatorial
+follow_up_pair_manifest_id: pair_01_equatorial
+
+hypothesis: >
+  H1: On pair_02_mid_equatorial, adding reciprocal (mutual nearest-neighbour)
+  validation to the EXP-001 SIFT baseline, holding detector, descriptor,
+  Lowe ratio, matching view, representation, and geometric verification
+  fixed, produces a meaningful improvement in verified correspondence
+  quality while maintaining or improving spatial distribution of those
+  verified correspondences.
+  H0: reciprocal validation does not improve verified quality, or any
+  quality gain comes with worse spatial distribution or an unstable
+  transform.
+
+decision_rule: >
+  The independent variable is valid only if variant A is the frozen
+  match() one-way SIFT + Lowe-ratio path and variant B is the same SIFT
+  detector/descriptor/Lowe-ratio with reciprocal nearest-neighbour
+  validation, on the same RepresentationResult. B is SUPPORTED only if
+  all of the following hold: (1) verified inliers strictly increase,
+  (2) inlier ratio does not decrease, (3) source and reference 8x8
+  occupied-cell counts are each >= A's, (4) both variants fit a
+  transform from more than the projective DLT minimum of 4 verified
+  inliers, (5) B match-stage runtime is at most 5x A's. Raw match count
+  alone is not success. Occupied-cell count is the spatial gate;
+  bounding-box coverage and Clark-Evans R are reported but not gated.
+  Matcher-derived held-out RMSE is reported and is not accuracy.
+  Independent accuracy remains NOT VALIDATED. Missing critical
+  measurements make the decision INDETERMINATE. If the hypothesis
+  fails, report NOT SUPPORTED and do not retune.
+
+# ---------------------------------------------------------------------------
+# Held constant across every variant
+# ---------------------------------------------------------------------------
+fixed:
+  pairs_source: data/manifests/demo_pairs.yaml
+  dataset_root_env: CHANDRAYAN_DATA_ROOT
+  matcher_id: sift
+
+  preprocessing:
+    applied_to_full_rasters: false
+    reason: full-raster float64 materialisation exceeds the 16777216-pixel cap
+    action: identity_passthrough
+    matching_view_stretch_still_applies: true
+
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+    spatial_window: full_image_stride_decimation_not_a_cropped_window
+    coordinate_mapping: >
+      x_original = x_matching * x_scale; y_original = y_matching * y_scale;
+      x_scale = y_scale = stride
+    expected_pair_02_strides:
+      ohrc: 16
+      lroc: 8
+    expected_pair_01_strides:
+      ohrc: 15
+      lroc: 8
+
+  representation:
+    routing: difficulty None/easy -> intensity
+    intensity: 2-98 percentile stretch
+
+  sift:
+    nfeatures: 0
+    n_octave_layers: 3
+    contrast_threshold: 0.04
+    edge_threshold: 10.0
+    sigma: 1.6
+    ratio_threshold: 0.75
+    min_matches: 4
+
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+    confidence_min: null
+
+  control_points:
+    grid_bins: 8
+    max_per_source_cell: 1
+    max_per_reference_cell: 1
+    max_points: null
+
+  spatial_grid:
+    grid_bins: 8
+    total_cells: 64
+    extent: full_product_image_dimensions_not_point_bbox
+    same_grid_as_control_point_selection: true
+
+  refinement:
+    method_id: zncc_parabolic_baseline
+    window_radius: 7
+    search_radius: 3
+    min_valid_pixel_fraction: 0.75
+    min_peak_zncc: 0.25
+    fine_half_width: 1.0
+    fine_step: 0.1
+
+  registration:
+    model_id: projective_2d_baseline
+    max_output_pixels: 16777216   # NOT raised by this experiment
+    diagnostic_crops_written: false
+
+  evaluation:
+    rmse: sqrt(mean(stored inlier verification residuals^2)); not accuracy
+    inlier_ratio_denominator: len(CorrespondenceSet.matches)
+    spatial_coverage: >
+      0.5 * (source_bbox_area / source_image_area +
+      reference_bbox_area / reference_image_area)
+    independent_ground_truth: false
+    independent_accuracy: NOT VALIDATED
+
+  held_out_validation:
+    design: k-fold split of verified correspondences per variant
+    folds: 5
+    rng_seed: 0
+    independent_accuracy: NOT VALIDATED
+
+  runtime_factor_limit: 5.0
+
+# ---------------------------------------------------------------------------
+# The independent variable: correspondence-validation protocol
+# Fixed before the first real-data run and not revisited afterwards.
+# Same SIFT detector and descriptor. Not a new matcher.
+# ---------------------------------------------------------------------------
+variants:
+  A:
+    label: exp001_sift_one_way_lowe_ratio
+    protocol_id: sift_lowe_ratio_one_way
+    role: control_existing_sift_baseline
+    callable: match(pair, representation)
+    require_reciprocal: false
+
+  B:
+    label: sift_lowe_ratio_reciprocal_nn
+    protocol_id: sift_lowe_ratio_reciprocal_nn
+    role: correspondence_quality_intervention
+    callable: run_sift(..., require_reciprocal=True)
+    require_reciprocal: true

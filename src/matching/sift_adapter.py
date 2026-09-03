@@ -14,8 +14,10 @@ Algorithm
 3. Detect keypoints and compute descriptors with cv2.SIFT.
 4. Match descriptors using BFMatcher (L2 norm) with k=2 nearest neighbours.
 5. Apply Lowe's ratio test (Lowe 2004, IJCV) to filter ambiguous matches.
-6. Normalise distance-based confidence to [0, 1].
-7. Return a CorrespondenceSet with all raw matches (status="raw").
+6. Optionally require reciprocal (mutual nearest-neighbour) agreement.
+   match() leaves this off; EXP-006 variant B turns it on.
+7. Normalise distance-based confidence to [0, 1].
+8. Return a CorrespondenceSet with all raw matches (status="raw").
 
 Verification (RANSAC etc.) is Shaiz's responsibility via src.verification.
 
@@ -54,6 +56,8 @@ def run_sift(
     pair: RegistrationPair,
     representation: RepresentationResult | None,
     settings: SiftSettings | None = None,
+    *,
+    require_reciprocal: bool = False,
 ) -> CorrespondenceSet:
     """Run the SIFT adapter and return a raw CorrespondenceSet.
 
@@ -68,6 +72,11 @@ def run_sift(
         If None, the adapter loads intensity arrays directly from raster_uri.
     settings:
         SiftSettings instance. If None, uses software defaults.
+    require_reciprocal:
+        If True, keep a Lowe-ratio match only when the same keypoint pair is
+        also a Lowe-ratio mutual nearest neighbour in the reverse direction.
+        Default False preserves the frozen one-way EXP-000 / EXP-001 path.
+        match() never sets this flag.
 
     Returns
     -------
@@ -124,20 +133,32 @@ def run_sift(
         return empty_set(pair, MATCHER_ID, representation)
 
     # --- Match with BFMatcher + ratio test ---
+    # crossCheck is False so knnMatch(k=2) can apply Lowe's ratio test.
+    # Reciprocal validation is a separate, explicit protocol (EXP-006).
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    raw_matches = bf.knnMatch(desc_src, desc_ref, k=2)
+    forward = _lowe_ratio_matches(
+        bf.knnMatch(desc_src, desc_ref, k=2), cfg.ratio_threshold
+    )
+    if require_reciprocal:
+        backward = _lowe_ratio_matches(
+            bf.knnMatch(desc_ref, desc_src, k=2), cfg.ratio_threshold
+        )
+        reverse_pairs = {(item.trainIdx, item.queryIdx) for item in backward}
+        kept = [
+            item
+            for item in forward
+            if (item.queryIdx, item.trainIdx) in reverse_pairs
+        ]
+    else:
+        kept = forward
 
     source_points: list[tuple[float, float]] = []
     reference_points: list[tuple[float, float]] = []
     distances: list[float] = []
-    for match_pair in raw_matches:
-        if len(match_pair) < 2:
-            continue
-        m, n = match_pair
-        if m.distance < cfg.ratio_threshold * n.distance:
-            source_points.append(kp_src[m.queryIdx].pt)
-            reference_points.append(kp_ref[m.trainIdx].pt)
-            distances.append(float(m.distance))
+    for item in kept:
+        source_points.append(kp_src[item.queryIdx].pt)
+        reference_points.append(kp_ref[item.trainIdx].pt)
+        distances.append(float(item.distance))
 
     if len(distances) < cfg.min_matches:
         return empty_set(pair, MATCHER_ID, representation)
@@ -152,6 +173,19 @@ def run_sift(
         source_scale=src_scale,
         reference_scale=ref_scale,
     )
+
+
+def _lowe_ratio_matches(knn_matches: list, ratio_threshold: float) -> list:
+    """Keep first-neighbour matches that pass Lowe's ratio test."""
+
+    accepted = []
+    for match_pair in knn_matches:
+        if len(match_pair) < 2:
+            continue
+        best, second = match_pair
+        if best.distance < ratio_threshold * second.distance:
+            accepted.append(best)
+    return accepted
 
 
 def _map_point_to_original(
