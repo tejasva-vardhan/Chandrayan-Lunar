@@ -52,6 +52,23 @@ def load_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
     ValueError
         If the URI is empty, the file does not exist, or OpenCV cannot decode it.
     """
+    img = _read_strided_raster(raster_uri, stride=stride)
+    return _to_unit_interval(img)
+
+
+def load_numeric_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
+    """Load a raster as float64 without min-max or percentile stretch.
+
+    Non-finite samples stay non-finite. Spatial size changes only when the
+    caller passes an explicit stride (matching-view decimation). This is not
+    radiometric calibration.
+    """
+    img = _read_strided_raster(raster_uri, stride=stride)
+    return np.asarray(img, dtype=np.float64)
+
+
+def _read_strided_raster(raster_uri: str, *, stride: int) -> np.ndarray:
+    """Load one 2-D raster, applying only explicit stride decimation."""
     if stride <= 0:
         raise ValueError("stride must be positive")
 
@@ -64,22 +81,20 @@ def load_array(raster_uri: str, *, stride: int = 1) -> np.ndarray:
             raise ValueError(f"NumPy could not load raster at: {path}") from exc
         if img_npy.ndim != 2:
             raise ValueError(f".npy raster must be 2D for representation loading: {path}")
-        img = np.asarray(img_npy[::stride, ::stride])
-    else:
-        # Load as grayscale. IMREAD_ANYDEPTH preserves 16-bit images (e.g. OHRC).
-        try:
-            import cv2
-        except ImportError as exc:
-            raise ImportError(
-                "opencv-python-headless is required to load non-.npy image rasters."
-            ) from exc
-        img = cv2.imread(str(path), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            raise ValueError(f"OpenCV could not decode image at: {path}")
-        if stride > 1:
-            img = img[::stride, ::stride]
+        return np.asarray(img_npy[::stride, ::stride])
 
-    return _to_unit_interval(img)
+    try:
+        import cv2
+    except ImportError as exc:
+        raise ImportError(
+            "opencv-python-headless is required to load non-.npy image rasters."
+        ) from exc
+    img = cv2.imread(str(path), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise ValueError(f"OpenCV could not decode image at: {path}")
+    if stride > 1:
+        img = img[::stride, ::stride]
+    return img
 
 
 def load_strided_window(
