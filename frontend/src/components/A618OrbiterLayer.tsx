@@ -81,6 +81,7 @@ export function A618OrbiterLayer({ reducedMotion }: A618OrbiterLayerProps) {
 
     // Master Spacecraft Group (Prominent, authentic Chandrayaan-2 model)
     const orbiterGroup = new Group();
+    orbiterGroup.scale.setScalar(0.325); // Make the orbiter smaller
     scene.add(orbiterGroup);
 
     // 1. Central Satellite Bus (Gold MLI thermal insulation)
