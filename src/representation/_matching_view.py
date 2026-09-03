@@ -14,6 +14,7 @@ import numpy as np
 
 from src.models.lunar_product import LunarProduct
 from src.representation._loader import inspect_array_shape, load_array, load_valid_mask
+from src.representation.cross_sensor import build_cross_sensor_array
 from src.representation.gradient import build_gradient_array
 from src.representation.intensity import build_intensity_array
 from src.representation.settings import (
@@ -36,6 +37,8 @@ def build_representation_array(
         return build_gradient_array(img)
     if representation_id == "structural":
         return build_structural_array(img)
+    if representation_id == "cross_sensor":
+        return build_cross_sensor_array(img)
     return build_intensity_array(img)
 
 

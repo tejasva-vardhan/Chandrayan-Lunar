@@ -1,0 +1,73 @@
+# PS-closing phase 3 exact configuration.
+# Authoritative source: src/io/ps_scale_multimodal/config.py.
+# Not EXP-007. Not SIH thresholds. Not a matcher freeze (D-007).
+
+record_id: PS-SCALE-MULTIMODAL
+inherits_fixed_configuration_from: EXP-000
+correspondence_baseline_record_id: PS-CORRESPONDENCE
+independent_variables:
+  - matching_view_scale_policy
+  - cross_sensor_intensity_representation
+primary_pair_manifest_id: pair_02_mid_equatorial
+
+scale_hypothesis: >
+  H1-scale: On pair_02_mid_equatorial, the production coarse-to-fine intensity
+  path maintains a useful verified correspondence set across the real
+  OHRC/LROC native GSD difference, and applying common_physical_gsd matching
+  views (B) does not collapse verified yield, 8x8 occupancy, or transform
+  stability relative to A.
+  H0-scale: the native GSD gap or GSD-normalised views cause collapse or
+  unstable geometry.
+
+multimodal_hypothesis: >
+  H1-cross-sensor: On the same pair, CLAHE cross-sensor intensity (C) maintains
+  a useful verified correspondence set under OHRC-calibrated vs LROC Scaled-I/F
+  appearance differences without spatial collapse or unstable geometry relative
+  to intensity baseline A. This tests cross-instrument optical appearance, not
+  OHRC/TMC/IIRS multi-modal products (those are not in the current demo dataset).
+
+fixed:
+  matcher_family: sift_coarse_to_fine
+  matching_view:
+    max_pixels_per_image: 4194304
+    downsample_method: stride_decimation
+  verification:
+    model_id: projective_2d_baseline
+    estimator_id: ransac_style_baseline
+    residual_limit: 3.0
+    max_trials: 500
+    rng_seed: 0
+  maintain_fraction: 0.5
+  runtime_factor_limit: 12.0
+  modality_scope:
+    available_instruments_in_demo_dataset: [OHRC, LRO_NAC]
+    tmc_available: false
+    iirs_available: false
+
+variants:
+  A:
+    label: production_coarse_to_fine_intensity
+    role: control_production_candidate
+    representation_id: intensity
+    scale_policy: per_image_pixel_budget
+    expected_pair_02_strides: {ohrc: 16, lroc: 8}
+  B:
+    label: coarse_to_fine_common_physical_gsd
+    role: scale_mechanism
+    representation_id: intensity
+    scale_policy: common_physical_gsd
+    expected_pair_02_strides: {ohrc: 16, lroc: 9}
+    catalog_gsd_meters_by_instrument:
+      - instrument: LRO_NAC
+        gsd_meters: 0.5
+        used_only_when_ingested_gsd_missing: true
+  C:
+    label: coarse_to_fine_cross_sensor_clahe
+    role: cross_sensor_appearance_mechanism
+    representation_id: cross_sensor
+    scale_policy: per_image_pixel_budget
+    expected_pair_02_strides: {ohrc: 16, lroc: 8}
+    cross_sensor:
+      method: percentile_stretch_then_clahe
+      clahe_clip_limit: 2.0
+      clahe_tile_grid: [8, 8]
