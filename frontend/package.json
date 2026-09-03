@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -20,8 +24,12 @@
     "vite-plugin-cesium": "^1.2.23"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@types/three": "^0.185.4"
+    "@types/three": "^0.185.4",
+    "jsdom": "^26.1.0",
+    "vitest": "^3.2.4"
   }
 }
