@@ -52,6 +52,9 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
     evaluation_limitation: null,
     runtime_seconds: 2.5,
     export_manifest: null,
+    preview_available: false,
+    preview_mode: null,
+    preview_note: null,
     ...overrides,
   };
 }
@@ -74,6 +77,20 @@ describe("resultsView", () => {
     expect(view.rmseLabel).toBe("Verification residual RMSE");
     expect(view.inlierRatio).toBe("40.0%");
     expect(view.points).toHaveLength(1);
+  });
+
+  it("builds overlay preview artifact urls when available", () => {
+    const view = fromRegistrationResult(
+      sampleResult({ preview_available: true, preview_mode: "diagnostic_crop" }),
+      { jobId: "job-preview", artifactUrl: null },
+    );
+    expect(view.previewAvailable).toBe(true);
+    expect(view.previewReferenceUrl).toContain(
+      "/registration/jobs/job-preview/artifacts/preview_reference",
+    );
+    expect(view.previewRegisteredUrl).toContain(
+      "/registration/jobs/job-preview/artifacts/preview_registered",
+    );
   });
 
   it("maps no-match diagnostics", () => {

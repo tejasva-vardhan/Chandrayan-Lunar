@@ -116,6 +116,9 @@ export interface RegistrationResultDTO {
   evaluation_limitation: string | null;
   runtime_seconds: number | null;
   export_manifest: Record<string, string | null> | null;
+  preview_available?: boolean;
+  preview_mode?: string | null;
+  preview_note?: string | null;
 }
 
 export interface JobResultResponse {
