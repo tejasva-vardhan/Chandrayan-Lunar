@@ -26,6 +26,8 @@ class LunarProduct(BaseModel):
     acquisition_time: datetime | None = None
     radiometric_state: str | None = None
     coordinates: Coordinates | None = None
+    sun_azimuth: float | None = None
+    sun_incidence: float | None = None
     valid_pixel_ratio: float | None = Field(
         default=None,
         ge=0.0,

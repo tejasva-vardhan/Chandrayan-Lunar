@@ -598,16 +598,29 @@ h1 em {
   position: relative;
   aspect-ratio: 4 / 3;
   width: 100%;
+  background: #020409;
+}
+.viewport-canvas.is-fallback {
   background:
     radial-gradient(circle at 28% 22%, #334155 0 2%, transparent 3%),
     radial-gradient(circle at 72% 78%, #1e293b 0 3%, transparent 4%),
     repeating-radial-gradient(circle at 40% 50%, #243044 0 2px, #0f172a 3px 18px);
 }
-.evidence-viewport.reference .viewport-canvas {
+.evidence-viewport.reference .viewport-canvas.is-fallback {
   background:
     radial-gradient(circle at 22% 38%, #334155 0 2%, transparent 3%),
     radial-gradient(circle at 82% 68%, #1e293b 0 3%, transparent 4%),
     repeating-radial-gradient(circle at 60% 40%, #243044 0 2px, #0f172a 3px 18px);
+}
+.viewport-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #020409;
+  pointer-events: none;
 }
 .evidence-point {
   position: absolute;
@@ -879,6 +892,16 @@ h1 em {
 .certificate dt { color: var(--mist); font: 11px var(--mono); letter-spacing: .02em; }
 .certificate dd { margin: 0; color: #f8fafc; font-size: 12.5px; font-family: var(--mono); }
 
+.certificate-section-title {
+  grid-column: 1 / -1;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--signal);
+  padding: 16px 0 0 0;
+  border-bottom: 1px solid var(--line);
+  display: block !important;
+}
 /* ---------- Report Section ---------- */
 .report { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding: 90px 4vw; }
 .report .eyebrow { color: var(--signal); }

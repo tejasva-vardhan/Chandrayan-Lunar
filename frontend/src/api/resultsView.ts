@@ -30,6 +30,8 @@ export type ResultsViewModel = {
   referenceProduct: string;
   acquisitionTimeSource: string;
   acquisitionTimeReference: string;
+  sunAzimuth: number | null;
+  sunIncidence: number | null;
   region: { lat: readonly [number, number]; lon: readonly [number, number]; label: string } | null;
   sourceDims: { width: number | null; height: number | null; gsd: string };
   referenceDims: { width: number | null; height: number | null };
@@ -56,6 +58,7 @@ export type ResultsViewModel = {
   points: DisplayPoint[];
   mapPoints: DisplayPoint[];
   registeredArtifactUrl: string | null;
+  previewSourceUrl: string | null;
   previewReferenceUrl: string | null;
   previewRegisteredUrl: string | null;
   previewAvailable: boolean;
@@ -223,6 +226,8 @@ export function baselineResultsView(): ResultsViewModel {
     referenceProduct: exp000.referenceProduct,
     acquisitionTimeSource: exp000.acquisitionTimeSource,
     acquisitionTimeReference: exp000.acquisitionTimeReference,
+    sunAzimuth: null,
+    sunIncidence: null,
     region: exp000.region,
     sourceDims: {
       width: exp000.sourceDims.width,
@@ -259,6 +264,7 @@ export function baselineResultsView(): ResultsViewModel {
     points,
     mapPoints: points,
     registeredArtifactUrl: null,
+    previewSourceUrl: null,
     previewReferenceUrl: null,
     previewRegisteredUrl: null,
     previewAvailable: false,
@@ -331,6 +337,10 @@ export function fromRegistrationResult(
 
   const previewAvailable = Boolean(result.preview_available);
   const previewQuery = previewAvailable ? `?v=${encodeURIComponent(jobId)}` : "";
+  const previewSourceUrl =
+    previewAvailable && jobId
+      ? `/registration/jobs/${encodeURIComponent(jobId)}/artifacts/preview_source${previewQuery}`
+      : null;
   const previewReferenceUrl =
     previewAvailable && jobId
       ? `/registration/jobs/${encodeURIComponent(jobId)}/artifacts/preview_reference${previewQuery}`
@@ -352,6 +362,8 @@ export function fromRegistrationResult(
     referenceProduct: result.reference.product_id,
     acquisitionTimeSource: result.source.acquisition_time ?? "Unavailable",
     acquisitionTimeReference: result.reference.acquisition_time ?? "Unavailable",
+    sunAzimuth: result.source.sun_azimuth ?? null,
+    sunIncidence: result.source.sun_incidence ?? null,
     region: null,
     sourceDims: {
       width: sw,
@@ -389,6 +401,7 @@ export function fromRegistrationResult(
     points,
     mapPoints,
     registeredArtifactUrl: artifactUrl,
+    previewSourceUrl,
     previewReferenceUrl,
     previewRegisteredUrl,
     previewAvailable,

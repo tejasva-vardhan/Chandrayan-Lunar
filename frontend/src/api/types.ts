@@ -92,6 +92,8 @@ export interface ProductInfo {
   height_px: number | null;
   gsd_meters: number | null;
   acquisition_time: string | null;
+  sun_azimuth: number | null;
+  sun_incidence: number | null;
   raster_uri: string | null;
 }
 

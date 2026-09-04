@@ -332,6 +332,8 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
           <CorrespondenceEvidence
             sourceLabel={results.source}
             referenceLabel={results.reference}
+            sourceUrl={results.previewSourceUrl}
+            referenceUrl={results.previewReferenceUrl}
             points={mapPoints}
             showRejected={showRejected}
           />
@@ -439,6 +441,14 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             <div>
               <dt>Independent accuracy</dt>
               <dd>Not independently validated</dd>
+            </div>
+            <div>
+              <dt>Illumination variation</dt>
+              <dd>
+                {results.sunAzimuth != null && results.sunIncidence != null
+                  ? `Azimuth ${results.sunAzimuth.toFixed(1)}° / Incidence ${results.sunIncidence.toFixed(1)}°`
+                  : "Not available from product metadata"}
+              </dd>
             </div>
             <div>
               <dt>Full-raster output</dt>

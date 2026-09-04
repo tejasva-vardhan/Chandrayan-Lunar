@@ -17,6 +17,8 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
       height_px: 100,
       gsd_meters: 0.25,
       acquisition_time: null,
+      sun_azimuth: null,
+      sun_incidence: null,
       raster_uri: null,
     },
     reference: {
@@ -27,6 +29,8 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
       height_px: 100,
       gsd_meters: null,
       acquisition_time: null,
+      sun_azimuth: null,
+      sun_incidence: null,
       raster_uri: null,
     },
     candidate_correspondences: 36,
