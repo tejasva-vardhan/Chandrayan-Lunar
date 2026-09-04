@@ -914,7 +914,7 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
       {/* NASA Eyes Header Navigation */}
       <header className="solar-nav" style={{ opacity: isZooming ? 1 - zoomFade : 1 }}>
         <div className="solar-brand">
-          <span style={{ font: "600 11px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace" }}>EYES ON THE SOLAR SYSTEM // <strong>fieldSPACE HELIOCENTRIC RADAR</strong></span>
+          <span style={{ font: "600 11px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace" }}>EYES ON THE SOLAR SYSTEM // <strong>SELENEON HELIOCENTRIC RADAR</strong></span>
         </div>
         <div className="solar-tag" style={{ font: "500 10px 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace" }}>
           {hoveredBodyName ? `TARGET LOCK: ${hoveredBodyName.toUpperCase()}` : "DRAG TO ROTATE / SCROLL TO ZOOM"}

@@ -40,7 +40,7 @@ export function OverlayViewer({
       <div className="card-header">
         <div className="card-header-left">
           <span className="card-dot" />
-          <span className="card-title">REGISTRATION OVERLAY EXPLORER</span>
+          <span className="card-title">ALIGNMENT DIAGNOSTIC</span>
         </div>
         {mode && (
           <span className={`chip ${canShow ? "chip-region" : ""}`}>
@@ -51,10 +51,10 @@ export function OverlayViewer({
 
       <p className="card-desc">
         {canShow
-          ? "Fade the warped source crop over the reference window. Alignment is correct when craters and ridges stay locked as you drag the slider."
+          ? "Before → after diagnostic: fade the warped source crop over the reference window. Features stay locked when alignment is consistent in this crop."
           : isLive
-            ? "This live run has not produced a browser preview crop yet."
-            : "Run a live registration in the pipeline above to generate a diagnostic overlay crop."}
+            ? "This live run has not produced a browser diagnostic crop yet."
+            : "No diagnostic overlay for the static fixture. Run a live registration to generate a bounded preview when available."}
       </p>
 
       <div className="overlay-container">
@@ -68,7 +68,7 @@ export function OverlayViewer({
             <img
               key={`ref-${referenceUrl}`}
               src={referenceUrl!}
-              alt="Reference diagnostic crop"
+              alt="Before registration — reference diagnostic crop"
               className="overlay-base"
               onLoad={() => setRefLoaded(true)}
               onError={() => setRefFailed(true)}
@@ -76,7 +76,7 @@ export function OverlayViewer({
             <img
               key={`reg-${registeredUrl}`}
               src={registeredUrl!}
-              alt="Registered diagnostic crop"
+              alt="Alignment diagnostic — registered source crop"
               className="overlay-top"
               style={{ opacity: opacity / 100 }}
               onLoad={() => setRegLoaded(true)}
@@ -85,19 +85,23 @@ export function OverlayViewer({
           </>
         ) : (
           <div className="overlay-empty" role="status">
-            <p>{loadFailed ? "Preview images failed to load" : "No raster overlay available"}</p>
+            <p>
+              {loadFailed
+                ? "Diagnostic images failed to load"
+                : "Diagnostic artifact not available"}
+            </p>
             <span>
               {loadFailed
-                ? "The preview URLs returned an error. Re-run registration with the API still running, then open this tab again."
+                ? "The preview URLs returned an error. Re-run registration with the API still running."
                 : note ||
-                  "Full-strip warp may be blocked by the output-size cap. Re-run registration to generate a diagnostic crop preview."}
+                  "Full-strip warp may be blocked by the output-size safety limit. A bounded diagnostic crop is shown only when the backend provides one."}
             </span>
           </div>
         )}
       </div>
 
       <div className="overlay-controls">
-        <span className="control-label">REFERENCE</span>
+        <span className="control-label">BEFORE / REFERENCE</span>
         <input
           type="range"
           min="0"
@@ -113,8 +117,8 @@ export function OverlayViewer({
 
       <div className="opacity-readout">
         {canShow
-          ? `Registered crop opacity: ${opacity}% · drag toward REFERENCE to compare`
-          : "Slider inactive until preview exists"}
+          ? `Registered crop opacity: ${opacity}% · drag toward BEFORE / REFERENCE to compare`
+          : "Slider inactive until a diagnostic preview exists"}
       </div>
       {canShow && note && <p className="overlay-note">{note}</p>}
     </div>

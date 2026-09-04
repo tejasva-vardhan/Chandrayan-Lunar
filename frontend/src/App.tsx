@@ -1,23 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { A618OrbiterLayer } from "./components/A618OrbiterLayer";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
-import { CorrespondenceMap } from "./components/workspace/CorrespondenceMap";
-import { OverlayViewer } from "./components/workspace/OverlayViewer";
 import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
+import { ResultsPanel } from "./components/workspace/ResultsPanel";
 import { baselineResultsView, type ResultsViewModel } from "./api/resultsView";
 
 const stages = [
   "Deep space", "Equatorial approach", "OHRC strip scan", "Control points", "Quality certificate", "Audit trail",
-];
-
-const CP_POINTS = [
-  { lon: 23.42, lat: 0.83 },
-  { lon: 23.39, lat: 0.55 },
-  { lon: 23.46, lat: 0.62 },
-  { lon: 23.44, lat: 0.38 },
 ];
 
 function useMoonOrbit() {
@@ -51,44 +43,12 @@ function useMoonOrbit() {
   return { smoothed, x, y, scale, opacity };
 }
 
-function Reveal({
-  children,
-  className = "",
-  delay = 0,
-  reducedMotion,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  reducedMotion: boolean;
-}) {
-  if (reducedMotion) return <div className={className}>{children}</div>;
-  return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function formatDims(width: number | null, height: number | null): string {
-  if (width == null || height == null) return "dimensions unavailable";
-  return `${width.toLocaleString()} × ${height.toLocaleString()} px`;
-}
-
 function App() {
   const [viewMode, setViewMode]         = useState<"solar" | "mission">("solar");
   const [progress, setProgress]         = useState(0.0);
-  const [showRejected, setShowRejected] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [focusedTarget, setFocusedTarget] = useState<{ lon: number; lat: number; zoomMultiplier?: number } | null>(null);
   const [results, setResults] = useState<ResultsViewModel>(() => baselineResultsView());
-  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -97,12 +57,6 @@ function App() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-
-  useEffect(() => {
-    if (results.isLive && results.previewAvailable) {
-      setShowOverlay(true);
-    }
-  }, [results.jobId, results.isLive, results.previewAvailable]);
 
   const { scrollYProgress } = useScroll();
   useEffect(() => {
@@ -145,18 +99,6 @@ function App() {
     hudCoords = "LAT 0.65°N · LON 23.43°E";
     hudStatus = "1.0× GLOBAL AUDIT";
   }
-
-  const failureFlags = results.flags.filter((f) =>
-    [
-      "no_correspondences",
-      "insufficient_verified_matches",
-      "insufficient_control_points",
-      "degenerate_control_points",
-      "invalid_transformation",
-      "warp_failed",
-    ].includes(f),
-  );
-  const isNoMatch = results.rawMatches === 0 || results.verified === 0;
 
   return (
     <>
@@ -216,7 +158,7 @@ function App() {
         </aside>
 
         <nav className="top-nav" aria-label="Primary navigation">
-          <a className="brand" href="#mission">field<span>SPACE</span></a>
+          <a className="brand" href="#mission">Selene<span>on</span></a>
           <div className="top-nav-links">
             <a href="#run">Run</a>
             <a href="#results">{results.isLive ? "Live result" : "Fixture"}</a>
@@ -259,263 +201,30 @@ function App() {
           </aside>
         </section>
 
-        {/* ── WORKSPACE (live API) ── */}
         <RegistrationWorkspace
           onResults={(view) => {
             setResults(view);
-            setShowRejected(false);
             if (view.isLive) {
               document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
             }
           }}
         />
 
-        <section className="results-shell" id="results">
-          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
-            <header className="section-header">
-              <div>
-                <p className="eyebrow">
-                  {results.isLive
-                    ? "LIVE PIPELINE RESULT / "
-                    : "STATIC / REGRESSION FIXTURE / "}
-                  {results.id}
-                </p>
-                <h2>The scientific view</h2>
-              </div>
-              <span className="state-pill">
-                {results.isLive
-                  ? "LIVE · NOT INDEPENDENTLY VALIDATED"
-                  : "STATIC FIXTURE · NOT INDEPENDENTLY VALIDATED"}
-              </span>
-            </header>
+        <ResultsPanel
+          results={results}
+          reducedMotion={reducedMotion}
+          onFocusRegion={setFocusedTarget}
+        />
 
-            {isNoMatch && results.isLive && (
-              <div className="run-error" role="status">
-                <b>{results.rawMatches === 0 ? "No correspondences" : "Insufficient verified matches"}</b>
-                <span>
-                  {results.rawMatches === 0
-                    ? "The matcher returned an empty correspondence set for this pair."
-                    : `Candidates: ${results.rawMatches}; verified inliers: ${results.verified}.`}
-                </span>
-              </div>
-            )}
-
-            {failureFlags.length > 0 && results.isLive && (
-              <div className="rejected-note">
-                Quality flags: {failureFlags.join(", ")}
-              </div>
-            )}
-
-            <div className="metric-strip">
-              <div title="Total features matched before geometric filtering.">
-                <b>{results.rawMatches}</b><span>candidate correspondences</span>
-              </div>
-              <div title="Correspondences surviving geometric verification.">
-                <b>{results.verified}</b><span>geometric inliers</span>
-              </div>
-              <div title="Ratio of inliers to total candidates.">
-                <b>{results.inlierRatio}</b><span>inlier ratio</span>
-              </div>
-              <div title="Proportion of the image area bounded by control points.">
-                <b>{results.coverage}</b><span>spatial coverage</span>
-              </div>
-              <div title="Verification residual RMSE is a geometric-verification fit diagnostic, not independent registration accuracy.">
-                <b className="metric-val-formatted">{results.rmse}</b>
-                <span>{results.rmseLabel}</span>
-              </div>
-              <div title="Total execution time for the pipeline.">
-                <b>
-                  {results.runtimeSeconds != null
-                    ? `${results.runtimeSeconds.toFixed(1)} s`
-                    : "—"}
-                </b>
-                <span>pipeline runtime</span>
-              </div>
-            </div>
-
-          <div className="dims-strip">
-            <div>
-              <span className="chip chip-ohrc">{results.source}</span>
-              <span>
-                {formatDims(results.sourceDims.width, results.sourceDims.height)}
-                {results.sourceDims.gsd ? ` — ${results.sourceDims.gsd}` : ""}
-              </span>
-            </div>
-            <div>
-              <span className="chip chip-lro">{results.reference}</span>
-              <span>{formatDims(results.referenceDims.width, results.referenceDims.height)}</span>
-            </div>
-            {results.region && (
-              <div
-                className="chip-interactive"
-                onMouseEnter={() => setFocusedTarget({ lon: 23.43, lat: 0.65, zoomMultiplier: 0.88 })}
-                onMouseLeave={() => setFocusedTarget(null)}
-                onClick={() => setFocusedTarget({ lon: 23.43, lat: 0.65, zoomMultiplier: 0.88 })}
-                role="button"
-                tabIndex={0}
-                title="Focus Moon camera directly on Equatorial OHRC scan field"
-              >
-                <span className="chip chip-region">Focus Scan Field ⊕</span>
-                <span>
-                  {results.region.label} · lat {results.region.lat[0]}–{results.region.lat[1]}° · lon{" "}
-                  {results.region.lon[0]}–{results.region.lon[1]}°
-                </span>
-              </div>
-            )}
-            {results.registeredArtifactUrl && (
-              <div>
-                <span className="chip chip-region">Registered artifact</span>
-                <a href={results.registeredArtifactUrl} target="_blank" rel="noreferrer">
-                  Download registered source
-                </a>
-              </div>
-            )}
-          </div>
-
-          <div className="view-toggle-controls" style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "24px" }}>
-            <button 
-              className={`secondary-button ${!showOverlay ? "active" : ""}`} 
-              onClick={() => setShowOverlay(false)}
-              style={!showOverlay ? { borderColor: "var(--signal)", color: "var(--signal)", background: "rgba(56, 189, 248, 0.1)" } : {}}
-            >
-              Correspondence map
-            </button>
-            <button 
-              className={`secondary-button ${showOverlay ? "active" : ""}`} 
-              onClick={() => setShowOverlay(true)}
-              style={showOverlay ? { borderColor: "var(--signal)", color: "var(--signal)", background: "rgba(56, 189, 248, 0.1)" } : {}}
-            >
-              Registration Overlay
-            </button>
-          </div>
-
-          {!showOverlay ? (
-            <CorrespondenceMap
-              sourceLabel={results.source}
-              referenceLabel={results.reference}
-              points={results.mapPoints.length ? results.mapPoints : results.points}
-              showRejected={showRejected}
-              rawMatches={results.rawMatches}
-              verified={results.verified}
-              rejected={results.rejected}
-              inlierRatio={results.inlierRatio}
-              onHoverPoint={(index) => {
-                if (index !== null && CP_POINTS[index]) {
-                  setFocusedTarget({
-                    lon: CP_POINTS[index].lon,
-                    lat: CP_POINTS[index].lat,
-                    zoomMultiplier: 0.82,
-                  });
-                } else {
-                  setFocusedTarget(null);
-                }
-              }}
-            />
-          ) : (
-            <OverlayViewer
-              available={results.previewAvailable}
-              referenceUrl={results.previewReferenceUrl}
-              registeredUrl={results.previewRegisteredUrl}
-              note={results.previewNote}
-              mode={results.previewMode}
-              isLive={results.isLive}
-            />
-          )}
-
-          <div className="explorer-controls">
-            <div>
-              <b>Correspondence explorer</b>
-              <span>
-                {results.verified} inliers survived geometric verification
-                ({results.rejected} rejected). Toggle rejected markers to see what the
-                geometry filter discarded.
-              </span>
-            </div>
-            <button
-              className={showRejected ? "active" : ""}
-              onClick={() => setShowRejected((v) => !v)}
-            >
-              {showRejected ? "Hide" : "Show"} {results.rejected} rejected
-            </button>
-          </div>
-          {showRejected && (
-            <div className="rejected-note">
-              Rejected correspondences are retained for inspection but are not control points and do not enter registration.
-            </div>
-          )}
-        </Reveal>
-      </section>
-
-      <section className="quality" id="quality">
-        <Reveal className="quality-copy glass-panel panel-right" reducedMotion={reducedMotion}>
-          <p className="eyebrow">QUALITY CERTIFICATE</p>
-          <h2>Clear about what exists.<br />Clear about what does not.</h2>
-          <p>
+        <footer>
+          <span>Seleneon / SIH26166</span>
+          <span>
             {results.isLive
-              ? "This live run shows the real pipeline path and controlled failure reporting. It does not establish independent registration accuracy."
-              : "EXP-000 demonstrates a real product path and controlled failure reporting. It does not establish independent registration accuracy."}
-          </p>
-          <div
-            className="geographic-target-card"
-            onMouseEnter={() => setFocusedTarget({ lon: 25.24, lat: -84.9, zoomMultiplier: 0.88 })}
-            onMouseLeave={() => setFocusedTarget(null)}
-            onClick={() => setFocusedTarget({ lon: 25.24, lat: -84.9, zoomMultiplier: 0.88 })}
-            role="button"
-            tabIndex={0}
-            title="Focus Moon camera directly on South Polar crater basin"
-          >
-            <div className="target-card-header">
-              <span className="target-tag">South Polar Cold Trap</span>
-              <span className="target-coords">84.90°S · 25.24°E</span>
-            </div>
-            <div className="target-card-action">
-              Focus camera on polar region ↗
-            </div>
-          </div>
-        </Reveal>
-        <Reveal className="glass-panel panel-right" delay={0.1} reducedMotion={reducedMotion}>
-          <dl className="certificate">
-            <div><dt>Source / reference</dt><dd>{results.source} / {results.reference}</dd></div>
-            <div><dt>Source acquisition</dt><dd>{results.acquisitionTimeSource}</dd></div>
-            <div><dt>Reference acquisition</dt><dd>{results.acquisitionTimeReference}</dd></div>
-            <div><dt>Matching view stride</dt><dd>Source {results.sourceStride}, Reference {results.referenceStride}</dd></div>
-            <div><dt>Refinement</dt><dd>{results.refinement}</dd></div>
-            <div><dt>Registration</dt><dd>{results.registration}</dd></div>
-            <div><dt>Independent accuracy</dt><dd>{results.independentAccuracy}</dd></div>
-          </dl>
-        </Reveal>
-      </section>
-
-      <section className="report" id="report">
-        <Reveal reducedMotion={reducedMotion}>
-          <p className="eyebrow">EXPORT / AUDIT TRAIL</p>
-          <h2>Built for a judge,<br />honest for a scientist.</h2>
-        </Reveal>
-        <Reveal className="report-card glass-panel panel-left" delay={0.1} reducedMotion={reducedMotion}>
-          <span className="report-mark">↗</span>
-          <b>{results.isLive ? "Live registration report" : "EXP-000 registration report"}</b>
-          <p>Metrics, transformation, selected points, quality flags, and the limitations of this baseline.</p>
-          <button onClick={() => window.print()}>Print / save report</button>
-        </Reveal>
-        <Reveal className="technical glass-panel panel-left" delay={0.15} reducedMotion={reducedMotion}>
-          <b>Technical details</b>
-          <p>{results.sourceProduct}</p>
-          <p>{results.referenceProduct}</p>
-          <p>{results.residualNote}</p>
-          {results.flags.length > 0 && <p>Flags: {results.flags.join(", ")}</p>}
-          {results.jobId && <p>API job: {results.jobId}</p>}
-        </Reveal>
-      </section>
-
-      <footer>
-        <span>fieldSPACE / SIH26166</span>
-        <span>
-          {results.isLive
-            ? "Scientific interface. Live pipeline result values."
-            : "Scientific interface. Real EXP-000 result values."}
-        </span>
-      </footer>
-    </motion.main>
+              ? "Scientific interface. Live pipeline result values."
+              : "Scientific interface. Static EXP-000 fixture values."}
+          </span>
+        </footer>
+      </motion.main>
     </>
   );
 }
