@@ -90,6 +90,8 @@ describe("RegistrationConsole", () => {
             height_px: 10,
             gsd_meters: null,
             acquisition_time: null,
+            sun_azimuth: null,
+            sun_incidence: null,
             raster_uri: null,
           },
           reference: {
@@ -100,6 +102,8 @@ describe("RegistrationConsole", () => {
             height_px: 10,
             gsd_meters: null,
             acquisition_time: null,
+            sun_azimuth: null,
+            sun_incidence: null,
             raster_uri: null,
           },
           candidate_correspondences: 5,

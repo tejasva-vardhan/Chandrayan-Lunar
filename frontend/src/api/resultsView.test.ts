@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { baselineResultsView, fromRegistrationResult } from "./resultsView";
+import {
+  baselineResultsView,
+  deriveResultStatus,
+  fromRegistrationResult,
+} from "./resultsView";
 import type { RegistrationResultDTO } from "./types";
 
 function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): RegistrationResultDTO {
@@ -13,6 +17,8 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
       height_px: 100,
       gsd_meters: 0.25,
       acquisition_time: null,
+      sun_azimuth: null,
+      sun_incidence: null,
       raster_uri: null,
     },
     reference: {
@@ -23,11 +29,13 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
       height_px: 100,
       gsd_meters: null,
       acquisition_time: null,
+      sun_azimuth: null,
+      sun_incidence: null,
       raster_uri: null,
     },
-    candidate_correspondences: 10,
+    candidate_correspondences: 36,
     verified_inliers: 4,
-    rejected_correspondences: 6,
+    rejected_correspondences: 32,
     correspondences: [],
     inliers: [],
     control_points: [
@@ -37,15 +45,15 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
       verification_residual_rmse: 1.2e-3,
       verification_residual_rmse_label: "Verification residual RMSE",
       inlier_count: 4,
-      inlier_ratio: 0.4,
-      spatial_coverage: 0.25,
-      control_point_count: 1,
+      inlier_ratio: 0.111,
+      spatial_coverage: 0.232,
+      control_point_count: 4,
       independent_accuracy_claim: "Not independently validated",
     },
     transformation: { model_name: "projective_2d_baseline", parameters: {} },
     registered_source_uri: null,
     registered_artifact_available: false,
-    quality_flags: [],
+    quality_flags: ["registration_output_too_large", "not_independently_validated"],
     confidence_class: null,
     refinement_note: "indeterminate",
     residual_note: "Verification transfer residuals are image-space fit values",
@@ -60,22 +68,34 @@ function sampleResult(overrides: Partial<RegistrationResultDTO> = {}): Registrat
 }
 
 describe("resultsView", () => {
-  it("labels baseline RMSE as verification residual", () => {
+  it("labels baseline RMSE as verification residual and keeps fixture non-live", () => {
     const view = baselineResultsView();
     expect(view.rmseLabel).toBe("Verification residual RMSE");
     expect(view.isLive).toBe(false);
+    expect(view.resultStatus).toBe("COMPLETED WITH LIMITATIONS");
+    expect(view.rawMatches).toBe(36);
+    expect(view.verified).toBe(4);
+    expect(view.inlierRatio).toBe("11.1%");
+    expect(view.controlPointCount).toBe(4);
+    expect(view.coverage).toBe("23.2%");
+    expect(view.fullRasterBlocked).toBe(true);
   });
 
-  it("maps successful live results", () => {
+  it("maps successful live results with isLive true", () => {
     const view = fromRegistrationResult(sampleResult(), {
       jobId: "job-9",
       artifactUrl: null,
     });
     expect(view.isLive).toBe(true);
-    expect(view.rawMatches).toBe(10);
+    expect(view.rawMatches).toBe(36);
     expect(view.verified).toBe(4);
+    expect(view.inlierRatio).toBe("11.1%");
+    expect(view.coverage).toBe("23.2%");
+    expect(view.controlPointCount).toBe(4);
     expect(view.rmseLabel).toBe("Verification residual RMSE");
-    expect(view.inlierRatio).toBe("40.0%");
+    expect(view.rmseLabel.toLowerCase()).not.toContain("accuracy");
+    expect(view.resultStatus).toBe("COMPLETED WITH LIMITATIONS");
+    expect(view.fullRasterBlocked).toBe(true);
     expect(view.points).toHaveLength(1);
   });
 
@@ -114,6 +134,7 @@ describe("resultsView", () => {
     );
     expect(view.rawMatches).toBe(0);
     expect(view.flags).toContain("no_correspondences");
+    expect(view.resultStatus).toBe("FAILED");
     expect(view.registration.toLowerCase()).toContain("no correspondences");
   });
 
@@ -127,5 +148,20 @@ describe("resultsView", () => {
       { jobId: "job-f", artifactUrl: null },
     );
     expect(view.registration.toLowerCase()).toContain("insufficient verified");
+    expect(view.resultStatus).toBe("FAILED");
+  });
+
+  it("derives status labels from backend confidence_class and flags only", () => {
+    expect(deriveResultStatus({ confidenceClass: "SUCCESS", flags: [] })).toBe("COMPLETED");
+    expect(
+      deriveResultStatus({
+        confidenceClass: "SUCCESS",
+        flags: ["registration_output_too_large"],
+      }),
+    ).toBe("COMPLETED WITH LIMITATIONS");
+    expect(deriveResultStatus({ confidenceClass: "LOW_CONFIDENCE", flags: [] })).toBe(
+      "LOW CONFIDENCE",
+    );
+    expect(deriveResultStatus({ confidenceClass: "FAILED", flags: [] })).toBe("FAILED");
   });
 });
