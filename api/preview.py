@@ -46,8 +46,9 @@ def ensure_job_previews(
     output_dir.mkdir(parents=True, exist_ok=True)
     reference_path = output_dir / PREVIEW_REFERENCE_NAME
     registered_path = output_dir / PREVIEW_REGISTERED_NAME
+    source_path = output_dir / "preview_source.png"
 
-    if reference_path.is_file() and registered_path.is_file():
+    if reference_path.is_file() and registered_path.is_file() and source_path.is_file():
         mode = (
             "full_registered"
             if result.registered_source_uri
@@ -59,6 +60,7 @@ def ensure_job_previews(
             "note": _FULL_NOTE if mode == "full_registered" else _DIAGNOSTIC_NOTE,
             "reference_path": reference_path,
             "registered_path": registered_path,
+            "source_path": source_path,
         }
 
     source_uri = pair.source.raster_uri
@@ -108,8 +110,20 @@ def ensure_job_previews(
     )
     registered_crop = warp_diagnostic_crop(source_uri, matrix, window)
 
+    # ── FIX: Generate a source preview based on the mapped control points in the source image
+    source_pts = [ControlPoint(source_xy=cp.source_xy, reference_xy=cp.source_xy) for cp in result.control_points]
+    source_window = diagnostic_crop_window(
+        int(pair.source.dimensions.height_px),
+        int(pair.source.dimensions.width_px),
+        source_pts,
+    )
+    source_crop = read_product_window(
+        source_uri, source_window.row, source_window.col, source_window.height, source_window.width
+    )
+
     _write_display_png(reference_path, reference_crop)
     _write_display_png(registered_path, registered_crop)
+    _write_display_png(output_dir / "preview_source.png", source_crop)
 
     return {
         "available": True,
@@ -117,6 +131,7 @@ def ensure_job_previews(
         "note": _DIAGNOSTIC_NOTE,
         "reference_path": reference_path,
         "registered_path": registered_path,
+        "source_path": output_dir / "preview_source.png",
     }
 
 

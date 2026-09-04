@@ -388,9 +388,16 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
 
     const scene = new Scene();
     // Matching exact NASA Eyes high-inclination view
-    const camera = new PerspectiveCamera(40, 1, 0.5, 700);
+    const camera = new PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 700);
     camera.position.set(0, 46, 68);
     camera.lookAt(0, 0, 0);
+
+    const onWindowResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onWindowResize);
 
     const ambientLight = new AmbientLight(0x1a2638, 0.4); // Darker ambient for deeper shadows
     scene.add(ambientLight);
@@ -879,6 +886,7 @@ export function SolarSystemEntrance({ onEnterLunarMission, reducedMotion }: Sola
 
     return () => {
       cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", onWindowResize);
       canvas.removeEventListener("mousedown", onPointerDown);
       window.removeEventListener("mousemove", onPointerMove);
       window.removeEventListener("mouseup", onPointerUp);

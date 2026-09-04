@@ -344,6 +344,13 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
         if md5_node is not None and md5_node.text:
             expected_md5 = md5_node.text.strip()
 
+    # Sun Azimuth and Incidence
+    sun_az_node = root.find(".//isda:sun_azimuth", _NAMESPACES)
+    sun_azimuth = float(sun_az_node.text.strip()) if sun_az_node is not None and sun_az_node.text else None
+
+    sun_inc_node = root.find(".//isda:solar_incidence", _NAMESPACES)
+    sun_incidence = float(sun_inc_node.text.strip()) if sun_inc_node is not None and sun_inc_node.text else None
+
     return {
         "product_id": product_id,
         "instrument": instrument,
@@ -355,6 +362,8 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
         "coordinates": coordinates,
         "img_filename": img_filename,
         "expected_md5": expected_md5,
+        "sun_azimuth": sun_azimuth,
+        "sun_incidence": sun_incidence,
         # carry through for use by the streaming writer
         "dtype_info": dtype_info,
         "nodata_values": nodata_values,
@@ -662,6 +671,8 @@ def ingest_from_pds(source: Path) -> LunarProduct:
         acquisition_time=metadata["acquisition_time"],
         radiometric_state=metadata["radiometric_state"],
         coordinates=metadata["coordinates"],
+        sun_azimuth=metadata.get("sun_azimuth"),
+        sun_incidence=metadata.get("sun_incidence"),
         valid_pixel_ratio=valid_pixel_ratio,
         raster_uri=str(raster_path),
         mask_uri=str(mask_path),
