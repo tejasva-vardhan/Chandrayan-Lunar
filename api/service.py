@@ -398,7 +398,7 @@ class RegistrationService:
                 status_code=404,
                 details=record.error,
             )
-        if name in {"preview_reference", "preview_registered"}:
+        if name in {"preview_reference", "preview_registered", "preview_source"}:
             self._ensure_previews(record)
             mapped = record.preview_paths.get(name)
             if not mapped:
@@ -584,10 +584,13 @@ class RegistrationService:
         paths: dict[str, str] = {}
         ref = meta.get("reference_path")
         reg = meta.get("registered_path")
+        src = meta.get("source_path")
         if ref is not None:
             paths["preview_reference"] = str(ref)
         if reg is not None:
             paths["preview_registered"] = str(reg)
+        if src is not None:
+            paths["preview_source"] = str(src)
         record.preview_paths = paths
         record.preview_meta = {
             "available": bool(meta.get("available")),

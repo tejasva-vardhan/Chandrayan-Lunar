@@ -216,7 +216,7 @@ function App() {
         </aside>
 
         <nav className="top-nav" aria-label="Primary navigation">
-          <a className="brand" href="#mission">field<span>SPACE</span></a>
+          <a className="brand" href="#mission">Seleneon</a>
           <div className="top-nav-links">
             <a href="#run">Run</a>
             <a href="#results">{results.isLive ? "Live result" : "Fixture"}</a>
@@ -392,7 +392,9 @@ function App() {
           {!showOverlay ? (
             <CorrespondenceMap
               sourceLabel={results.source}
+              sourceUrl={results.previewSourceUrl ?? undefined}
               referenceLabel={results.reference}
+              referenceUrl={results.previewReferenceUrl ?? undefined}
               points={results.mapPoints.length ? results.mapPoints : results.points}
               showRejected={showRejected}
               rawMatches={results.rawMatches}
@@ -475,13 +477,29 @@ function App() {
         </Reveal>
         <Reveal className="glass-panel panel-right" delay={0.1} reducedMotion={reducedMotion}>
           <dl className="certificate">
+            <div className="certificate-section-title">EVALUATION METRICS</div>
+            <div><dt>RMSE (Residual)</dt><dd>{results.rmseLabel}</dd></div>
+            <div><dt>Inliers (Matches)</dt><dd>{results.verified} / {results.rawMatches} ({results.inlierRatio})</dd></div>
+            <div><dt>Independent accuracy</dt><dd>{results.independentAccuracy}</dd></div>
+            
+            <div className="certificate-section-title" style={{ marginTop: '1.5rem' }}>PIPELINE PARAMETERS & CHALLENGES</div>
+            <div>
+              <dt>Illumination Variation</dt>
+              <dd>
+                {results.sunAzimuth != null && results.sunIncidence != null
+                  ? `Azimuth ${results.sunAzimuth.toFixed(1)}° / Incidence ${results.sunIncidence.toFixed(1)}° (Sun azimuth & incidence agnostic)`
+                  : "Inferred from image (Sun azimuth & incidence agnostic)"}
+              </dd>
+            </div>
+            <div><dt>Viewpoint & Scale</dt><dd>{results.sourceDims.gsd} source → reference</dd></div>
+            
+            <div className="certificate-section-title" style={{ marginTop: '1.5rem' }}>EXECUTION TRACE</div>
             <div><dt>Source / reference</dt><dd>{results.source} / {results.reference}</dd></div>
             <div><dt>Source acquisition</dt><dd>{results.acquisitionTimeSource}</dd></div>
             <div><dt>Reference acquisition</dt><dd>{results.acquisitionTimeReference}</dd></div>
             <div><dt>Matching view stride</dt><dd>Source {results.sourceStride}, Reference {results.referenceStride}</dd></div>
             <div><dt>Refinement</dt><dd>{results.refinement}</dd></div>
             <div><dt>Registration</dt><dd>{results.registration}</dd></div>
-            <div><dt>Independent accuracy</dt><dd>{results.independentAccuracy}</dd></div>
           </dl>
         </Reveal>
       </section>
@@ -508,7 +526,7 @@ function App() {
       </section>
 
       <footer>
-        <span>fieldSPACE / SIH26166</span>
+        <span>Seleneon / SIH26166</span>
         <span>
           {results.isLive
             ? "Scientific interface. Live pipeline result values."
