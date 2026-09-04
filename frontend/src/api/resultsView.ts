@@ -2,14 +2,25 @@ import type { RegistrationResultDTO } from "../api/types";
 import { exp000 } from "../data/exp000";
 
 export type DisplayPoint = {
+  id: string;
   x: number;
   y: number;
   rx: number;
   ry: number;
   residual: string;
-  status: "inlier" | "rejected" | "control" | "candidate";
   residualValue: number | null;
+  confidence: string;
+  status: "inlier" | "rejected" | "control" | "candidate";
+  sourcePixel: string;
+  referencePixel: string;
 };
+
+/** Presentation status derived only from backend confidence_class / quality_flags. */
+export type ResultStatusLabel =
+  | "COMPLETED"
+  | "COMPLETED WITH LIMITATIONS"
+  | "LOW CONFIDENCE"
+  | "FAILED";
 
 export type ResultsViewModel = {
   id: string;
@@ -27,6 +38,7 @@ export type ResultsViewModel = {
   rawMatches: number;
   verified: number;
   rejected: number;
+  controlPointCount: number;
   inlierRatio: string;
   coverage: string;
   rmse: string;
@@ -36,7 +48,11 @@ export type ResultsViewModel = {
   registration: string;
   independentAccuracy: string;
   residualNote: string;
+  evaluationLimitation: string | null;
   flags: string[];
+  confidenceClass: string | null;
+  resultStatus: ResultStatusLabel;
+  fullRasterBlocked: boolean;
   points: DisplayPoint[];
   mapPoints: DisplayPoint[];
   registeredArtifactUrl: string | null;
@@ -45,12 +61,50 @@ export type ResultsViewModel = {
   previewAvailable: boolean;
   previewMode: string | null;
   previewNote: string | null;
+  transformationModel: string | null;
   isLive: boolean;
   jobId: string | null;
 };
 
+const FAILURE_FLAGS = new Set([
+  "no_correspondences",
+  "insufficient_verified_matches",
+  "insufficient_control_points",
+  "degenerate_control_points",
+  "invalid_transformation",
+  "warp_failed",
+]);
+
+const LIMITATION_FLAGS = new Set([
+  "registration_output_too_large",
+  "not_independently_validated",
+  "preprocess_identity_passthrough_oversized_raster",
+]);
+
+export function deriveResultStatus(input: {
+  confidenceClass: string | null | undefined;
+  flags: string[];
+}): ResultStatusLabel {
+  const { confidenceClass, flags } = input;
+  if (confidenceClass === "FAILED" || flags.some((f) => FAILURE_FLAGS.has(f))) {
+    return "FAILED";
+  }
+  if (confidenceClass === "LOW_CONFIDENCE") {
+    return "LOW CONFIDENCE";
+  }
+  const hasLimitations = flags.some((f) => LIMITATION_FLAGS.has(f));
+  if (confidenceClass === "SUCCESS") {
+    return hasLimitations ? "COMPLETED WITH LIMITATIONS" : "COMPLETED";
+  }
+  // confidence_class commonly unset — map from quality_flags only.
+  if (hasLimitations) {
+    return "COMPLETED WITH LIMITATIONS";
+  }
+  return "COMPLETED";
+}
+
 function formatScientific(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return "—";
+  if (value == null || Number.isNaN(value)) return "Not available";
   if (value === 0) return "0";
   const match = /^(-?\d+(?:\.\d+)?)e([+-]?\d+)$/.exec(value.toExponential(2));
   if (!match) return value.toExponential(2);
@@ -64,6 +118,16 @@ function formatScientific(value: number | null | undefined): string {
     .map((d) => digits[Number(d)])
     .join("")}`;
   return `${coeff} × 10${powerText}`;
+}
+
+function formatConfidence(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "Not available";
+  return value.toFixed(3);
+}
+
+function formatPixel(xy: [number, number] | null | undefined): string {
+  if (!xy) return "Not available";
+  return `${xy[0].toFixed(1)}, ${xy[1].toFixed(1)}`;
 }
 
 function pct(value: number | null | undefined): string {
@@ -104,7 +168,53 @@ function registrationSummary(result: RegistrationResultDTO): string {
   return "Registration did not produce a registered raster";
 }
 
+function makeDisplayPoint(
+  item: {
+    source_xy: [number, number];
+    reference_xy: [number, number];
+    residual?: number | null;
+    confidence?: number | null;
+  },
+  status: DisplayPoint["status"],
+  id: string,
+  sw: number | null,
+  sh: number | null,
+  rw: number | null,
+  rh: number | null,
+): DisplayPoint {
+  const s = toPercent(item.source_xy, sw, sh);
+  const r = toPercent(item.reference_xy, rw, rh);
+  return {
+    id,
+    x: s.x,
+    y: s.y,
+    rx: r.x,
+    ry: r.y,
+    residual: formatScientific(item.residual ?? null),
+    residualValue: item.residual ?? null,
+    confidence: formatConfidence(item.confidence ?? null),
+    status,
+    sourcePixel: formatPixel(item.source_xy),
+    referencePixel: formatPixel(item.reference_xy),
+  };
+}
+
 export function baselineResultsView(): ResultsViewModel {
+  const flags = [...exp000.flags];
+  const points: DisplayPoint[] = exp000.points.map((p, i) => ({
+    id: `CP-${i + 1}`,
+    x: p.x,
+    y: p.y,
+    rx: p.rx,
+    ry: p.ry,
+    residual: p.residual,
+    residualValue: null,
+    confidence: "Not available",
+    status: "control" as const,
+    sourcePixel: "Not available",
+    referencePixel: "Not available",
+  }));
+
   return {
     id: exp000.id,
     source: exp000.source,
@@ -128,6 +238,7 @@ export function baselineResultsView(): ResultsViewModel {
     rawMatches: exp000.rawMatches,
     verified: exp000.verified,
     rejected: exp000.rejected,
+    controlPointCount: exp000.points.length,
     inlierRatio: exp000.inlierRatio,
     coverage: exp000.coverage,
     rmse: exp000.rmse,
@@ -137,23 +248,23 @@ export function baselineResultsView(): ResultsViewModel {
     registration: exp000.registration,
     independentAccuracy: exp000.independentAccuracy,
     residualNote: exp000.residualNote,
-    flags: [...exp000.flags],
-    points: exp000.points.map((p) => ({
-      ...p,
-      status: "control" as const,
-      residualValue: null,
-    })),
-    mapPoints: exp000.points.map((p) => ({
-      ...p,
-      status: "control" as const,
-      residualValue: null,
-    })),
+    evaluationLimitation: null,
+    flags,
+    confidenceClass: null,
+    resultStatus: deriveResultStatus({
+      confidenceClass: null,
+      flags,
+    }),
+    fullRasterBlocked: flags.includes("registration_output_too_large"),
+    points,
+    mapPoints: points,
     registeredArtifactUrl: null,
     previewReferenceUrl: null,
     previewRegisteredUrl: null,
     previewAvailable: false,
     previewMode: null,
     previewNote: "Static fixture has no live overlay preview.",
+    transformationModel: null,
     isLive: false,
     jobId: null,
   };
@@ -171,65 +282,54 @@ export function fromRegistrationResult(
   const pointsSource = result.control_points.length
     ? result.control_points
     : result.inliers;
-  const points: DisplayPoint[] = pointsSource.slice(0, 12).map((item) => {
-    const s = toPercent(item.source_xy, sw, sh);
-    const r = toPercent(item.reference_xy, rw, rh);
-    return {
-      x: s.x,
-      y: s.y,
-      rx: r.x,
-      ry: r.y,
-      residual: formatScientific(item.residual),
-      status: "control" as const,
-      residualValue: item.residual ?? null,
-    };
-  });
+  const points: DisplayPoint[] = pointsSource.slice(0, 12).map((item, i) =>
+    makeDisplayPoint(item, "control", `CP-${i + 1}`, sw, sh, rw, rh),
+  );
 
   const mapPoints: DisplayPoint[] = [];
   const pushMapPoint = (
-    item: { source_xy: [number, number]; reference_xy: [number, number]; residual?: number | null; status?: string },
+    item: {
+      source_xy: [number, number];
+      reference_xy: [number, number];
+      residual?: number | null;
+      confidence?: number | null;
+      status?: string;
+    },
     status: DisplayPoint["status"],
+    id: string,
   ) => {
-    const s = toPercent(item.source_xy, sw, sh);
-    const r = toPercent(item.reference_xy, rw, rh);
-    mapPoints.push({
-      x: s.x,
-      y: s.y,
-      rx: r.x,
-      ry: r.y,
-      residual: formatScientific(item.residual ?? null),
-      status,
-      residualValue: item.residual ?? null,
-    });
+    mapPoints.push(makeDisplayPoint(item, status, id, sw, sh, rw, rh));
   };
 
-  for (const item of result.correspondences) {
+  result.correspondences.forEach((item, i) => {
     const status =
       item.status === "inlier"
         ? "inlier"
         : item.status === "rejected"
           ? "rejected"
           : "candidate";
-    pushMapPoint(item, status);
-  }
+    pushMapPoint(item, status, `M-${i + 1}`);
+  });
   if (mapPoints.length === 0) {
-    for (const item of result.inliers) pushMapPoint(item, "inlier");
+    result.inliers.forEach((item, i) => pushMapPoint(item, "inlier", `I-${i + 1}`));
   }
-  for (const item of result.control_points) {
-    // Prefer marking control points distinctly on top of inliers.
+  result.control_points.forEach((item, i) => {
     const s = toPercent(item.source_xy, sw, sh);
     const existing = mapPoints.find(
       (p) => Math.abs(p.x - s.x) < 0.05 && Math.abs(p.y - s.y) < 0.05,
     );
-    if (existing) existing.status = "control";
-    else pushMapPoint(item, "control");
-  }
+    if (existing) {
+      existing.status = "control";
+      existing.id = `CP-${i + 1}`;
+    } else {
+      pushMapPoint(item, "control", `CP-${i + 1}`);
+    }
+  });
 
   const gsd =
     result.source.gsd_meters != null ? `${result.source.gsd_meters} m/px` : "GSD unavailable";
 
   const previewAvailable = Boolean(result.preview_available);
-  // Cache-bust so a re-run of the same job id (dev restarts) reloads PNGs.
   const previewQuery = previewAvailable ? `?v=${encodeURIComponent(jobId)}` : "";
   const previewReferenceUrl =
     previewAvailable && jobId
@@ -239,6 +339,10 @@ export function fromRegistrationResult(
     previewAvailable && jobId
       ? `/registration/jobs/${encodeURIComponent(jobId)}/artifacts/preview_registered${previewQuery}`
       : null;
+
+  const flags = result.quality_flags;
+  const controlPointCount =
+    result.metrics?.control_point_count ?? result.control_points.length;
 
   return {
     id: result.pair_id,
@@ -263,6 +367,7 @@ export function fromRegistrationResult(
     rawMatches: result.candidate_correspondences,
     verified: result.verified_inliers,
     rejected: result.rejected_correspondences,
+    controlPointCount,
     inlierRatio: pct(result.metrics?.inlier_ratio),
     coverage: pct(result.metrics?.spatial_coverage),
     rmse: formatScientific(result.metrics?.verification_residual_rmse),
@@ -273,7 +378,14 @@ export function fromRegistrationResult(
     independentAccuracy:
       result.metrics?.independent_accuracy_claim ?? "Not independently validated",
     residualNote: result.residual_note,
-    flags: result.quality_flags,
+    evaluationLimitation: result.evaluation_limitation ?? null,
+    flags,
+    confidenceClass: result.confidence_class,
+    resultStatus: deriveResultStatus({
+      confidenceClass: result.confidence_class,
+      flags,
+    }),
+    fullRasterBlocked: flags.includes("registration_output_too_large"),
     points,
     mapPoints,
     registeredArtifactUrl: artifactUrl,
@@ -282,6 +394,7 @@ export function fromRegistrationResult(
     previewAvailable,
     previewMode: result.preview_mode ?? null,
     previewNote: result.preview_note ?? null,
+    transformationModel: result.transformation?.model_name ?? null,
     isLive: true,
     jobId,
   };
