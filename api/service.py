@@ -46,7 +46,11 @@ _WORK_ROOT_ENV = "CHANDRAYAN_API_WORK_ROOT"
 
 
 def _default_work_root() -> Path:
-    """Prefer CHANDRAYAN_API_WORK_ROOT when C: is tight; else repo outputs/api."""
+    """Prefer CHANDRAYAN_API_WORK_ROOT when set; else repo ``outputs/api``.
+
+    On ephemeral hosts (for example Render) this directory is writable but not
+    durable across restarts. Scientific datasets are never assumed to live here.
+    """
 
     import os
 
