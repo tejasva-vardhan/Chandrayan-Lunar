@@ -8,7 +8,7 @@
       "height_px": 101075,
       "band_count": 1
     },
-    "gsd_meters": null,
+    "gsd_meters": 0.25,
     "acquisition_time": "2026-01-03T10:05:17.645000Z",
     "radiometric_state": "Calibrated",
     "coordinates": {
@@ -20,19 +20,21 @@
         -84.522148
       ]
     },
+    "sun_azimuth": 337.069783,
+    "sun_incidence": 84.484444,
     "valid_pixel_ratio": 1.0,
-    "raster_uri": null,
-    "mask_uri": null,
+    "raster_uri": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_raster.npy",
+    "mask_uri": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_mask.npy",
     "provenance": {
-      "source_uri": "ch2_ohr_ncp_20260103T1005176450_d_img_d18",
+      "source_uri": "ch2_ohr_ncp_20260103T1005176450_d_img_d18.zip",
       "reader": "pds4_stream_reader",
       "checksum": "40347cb3a97e4fce72e04526643098e1",
-      "software_commit": "94eab2e8fb357963b02040a65de98fc4d6d39eec",
-      "notes": "Reference manifest — raster/mask paths are machine-local and excluded. Set LUNAR_DATA_DIR and re-run ingestion to populate them locally."
+      "software_commit": "36cd113570d3bb226d77bddeada197dc0d5a3be5",
+      "notes": "Successfully ingested from ch2_ohr_ncp_20260103T1005176450_d_img_d18.zip"
     }
   },
-  "source_path": "external — set LUNAR_DATA_DIR=<path-to-ohrc-products>",
-  "raster_path": null,
-  "mask_path": null,
-  "processing_state": "reference"
+  "source_path": "/home/shashwat/SIH/Code/Chandrayan-Lunar/outputs/api/products/upload-c0db11bc77a3/ch2_ohr_ncp_20260103T1005176450_d_img_d18.zip",
+  "raster_path": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_raster.npy",
+  "mask_path": "/home/shashwat/SIH/Code/Chandrayan-Lunar/data/processed/urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20260103t1005176450_d_img_d18_mask.npy",
+  "processing_state": "ingested"
 }
