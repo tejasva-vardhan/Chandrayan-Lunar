@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiClient } from "../api/client";
+import { createApiClient, resolveApiBaseUrl } from "../api/client";
 import { ApiClientError } from "../api/types";
 
 afterEach(() => {
@@ -7,6 +7,17 @@ afterEach(() => {
 });
 
 describe("api client", () => {
+  it("resolves empty base URL when VITE_API_BASE_URL is unset", () => {
+    expect(resolveApiBaseUrl({})).toBe("");
+    expect(resolveApiBaseUrl({ VITE_API_BASE_URL: "   " })).toBe("");
+  });
+
+  it("trims trailing slash from VITE_API_BASE_URL", () => {
+    expect(resolveApiBaseUrl({ VITE_API_BASE_URL: "https://api.example.com/" })).toBe(
+      "https://api.example.com",
+    );
+  });
+
   it("posts registration jobs and parses responses", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

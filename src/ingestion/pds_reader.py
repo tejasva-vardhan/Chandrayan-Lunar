@@ -346,10 +346,18 @@ def parse_metadata_from_xml(xml_content: bytes) -> dict:
 
     # Sun Azimuth and Incidence
     sun_az_node = root.find(".//isda:sun_azimuth", _NAMESPACES)
-    sun_azimuth = float(sun_az_node.text.strip()) if sun_az_node is not None and sun_az_node.text else None
+    sun_azimuth = (
+        float(sun_az_node.text.strip())
+        if sun_az_node is not None and sun_az_node.text
+        else None
+    )
 
     sun_inc_node = root.find(".//isda:solar_incidence", _NAMESPACES)
-    sun_incidence = float(sun_inc_node.text.strip()) if sun_inc_node is not None and sun_inc_node.text else None
+    sun_incidence = (
+        float(sun_inc_node.text.strip())
+        if sun_inc_node is not None and sun_inc_node.text
+        else None
+    )
 
     return {
         "product_id": product_id,
