@@ -7,6 +7,8 @@ export type DisplayPoint = {
   rx: number;
   ry: number;
   residual: string;
+  status: "inlier" | "rejected" | "control" | "candidate";
+  residualValue: number | null;
 };
 
 export type ResultsViewModel = {
@@ -36,7 +38,13 @@ export type ResultsViewModel = {
   residualNote: string;
   flags: string[];
   points: DisplayPoint[];
+  mapPoints: DisplayPoint[];
   registeredArtifactUrl: string | null;
+  previewReferenceUrl: string | null;
+  previewRegisteredUrl: string | null;
+  previewAvailable: boolean;
+  previewMode: string | null;
+  previewNote: string | null;
   isLive: boolean;
   jobId: string | null;
 };
@@ -130,8 +138,22 @@ export function baselineResultsView(): ResultsViewModel {
     independentAccuracy: exp000.independentAccuracy,
     residualNote: exp000.residualNote,
     flags: [...exp000.flags],
-    points: exp000.points.map((p) => ({ ...p })),
+    points: exp000.points.map((p) => ({
+      ...p,
+      status: "control" as const,
+      residualValue: null,
+    })),
+    mapPoints: exp000.points.map((p) => ({
+      ...p,
+      status: "control" as const,
+      residualValue: null,
+    })),
     registeredArtifactUrl: null,
+    previewReferenceUrl: null,
+    previewRegisteredUrl: null,
+    previewAvailable: false,
+    previewMode: null,
+    previewNote: "Static fixture has no live overlay preview.",
     isLive: false,
     jobId: null,
   };
@@ -158,11 +180,65 @@ export function fromRegistrationResult(
       rx: r.x,
       ry: r.y,
       residual: formatScientific(item.residual),
+      status: "control" as const,
+      residualValue: item.residual ?? null,
     };
   });
 
+  const mapPoints: DisplayPoint[] = [];
+  const pushMapPoint = (
+    item: { source_xy: [number, number]; reference_xy: [number, number]; residual?: number | null; status?: string },
+    status: DisplayPoint["status"],
+  ) => {
+    const s = toPercent(item.source_xy, sw, sh);
+    const r = toPercent(item.reference_xy, rw, rh);
+    mapPoints.push({
+      x: s.x,
+      y: s.y,
+      rx: r.x,
+      ry: r.y,
+      residual: formatScientific(item.residual ?? null),
+      status,
+      residualValue: item.residual ?? null,
+    });
+  };
+
+  for (const item of result.correspondences) {
+    const status =
+      item.status === "inlier"
+        ? "inlier"
+        : item.status === "rejected"
+          ? "rejected"
+          : "candidate";
+    pushMapPoint(item, status);
+  }
+  if (mapPoints.length === 0) {
+    for (const item of result.inliers) pushMapPoint(item, "inlier");
+  }
+  for (const item of result.control_points) {
+    // Prefer marking control points distinctly on top of inliers.
+    const s = toPercent(item.source_xy, sw, sh);
+    const existing = mapPoints.find(
+      (p) => Math.abs(p.x - s.x) < 0.05 && Math.abs(p.y - s.y) < 0.05,
+    );
+    if (existing) existing.status = "control";
+    else pushMapPoint(item, "control");
+  }
+
   const gsd =
     result.source.gsd_meters != null ? `${result.source.gsd_meters} m/px` : "GSD unavailable";
+
+  const previewAvailable = Boolean(result.preview_available);
+  // Cache-bust so a re-run of the same job id (dev restarts) reloads PNGs.
+  const previewQuery = previewAvailable ? `?v=${encodeURIComponent(jobId)}` : "";
+  const previewReferenceUrl =
+    previewAvailable && jobId
+      ? `/registration/jobs/${encodeURIComponent(jobId)}/artifacts/preview_reference${previewQuery}`
+      : null;
+  const previewRegisteredUrl =
+    previewAvailable && jobId
+      ? `/registration/jobs/${encodeURIComponent(jobId)}/artifacts/preview_registered${previewQuery}`
+      : null;
 
   return {
     id: result.pair_id,
@@ -199,7 +275,13 @@ export function fromRegistrationResult(
     residualNote: result.residual_note,
     flags: result.quality_flags,
     points,
+    mapPoints,
     registeredArtifactUrl: artifactUrl,
+    previewReferenceUrl,
+    previewRegisteredUrl,
+    previewAvailable,
+    previewMode: result.preview_mode ?? null,
+    previewNote: result.preview_note ?? null,
     isLive: true,
     jobId,
   };

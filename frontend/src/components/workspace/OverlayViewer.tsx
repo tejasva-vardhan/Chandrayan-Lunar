@@ -1,19 +1,39 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface OverlayViewerProps {
-  referenceUrl?: string;
-  sourceUrl?: string;
+  referenceUrl?: string | null;
+  registeredUrl?: string | null;
+  available?: boolean;
+  note?: string | null;
+  mode?: string | null;
+  isLive?: boolean;
 }
 
-export function OverlayViewer({ referenceUrl, sourceUrl }: OverlayViewerProps) {
-  const [opacity, setOpacity] = useState(50);
+export function OverlayViewer({
+  referenceUrl,
+  registeredUrl,
+  available = false,
+  note,
+  mode,
+  isLive = false,
+}: OverlayViewerProps) {
+  const [opacity, setOpacity] = useState(55);
+  const [refFailed, setRefFailed] = useState(false);
+  const [regFailed, setRegFailed] = useState(false);
+  const [refLoaded, setRefLoaded] = useState(false);
+  const [regLoaded, setRegLoaded] = useState(false);
 
-  // Fallback placeholder images if backend hasn't provided real ones yet
-  const defaultRef = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='100%25' height='100%25' fill='%230f172a'/%3E%3Cpath d='M0 0l800 600M800 0L0 600' stroke='%23334155' stroke-width='2'/%3E%3Ctext x='400' y='300' fill='%2364748b' font-family='monospace' font-size='24' text-anchor='middle'%3EREFERENCE BASEMAP%3C/text%3E%3C/svg%3E";
-  const defaultSrc = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='100%25' height='100%25' fill='transparent'/%3E%3Ccircle cx='400' cy='300' r='200' stroke='%2338bdf8' stroke-width='4' fill='rgba(56,189,248,0.1)'/%3E%3Ctext x='400' y='360' fill='%2338bdf8' font-family='monospace' font-size='24' text-anchor='middle'%3EREGISTERED SOURCE%3C/text%3E%3C/svg%3E";
+  useEffect(() => {
+    setRefFailed(false);
+    setRegFailed(false);
+    setRefLoaded(false);
+    setRegLoaded(false);
+  }, [referenceUrl, registeredUrl, available]);
 
-  const refSrc = referenceUrl || defaultRef;
-  const overlaySrc = sourceUrl || defaultSrc;
+  const urlsReady = Boolean(available && referenceUrl && registeredUrl);
+  const loadFailed = refFailed || regFailed;
+  const canShow = urlsReady && !loadFailed;
+  const loading = urlsReady && !loadFailed && !(refLoaded && regLoaded);
 
   return (
     <div className="workspace-card overlay-viewer-card">
@@ -22,39 +42,81 @@ export function OverlayViewer({ referenceUrl, sourceUrl }: OverlayViewerProps) {
           <span className="card-dot" />
           <span className="card-title">REGISTRATION OVERLAY EXPLORER</span>
         </div>
+        {mode && (
+          <span className={`chip ${canShow ? "chip-region" : ""}`}>
+            {mode.replace(/_/g, " ")}
+          </span>
+        )}
       </div>
-      
+
       <p className="card-desc">
-        Visually verify geometric alignment by fading the warped source image over the reference basemap.
+        {canShow
+          ? "Fade the warped source crop over the reference window. Alignment is correct when craters and ridges stay locked as you drag the slider."
+          : isLive
+            ? "This live run has not produced a browser preview crop yet."
+            : "Run a live registration in the pipeline above to generate a diagnostic overlay crop."}
       </p>
 
       <div className="overlay-container">
-        <img src={refSrc} alt="Reference Base" className="overlay-base" />
-        <img 
-          src={overlaySrc} 
-          alt="Registered Source" 
-          className="overlay-top" 
-          style={{ opacity: opacity / 100 }} 
-        />
+        {canShow ? (
+          <>
+            {loading && (
+              <div className="overlay-loading" role="status">
+                Loading diagnostic crop…
+              </div>
+            )}
+            <img
+              key={`ref-${referenceUrl}`}
+              src={referenceUrl!}
+              alt="Reference diagnostic crop"
+              className="overlay-base"
+              onLoad={() => setRefLoaded(true)}
+              onError={() => setRefFailed(true)}
+            />
+            <img
+              key={`reg-${registeredUrl}`}
+              src={registeredUrl!}
+              alt="Registered diagnostic crop"
+              className="overlay-top"
+              style={{ opacity: opacity / 100 }}
+              onLoad={() => setRegLoaded(true)}
+              onError={() => setRegFailed(true)}
+            />
+          </>
+        ) : (
+          <div className="overlay-empty" role="status">
+            <p>{loadFailed ? "Preview images failed to load" : "No raster overlay available"}</p>
+            <span>
+              {loadFailed
+                ? "The preview URLs returned an error. Re-run registration with the API still running, then open this tab again."
+                : note ||
+                  "Full-strip warp may be blocked by the output-size cap. Re-run registration to generate a diagnostic crop preview."}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="overlay-controls">
         <span className="control-label">REFERENCE</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="100" 
-          value={opacity} 
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={opacity}
+          disabled={!canShow}
           onChange={(e) => setOpacity(Number(e.target.value))}
           className="opacity-slider"
           aria-label="Overlay Opacity"
         />
-        <span className="control-label">SOURCE</span>
+        <span className="control-label">REGISTERED</span>
       </div>
-      
+
       <div className="opacity-readout">
-        Source Opacity: {opacity}%
+        {canShow
+          ? `Registered crop opacity: ${opacity}% · drag toward REFERENCE to compare`
+          : "Slider inactive until preview exists"}
       </div>
+      {canShow && note && <p className="overlay-note">{note}</p>}
     </div>
   );
 }

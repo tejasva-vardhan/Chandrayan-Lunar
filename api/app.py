@@ -93,6 +93,29 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
                 filename=target.name,
                 nbytes=size,
             )
+        except ApiError:
+            shutil.rmtree(target.parent, ignore_errors=True)
+            raise
+        except OSError as exc:
+            shutil.rmtree(target.parent, ignore_errors=True)
+            if getattr(exc, "errno", None) == 28:
+                raise ApiError(
+                    code="storage_full",
+                    message=(
+                        "Upload failed: no space left on the API work disk. "
+                        "Free disk space, set CHANDRAYAN_API_WORK_ROOT to a drive "
+                        "with room (for example D:\\SIH\\api-work), or use "
+                        "Select Existing / Load EXP-000 Real Pair instead of "
+                        "re-uploading large IMG products already under "
+                        "CHANDRAYAN_DATA_ROOT."
+                    ),
+                    status_code=507,
+                ) from exc
+            raise ApiError(
+                code="backend_exception",
+                message=f"Upload failed: {exc}",
+                status_code=500,
+            ) from exc
         except Exception:
             shutil.rmtree(target.parent, ignore_errors=True)
             raise
@@ -137,6 +160,20 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
     @app.get("/registration/jobs/{job_id}/artifacts/{name}")
     def get_artifact(job_id: str, name: str) -> FileResponse:
         path = app.state.service.resolve_artifact(job_id, name)
-        return FileResponse(path, filename=Path(path).name)
+        suffix = Path(path).suffix.lower()
+        media_type = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".gif": "image/gif",
+        }.get(suffix)
+        # Inline so <img> overlay can display previews (not force download).
+        return FileResponse(
+            path,
+            media_type=media_type,
+            filename=Path(path).name,
+            content_disposition_type="inline",
+        )
 
     return app

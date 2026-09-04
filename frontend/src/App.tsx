@@ -3,12 +3,11 @@ import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { A618OrbiterLayer } from "./components/A618OrbiterLayer";
 import { CesiumMoon } from "./components/CesiumMoon";
 import { MoonScene } from "./components/MoonScene";
-import { RegistrationConsole } from "./components/RegistrationConsole";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
-import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
+import { CorrespondenceMap } from "./components/workspace/CorrespondenceMap";
 import { OverlayViewer } from "./components/workspace/OverlayViewer";
+import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
 import { baselineResultsView, type ResultsViewModel } from "./api/resultsView";
-import type { DisplayPoint } from "./api/resultsView";
 
 const stages = [
   "Deep space", "Equatorial approach", "OHRC strip scan", "Control points", "Quality certificate", "Audit trail",
@@ -20,35 +19,6 @@ const CP_POINTS = [
   { lon: 23.46, lat: 0.62 },
   { lon: 23.44, lat: 0.38 },
 ];
-
-function Raster({
-  label,
-  points,
-  reference = false,
-  onHoverPoint,
-}: {
-  label: string;
-  points: DisplayPoint[];
-  reference?: boolean;
-  onHoverPoint?: (index: number | null) => void;
-}) {
-  return (
-    <figure className={`raster ${reference ? "reference" : "source"}`}>
-      <div className="raster-grid" aria-hidden="true" />
-      {points.map((point, index) => (
-        <i
-          className="raster-point"
-          key={index}
-          style={{ left: `${reference ? point.rx : point.x}%`, top: `${reference ? point.ry : point.y}%` }}
-          onMouseEnter={() => onHoverPoint?.(index)}
-          onMouseLeave={() => onHoverPoint?.(null)}
-          title={`Verified Inlier 0${index + 1}: ${point.residual} residual`}
-        />
-      ))}
-      <figcaption>{label}<span>Illustrative viewing layer</span></figcaption>
-    </figure>
-  );
-}
 
 function useMoonOrbit() {
   const { scrollYProgress } = useScroll();
@@ -127,6 +97,12 @@ function App() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    if (results.isLive && results.previewAvailable) {
+      setShowOverlay(true);
+    }
+  }, [results.jobId, results.isLive, results.previewAvailable]);
 
   const { scrollYProgress } = useScroll();
   useEffect(() => {
@@ -267,7 +243,7 @@ function App() {
               OHRC × LRO NAC image-correspondence experiment — now wired to the live
               scientific pipeline API.
             </p>
-            <a className="primary-button" href="#run">Run registration <span>↓</span></a>
+            <a className="primary-button" href="#run">Open registration pipeline <span>↓</span></a>
           </div>
 
           <aside className="mission-control" aria-label="Mission timeline">
@@ -293,23 +269,6 @@ function App() {
             }
           }}
         />
-
-        <section className="results-shell advanced-console" aria-label="Advanced path console">
-          <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
-            <details className="advanced-path-details">
-              <summary>Advanced: local server path inputs</summary>
-              <RegistrationConsole
-                onResults={(view) => {
-                  setResults(view);
-                  setShowRejected(false);
-                  if (view.isLive) {
-                    document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-              />
-            </details>
-          </Reveal>
-        </section>
 
         <section className="results-shell" id="results">
           <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
@@ -419,7 +378,7 @@ function App() {
               onClick={() => setShowOverlay(false)}
               style={!showOverlay ? { borderColor: "var(--signal)", color: "var(--signal)", background: "rgba(56, 189, 248, 0.1)" } : {}}
             >
-              Split Correspondences
+              Correspondence map
             </button>
             <button 
               className={`secondary-button ${showOverlay ? "active" : ""}`} 
@@ -431,49 +390,36 @@ function App() {
           </div>
 
           {!showOverlay ? (
-            <div className="evidence-grid">
-              <Raster
-                label={results.source}
-                points={results.points}
-                onHoverPoint={(index) => {
-                  if (index !== null && CP_POINTS[index]) {
-                    setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
-                  } else {
-                    setFocusedTarget(null);
-                  }
-                }}
-              />
-              <div className="correspondence-rail" aria-label="Verified correspondences">
-                <p>VERIFIED<br />CORRESPONDENCES</p>
-                {results.points.slice(0, 4).map((_, item) => (
-                  <span
-                    key={item}
-                    style={{ top: `${22 + item * 16}%` }}
-                    onMouseEnter={() => {
-                      if (CP_POINTS[item]) {
-                        setFocusedTarget({ lon: CP_POINTS[item].lon, lat: CP_POINTS[item].lat, zoomMultiplier: 0.82 });
-                      }
-                    }}
-                    onMouseLeave={() => setFocusedTarget(null)}
-                    title={`Inspect Verified Point CP-0${item + 1}`}
-                  />
-                ))}
-              </div>
-              <Raster
-                label={results.reference}
-                points={results.points}
-                reference
-                onHoverPoint={(index) => {
-                  if (index !== null && CP_POINTS[index]) {
-                    setFocusedTarget({ lon: CP_POINTS[index].lon, lat: CP_POINTS[index].lat, zoomMultiplier: 0.82 });
-                  } else {
-                    setFocusedTarget(null);
-                  }
-                }}
-              />
-            </div>
+            <CorrespondenceMap
+              sourceLabel={results.source}
+              referenceLabel={results.reference}
+              points={results.mapPoints.length ? results.mapPoints : results.points}
+              showRejected={showRejected}
+              rawMatches={results.rawMatches}
+              verified={results.verified}
+              rejected={results.rejected}
+              inlierRatio={results.inlierRatio}
+              onHoverPoint={(index) => {
+                if (index !== null && CP_POINTS[index]) {
+                  setFocusedTarget({
+                    lon: CP_POINTS[index].lon,
+                    lat: CP_POINTS[index].lat,
+                    zoomMultiplier: 0.82,
+                  });
+                } else {
+                  setFocusedTarget(null);
+                }
+              }}
+            />
           ) : (
-            <OverlayViewer />
+            <OverlayViewer
+              available={results.previewAvailable}
+              referenceUrl={results.previewReferenceUrl}
+              registeredUrl={results.previewRegisteredUrl}
+              note={results.previewNote}
+              mode={results.previewMode}
+              isLive={results.isLive}
+            />
           )}
 
           <div className="explorer-controls">
@@ -481,7 +427,8 @@ function App() {
               <b>Correspondence explorer</b>
               <span>
                 {results.verified} inliers survived geometric verification
-                ({results.rejected} rejected).
+                ({results.rejected} rejected). Toggle rejected markers to see what the
+                geometry filter discarded.
               </span>
             </div>
             <button
