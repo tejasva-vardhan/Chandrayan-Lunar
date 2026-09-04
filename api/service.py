@@ -22,6 +22,7 @@ from api.catalog import (
 )
 from api.errors import ApiError, classify_pipeline_exception
 from api.preprocess_guard import PREPROCESS_IDENTITY_FLAG, guarded_preprocess
+from api.preview import ensure_job_previews
 from api.schemas import (
     CatalogStatusResponse,
     Exp000PairResponse,
@@ -41,7 +42,18 @@ from src.models.registration_result import RegistrationResult
 from src.pipeline.orchestrator import PIPELINE_STAGES, PipelineOperations, ScientificPipeline
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
-_DEFAULT_WORK_ROOT = _REPO_ROOT / "outputs" / "api"
+_WORK_ROOT_ENV = "CHANDRAYAN_API_WORK_ROOT"
+
+
+def _default_work_root() -> Path:
+    """Prefer CHANDRAYAN_API_WORK_ROOT when C: is tight; else repo outputs/api."""
+
+    import os
+
+    raw = os.environ.get(_WORK_ROOT_ENV)
+    if raw and raw.strip():
+        return Path(raw).expanduser()
+    return _REPO_ROOT / "outputs" / "api"
 
 # Formats accepted by default ingest_product (LROC PDS3 .IMG, OHRC PDS4 .zip/.xml).
 ALLOWED_UPLOAD_SUFFIXES = {".img", ".zip", ".xml"}
@@ -67,6 +79,8 @@ class _JobRecord:
     runtime_seconds: float | None = None
     wall_start: float | None = None
     warnings: list[str] = field(default_factory=list)
+    preview_paths: dict[str, str] = field(default_factory=dict)
+    preview_meta: dict[str, Any] = field(default_factory=dict)
 
 
 def _now() -> str:
@@ -83,7 +97,7 @@ class RegistrationService:
         ops: PipelineOperations | None = None,
         run_inline: bool = False,
     ) -> None:
-        self.work_root = Path(work_root) if work_root is not None else _DEFAULT_WORK_ROOT
+        self.work_root = Path(work_root) if work_root is not None else _default_work_root()
         self.products_dir = self.work_root / "products"
         self.jobs_dir = self.work_root / "jobs"
         self.products_dir.mkdir(parents=True, exist_ok=True)
@@ -320,6 +334,8 @@ class RegistrationService:
                 message=f"Job {job_id} is still {record.status}.",
                 status_code=409,
             )
+        if record.status == "completed" and record.result is not None and record.pair is not None:
+            self._attach_preview_metadata(record)
         return JobResultResponse(
             job_id=record.job_id,
             status=record.status,
@@ -347,26 +363,30 @@ class RegistrationService:
 
     def get_visualization(self, job_id: str) -> VisualizationResponse:
         record = self._require_job(job_id)
-        if record.status != "completed" or record.result is None:
+        if record.status != "completed" or record.result is None or record.pair is None:
             raise ApiError(
                 code="result_unavailable",
                 message=f"Visualization unavailable for job {job_id}.",
                 status_code=404,
                 details=record.error,
             )
-        
-        # Reference URL needs to be served from the API. We'll map to the original file
-        # or assuming the frontend can download it via a known route. 
-        # For this API, we will just return the URLs to the artifacts endpoint.
-        # But wait, does reference image have an artifact name? 
-        # Actually, we can return the local path as the URL for now, or a synthetic endpoint.
-        # Let's use `/registration/jobs/{job_id}/artifacts/reference` if we want to serve it.
-        # Wait, resolve_artifact looks at manifest.
-        # Let's just return standard relative URLs for the API server.
-        
+        meta = self._ensure_previews(record)
+        if not meta.get("available"):
+            return VisualizationResponse(
+                available=False,
+                mode=str(meta.get("mode") or "unavailable"),
+                reference_url=None,
+                registered_source_url=None,
+                note=str(meta.get("note") or "Overlay preview unavailable."),
+            )
         return VisualizationResponse(
-            reference_url=f"/registration/jobs/{job_id}/artifacts/reference",
-            registered_source_url=f"/registration/jobs/{job_id}/artifacts/registered_source",
+            available=True,
+            mode=str(meta.get("mode") or "diagnostic_crop"),
+            reference_url=f"/registration/jobs/{job_id}/artifacts/preview_reference",
+            registered_source_url=(
+                f"/registration/jobs/{job_id}/artifacts/preview_registered"
+            ),
+            note=str(meta.get("note") or ""),
         )
 
     def resolve_artifact(self, job_id: str, name: str) -> Path:
@@ -378,12 +398,28 @@ class RegistrationService:
                 status_code=404,
                 details=record.error,
             )
+        if name in {"preview_reference", "preview_registered"}:
+            self._ensure_previews(record)
+            mapped = record.preview_paths.get(name)
+            if not mapped:
+                raise ApiError(
+                    code="artifact_unavailable",
+                    message=f"Preview artifact {name!r} is not available for job {job_id}.",
+                    status_code=404,
+                )
+            path = Path(mapped)
+            if not path.is_file():
+                raise ApiError(
+                    code="artifact_unavailable",
+                    message=f"Preview file missing: {path.name}",
+                    status_code=404,
+                )
+            return path
+
         mapping: dict[str, str | None] = {}
         if record.manifest is not None:
             mapping.update(record.manifest.model_dump(mode="json"))
         mapping["registered_source"] = record.result.registered_source_uri
-        if record.pair and record.pair.reference:
-            mapping["reference"] = str(record.pair.reference.path)
         uri = mapping.get(name)
         if not uri:
             raise ApiError(
@@ -395,11 +431,10 @@ class RegistrationService:
         if not path.is_file():
             raise ApiError(
                 code="artifact_unavailable",
-                message=f"Artifact file missing: {path}",
+                message=f"Artifact file missing: {path.name}",
                 status_code=404,
             )
         return path
-
     def clear(self) -> None:
         with self._lock:
             self._jobs.clear()
@@ -484,19 +519,28 @@ class RegistrationService:
                 runtime = time.perf_counter() - record.wall_start
             dto = result_to_dto(result, pair, manifest=manifest, runtime_seconds=runtime)
             completed = list(PIPELINE_STAGES)
+            # Keep status=running while diagnostic previews build so clients do
+            # not snapshot result.preview_available=false and skip the overlay.
+            self._touch(
+                record,
+                result=result,
+                result_dto=dto,
+                pair=pair,
+                manifest=manifest,
+                completed_stages=completed,
+                runtime_seconds=runtime,
+                error=None,
+            )
+            self._annotate_scientific_outcome(record)
+            self._attach_preview_metadata(record)
             self._touch(
                 record,
                 status="completed",
                 current_stage=None,
                 completed_stages=completed,
-                result=result,
-                result_dto=dto,
-                pair=pair,
-                manifest=manifest,
                 runtime_seconds=runtime,
                 error=None,
             )
-            self._annotate_scientific_outcome(record)
         except Exception as exc:  # noqa: BLE001 — boundary: convert to API error payload
             api_error = classify_pipeline_exception(exc)
             runtime = None
@@ -517,6 +561,49 @@ class RegistrationService:
                     "failed_stage": record.current_stage,
                 },
             )
+
+    def _ensure_previews(self, record: _JobRecord) -> dict[str, Any]:
+        if record.preview_meta.get("available") and record.preview_paths:
+            return record.preview_meta
+        if record.pair is None or record.result is None:
+            return {
+                "available": False,
+                "mode": "unavailable",
+                "note": "Overlay preview unavailable.",
+            }
+        try:
+            meta = ensure_job_previews(record.pair, record.result, record.output_dir)
+        except Exception as exc:  # noqa: BLE001 — preview is best-effort viewing aid
+            meta = {
+                "available": False,
+                "mode": "unavailable",
+                "note": f"Overlay preview failed: {exc}",
+                "reference_path": None,
+                "registered_path": None,
+            }
+        paths: dict[str, str] = {}
+        ref = meta.get("reference_path")
+        reg = meta.get("registered_path")
+        if ref is not None:
+            paths["preview_reference"] = str(ref)
+        if reg is not None:
+            paths["preview_registered"] = str(reg)
+        record.preview_paths = paths
+        record.preview_meta = {
+            "available": bool(meta.get("available")),
+            "mode": meta.get("mode"),
+            "note": meta.get("note"),
+        }
+        return record.preview_meta
+
+    def _attach_preview_metadata(self, record: _JobRecord) -> None:
+        meta = self._ensure_previews(record)
+        dto = record.result_dto
+        if dto is None:
+            return
+        dto.preview_available = bool(meta.get("available"))
+        dto.preview_mode = str(meta.get("mode")) if meta.get("mode") else None
+        dto.preview_note = str(meta.get("note")) if meta.get("note") else None
 
     def _capturing_ops(self, captured: dict[str, Any], record: _JobRecord) -> PipelineOperations:
         from src.pipeline.orchestrator import default_operations

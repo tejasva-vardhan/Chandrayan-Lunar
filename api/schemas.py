@@ -150,6 +150,9 @@ class RegistrationResultDTO(BaseModel):
     evaluation_limitation: str | None = None
     runtime_seconds: float | None = None
     export_manifest: dict[str, str | None] | None = None
+    preview_available: bool = False
+    preview_mode: str | None = None
+    preview_note: str | None = None
 
 
 class JobStatusResponse(BaseModel):
@@ -186,5 +189,10 @@ class HealthResponse(BaseModel):
 class VisualizationResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    reference_url: str
-    registered_source_url: str
+    available: bool = False
+    mode: str = "unavailable"
+    reference_url: str | None = None
+    registered_source_url: str | None = None
+    note: str = (
+        "Overlay preview unavailable."
+    )
