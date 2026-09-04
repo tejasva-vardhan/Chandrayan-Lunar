@@ -16,6 +16,7 @@ export function CesiumMoon({ children, progress = 0, reducedMotion }: CesiumMoon
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !token) return;
+    const accessToken: string = token;
     const mount = container;
     let viewer: Viewer | undefined;
     let disposed = false;
@@ -23,7 +24,7 @@ export function CesiumMoon({ children, progress = 0, reducedMotion }: CesiumMoon
 
     async function loadMoon() {
       try {
-        Ion.defaultAccessToken = token;
+        Ion.defaultAccessToken = accessToken;
         Ellipsoid.default = Ellipsoid.MOON;
         viewer = new Viewer(mount, {
           globe: false,

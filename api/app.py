@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,39 @@ from api.schemas import (
 from api.service import MAX_UPLOAD_BYTES, RegistrationService
 from src.pipeline.orchestrator import PIPELINE_STAGES
 
+# Local Vite dev / preview origins. Always allowed so local UI keeps working.
+_LOCAL_CORS_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+)
+_CORS_ORIGINS_ENV = "SIH26166_CORS_ORIGINS"
+
+
+def cors_allow_origins(
+    *,
+    env: dict[str, str] | None = None,
+    local_origins: tuple[str, ...] = _LOCAL_CORS_ORIGINS,
+) -> list[str]:
+    """Local Vite origins plus optional comma-separated SIH26166_CORS_ORIGINS.
+
+    Does not use ``*`` because credentials are enabled. Deployed frontend origins
+    (for example a Vercel URL) must be listed explicitly via the env var.
+    """
+
+    source = env if env is not None else os.environ
+    raw = (source.get(_CORS_ORIGINS_ENV) or "").strip()
+    extras = [part.strip() for part in raw.split(",") if part.strip()]
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for origin in (*local_origins, *extras):
+        if origin in seen:
+            continue
+        seen.add(origin)
+        ordered.append(origin)
+    return ordered
+
 
 def create_app(service: RegistrationService | None = None) -> FastAPI:
     app = FastAPI(
@@ -39,12 +73,7 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:4173",
-            "http://127.0.0.1:4173",
-        ],
+        allow_origins=cors_allow_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -103,11 +132,10 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
                     code="storage_full",
                     message=(
                         "Upload failed: no space left on the API work disk. "
-                        "Free disk space, set CHANDRAYAN_API_WORK_ROOT to a drive "
-                        "with room (for example D:\\SIH\\api-work), or use "
-                        "Select Existing / Load EXP-000 Real Pair instead of "
-                        "re-uploading large IMG products already under "
-                        "CHANDRAYAN_DATA_ROOT."
+                        "Free disk space, set CHANDRAYAN_API_WORK_ROOT to a writable "
+                        "location with enough room, or use Select Existing / "
+                        "Load EXP-000 Real Pair instead of re-uploading large "
+                        "products already under CHANDRAYAN_DATA_ROOT."
                     ),
                     status_code=507,
                 ) from exc
@@ -177,3 +205,7 @@ def create_app(service: RegistrationService | None = None) -> FastAPI:
         )
 
     return app
+
+
+# ASGI entry for production: ``uvicorn api.app:app --host 0.0.0.0 --port $PORT``
+app = create_app()
