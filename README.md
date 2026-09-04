@@ -134,6 +134,63 @@ npm run lint
 npm run build
 ```
 
+## Deployment (Render + Vercel)
+
+This section covers a **demo** deployment. It does not change scientific contracts or invent dataset availability.
+
+See also:
+
+- Backend env template: `.env.example`
+- Frontend env template: `frontend/.env.example`
+
+### Backend on Render
+
+| Setting | Value |
+|---|---|
+| Root directory | repository root (not `frontend/`) |
+| Runtime | Python 3.11+ |
+| Build command | `pip install -e ".[api]"` |
+| Start command | `uvicorn api.app:app --host 0.0.0.0 --port $PORT` |
+
+**Required env vars:** none beyond Render’s `PORT`.
+
+**Optional env vars:**
+
+| Variable | Purpose |
+|---|---|
+| `CHANDRAYAN_DATA_ROOT` | External scientific products root. If unset, the API still starts; catalog and EXP-000 resolve as unavailable (no fake products). |
+| `CHANDRAYAN_API_WORK_ROOT` | Writable uploads/jobs directory (defaults to `<repo>/outputs/api`). Ephemeral on Render. |
+| `SIH26166_CORS_ORIGINS` | Comma-separated extra browser origins (add the Vercel URL after it exists). Local Vite origins remain allowed. |
+
+The backend must not depend on Windows paths or `D:\SIH`. Startup and `/health` succeed without a local dataset.
+
+### Frontend on Vercel
+
+| Setting | Value |
+|---|---|
+| Root Directory | `frontend` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Framework preset | Vite |
+
+**Build-time env vars:**
+
+| Variable | Required? | Purpose |
+|---|---|---|
+| `VITE_API_BASE_URL` | **Yes for production** | Public Render API origin, no trailing slash (example: `https://your-service.onrender.com`). Embedded at build time. |
+| `VITE_CESIUM_ION_TOKEN` | No | Cesium ion token for the globe layer. UI loads without it. |
+
+Locally, leave `VITE_API_BASE_URL` unset so the Vite proxy targets `http://127.0.0.1:8000`.
+
+After the Vercel URL exists, set `SIH26166_CORS_ORIGINS` on Render to that origin and redeploy/restart the API.
+
+### Deployed demo limitations (honest)
+
+- Render’s filesystem is **ephemeral**: uploads and job artifacts do not persist across restarts.
+- Large Chandrayaan-2 / LROC rasters may exceed free-tier memory/time; existing safety limits and degraded/unavailable paths remain.
+- Without mounting real products at `CHANDRAYAN_DATA_ROOT`, **Select Existing** and **Load EXP-000 Real Pair** correctly report unavailable — they do not invent catalog entries.
+- Static EXP-000 fixture numbers in the UI remain labelled as a fixture until a live completed job supplies results.
+
 ## Configuration
 
 Structural settings live in `configs/default.yaml`. Slots exist for preprocessing, geometry, representation, matcher identity, verification, control points, refinement, registration, evaluation, and export. Scientific thresholds, routing cutoffs, and a final matcher are experimental and are not set here.

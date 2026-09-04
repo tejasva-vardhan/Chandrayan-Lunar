@@ -10,7 +10,19 @@ import type {
 } from "./types";
 import { ApiClientError } from "./types";
 
-const DEFAULT_BASE = "";
+/**
+ * Production (Vercel): set VITE_API_BASE_URL at build time to the Render API origin.
+ * Local development: leave unset so requests stay same-origin and Vite proxies to :8000.
+ */
+export function resolveApiBaseUrl(
+  env: { VITE_API_BASE_URL?: string } = import.meta.env,
+): string {
+  const configured = env.VITE_API_BASE_URL;
+  if (typeof configured === "string" && configured.trim()) {
+    return configured.trim().replace(/\/$/, "");
+  }
+  return "";
+}
 
 async function parseError(response: Response): Promise<ApiClientError> {
   let body: ApiErrorBody = {
@@ -30,7 +42,7 @@ async function parseError(response: Response): Promise<ApiClientError> {
   return new ApiClientError(response.status, body);
 }
 
-export function createApiClient(baseUrl: string = DEFAULT_BASE) {
+export function createApiClient(baseUrl: string = resolveApiBaseUrl()) {
   const root = baseUrl.replace(/\/$/, "");
 
   async function request<T>(path: string, init?: RequestInit): Promise<T> {
