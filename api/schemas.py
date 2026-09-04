@@ -112,6 +112,8 @@ class ProductInfoDTO(BaseModel):
     height_px: int | None = None
     gsd_meters: float | None = None
     acquisition_time: str | None = None
+    sun_azimuth: float | None = None
+    sun_incidence: float | None = None
     raster_uri: str | None = None
 
 

@@ -1,8 +1,11 @@
+import React from "react";
 import type { DisplayPoint } from "../../api/resultsView";
 
 type CorrespondenceMapProps = {
   sourceLabel: string;
+  sourceUrl?: string;
   referenceLabel: string;
+  referenceUrl?: string;
   points: DisplayPoint[];
   showRejected: boolean;
   rawMatches: number;
@@ -33,25 +36,43 @@ function DensityHeatmap({
   points,
   reference = false,
   showRejected,
+  imageUrl,
   onHoverPoint,
+  hoveredIndex,
 }: {
   title: string;
   subtitle: string;
   points: DisplayPoint[];
   reference?: boolean;
   showRejected: boolean;
+  imageUrl?: string;
   onHoverPoint?: (index: number | null) => void;
+  hoveredIndex?: number | null;
 }) {
   const visible = panelPoints(points, showRejected);
+  const [imageError, setImageError] = React.useState(false);
+  const showRadar = !imageUrl || imageError;
 
   return (
     <figure className={`raster heatmap-panel ${reference ? "reference" : "source"}`}>
-      <div className="heatmap-grid" aria-hidden="true" />
-      <div className="heatmap-glow" aria-hidden="true" />
+      {imageUrl && !imageError && (
+        <img 
+          src={imageUrl} 
+          alt={title} 
+          onError={() => setImageError(true)}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      )}
+      {showRadar && (
+        <>
+          <div className="heatmap-grid" aria-hidden="true" />
+          <div className="heatmap-glow" aria-hidden="true" />
+        </>
+      )}
       {visible.map((point, index) => (
         <i
           key={`${point.status}-${index}`}
-          className={`raster-point map-point status-${point.status}`}
+          className={`raster-point map-point status-${point.status} ${index === hoveredIndex ? "glowing" : ""}`}
           style={{
             left: `${reference ? point.rx : point.x}%`,
             top: `${reference ? point.ry : point.y}%`,
@@ -71,7 +92,9 @@ function DensityHeatmap({
 
 export function CorrespondenceMap({
   sourceLabel,
+  sourceUrl,
   referenceLabel,
+  referenceUrl,
   points,
   showRejected,
   rawMatches,
@@ -84,6 +107,13 @@ export function CorrespondenceMap({
   const shownRejected = showRejected
     ? points.filter((p) => p.status === "rejected").length
     : 0;
+
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
+  const handleHover = React.useCallback((idx: number | null) => {
+    setHoveredIndex(idx);
+    onHoverPoint?.(idx);
+  }, [onHoverPoint]);
 
   return (
     <div className="correspondence-map">
@@ -141,7 +171,9 @@ export function CorrespondenceMap({
           subtitle="Source feature locations"
           points={points}
           showRejected={showRejected}
-          onHoverPoint={onHoverPoint}
+          imageUrl={sourceUrl}
+          onHoverPoint={handleHover}
+          hoveredIndex={hoveredIndex}
         />
         <div className="correspondence-rail mapping-rail" aria-label="How mapping connects images">
           <p>HOW WE MAP</p>
@@ -167,7 +199,9 @@ export function CorrespondenceMap({
           points={points}
           reference
           showRejected={showRejected}
-          onHoverPoint={onHoverPoint}
+          imageUrl={referenceUrl}
+          onHoverPoint={handleHover}
+          hoveredIndex={hoveredIndex}
         />
       </div>
 
