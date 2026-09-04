@@ -4,6 +4,8 @@ import type { DisplayPoint } from "../../api/resultsView";
 type CorrespondenceEvidenceProps = {
   sourceLabel: string;
   referenceLabel: string;
+  sourceUrl?: string | null;
+  referenceUrl?: string | null;
   points: DisplayPoint[];
   showRejected: boolean;
 };
@@ -36,6 +38,7 @@ function Viewport({
   points,
   selectedId,
   onSelect,
+  imageUrl,
   reference = false,
 }: {
   title: string;
@@ -43,15 +46,31 @@ function Viewport({
   points: DisplayPoint[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  imageUrl?: string | null;
   reference?: boolean;
 }) {
+  const [imageError, setImageError] = useState(false);
+  const showFallback = !imageUrl || imageError;
+
   return (
     <figure className={`evidence-viewport ${reference ? "reference" : "source"}`}>
       <header className="viewport-header">
         <span className="viewport-role">{role}</span>
         <strong>{title}</strong>
       </header>
-      <div className="viewport-canvas" role="img" aria-label={`${role} correspondence points`}>
+      <div
+        className={`viewport-canvas${showFallback ? " is-fallback" : ""}`}
+        role="img"
+        aria-label={`${role} correspondence points`}
+      >
+        {imageUrl && !imageError && (
+          <img
+            className="viewport-image"
+            src={imageUrl}
+            alt={`${role} — ${title}`}
+            onError={() => setImageError(true)}
+          />
+        )}
         {points.map((point) => {
           const selected = selectedId === point.id;
           return (
@@ -81,6 +100,8 @@ function Viewport({
 export function CorrespondenceEvidence({
   sourceLabel,
   referenceLabel,
+  sourceUrl,
+  referenceUrl,
   points,
   showRejected,
 }: CorrespondenceEvidenceProps) {
@@ -104,9 +125,7 @@ export function CorrespondenceEvidence({
       "Each pair of markers marks a location the algorithm believes corresponds between the source and reference images.",
     );
     if (presentStatuses.includes("inlier") || presentStatuses.includes("control")) {
-      parts.push(
-        "Verified matches survived geometric consistency checks.",
-      );
+      parts.push("Verified matches survived geometric consistency checks.");
     }
     if (presentStatuses.includes("control")) {
       parts.push(
@@ -164,6 +183,7 @@ export function CorrespondenceEvidence({
           points={visible}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          imageUrl={sourceUrl}
         />
         <Viewport
           role="Reference"
@@ -171,6 +191,7 @@ export function CorrespondenceEvidence({
           points={visible}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          imageUrl={referenceUrl}
           reference
         />
       </div>

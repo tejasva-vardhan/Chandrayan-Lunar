@@ -29,6 +29,8 @@ def product_to_dto(product: LunarProduct) -> ProductInfoDTO:
         acquisition_time=product.acquisition_time.isoformat()
         if product.acquisition_time is not None
         else None,
+        sun_azimuth=product.sun_azimuth,
+        sun_incidence=product.sun_incidence,
         raster_uri=product.raster_uri,
     )
 
