@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { DisplayPoint } from "../../api/resultsView";
 
 const GRID = 8;
@@ -6,6 +6,10 @@ const GRID = 8;
 type SpatialDistributionProps = {
   points: DisplayPoint[];
   coverage: string;
+  sourceLabel: string;
+  referenceLabel: string;
+  sourceUrl?: string | null;
+  referenceUrl?: string | null;
 };
 
 /** Presentational 8×8 occupancy from existing point positions — not a scientific coverage algorithm. */
@@ -32,6 +36,7 @@ function OccupancyMap({
   return (
     <div className="occupancy-map">
       <span className="occupancy-map-label">{label}</span>
+      <p className="occupancy-map-note">8×8 occupancy / distribution — not an accuracy or error heatmap</p>
       <div
         className="occupancy-grid"
         role="img"
@@ -54,53 +59,154 @@ function OccupancyMap({
   );
 }
 
-export function SpatialDistribution({ points, coverage }: SpatialDistributionProps) {
-  const useful = useMemo(
-    () => points.filter((p) => p.status === "control" || p.status === "inlier"),
+function ControlPointViewport({
+  role,
+  title,
+  points,
+  imageUrl,
+  reference = false,
+}: {
+  role: string;
+  title: string;
+  points: DisplayPoint[];
+  imageUrl?: string | null;
+  reference?: boolean;
+}) {
+  const [imageError, setImageError] = useState(false);
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
+  const showImage = Boolean(imageUrl) && !imageError;
+
+  return (
+    <figure className={`evidence-viewport ${reference ? "reference" : "source"}`}>
+      <header className="viewport-header">
+        <span className="viewport-role">{role}</span>
+        <strong>{title}</strong>
+      </header>
+      <div
+        className={`viewport-canvas${showImage ? "" : " is-empty"}`}
+        role="img"
+        aria-label={`${role} selected control points`}
+      >
+        {showImage ? (
+          <img
+            className="viewport-image"
+            src={imageUrl!}
+            alt={`${role} — ${title}`}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="viewport-missing">
+            <b>Image preview unavailable</b>
+            <span>Control-point positions use backend coordinates only.</span>
+          </div>
+        )}
+        {points.map((point) => (
+          <span
+            key={point.id}
+            className="evidence-point status-control spatial-cp"
+            style={{
+              left: `${reference ? point.rx : point.x}%`,
+              top: `${reference ? point.ry : point.y}%`,
+            }}
+            title={`${point.id} · (${reference ? point.referencePixel : point.sourcePixel})`}
+          >
+            <span className="evidence-point-label" style={{ opacity: 1 }}>
+              {point.id.replace(/^CP-/, "")}
+            </span>
+          </span>
+        ))}
+      </div>
+    </figure>
+  );
+}
+
+export function SpatialDistribution({
+  points,
+  coverage,
+  sourceLabel,
+  referenceLabel,
+  sourceUrl,
+  referenceUrl,
+}: SpatialDistributionProps) {
+  const controlPoints = useMemo(
+    () => points.filter((p) => p.status === "control"),
     [points],
   );
-  const sourceCells = useMemo(() => buildOccupancy(useful, "source"), [useful]);
-  const referenceCells = useMemo(() => buildOccupancy(useful, "reference"), [useful]);
+  const sourceCells = useMemo(
+    () => buildOccupancy(controlPoints, "source"),
+    [controlPoints],
+  );
+  const referenceCells = useMemo(
+    () => buildOccupancy(controlPoints, "reference"),
+    [controlPoints],
+  );
   const occupiedSource = sourceCells.filter((c) => c > 0).length;
   const occupiedReference = referenceCells.filter((c) => c > 0).length;
 
   return (
-    <section className="results-block spatial-distribution" aria-labelledby="spatial-dist-title">
+    <section
+      className="results-block spatial-distribution"
+      id="spatial"
+      aria-labelledby="spatial-dist-title"
+    >
       <header className="results-block-header">
         <div>
           <h3 id="spatial-dist-title">Spatial Distribution</h3>
           <p className="results-block-subtitle">
-            Shows where the verified/control points are located across the image.
+            Where selected control points from this run are located on the images.
           </p>
-          <p className="results-tech-label">8×8 control-point occupancy</p>
         </div>
       </header>
 
       <p className="what-you-see">
         <span>What you&apos;re seeing</span>
-        This view shows whether selected control points are spread across the image rather than
-        concentrated in one region. It is an occupancy map, not a registration-error heatmap.
+        Actual image (when preview exists) with selected control-point locations, then an 8×8
+        occupancy map. The grid is an occupancy/distribution visualization — not an accuracy,
+        error, or confidence heatmap.
       </p>
 
-      {useful.length === 0 ? (
+      {controlPoints.length === 0 ? (
         <p className="results-empty">
-          No verified or control-point coordinates are available to plot occupancy.
+          No selected control points are available in this result to plot.
         </p>
       ) : (
-        <div className="occupancy-row">
-          <OccupancyMap label="Source occupancy" cells={sourceCells} />
-          <OccupancyMap label="Reference occupancy" cells={referenceCells} />
-        </div>
+        <>
+          <div className="evidence-viewports spatial-image-row">
+            <ControlPointViewport
+              role="SOURCE · control points"
+              title={sourceLabel}
+              points={controlPoints}
+              imageUrl={sourceUrl}
+            />
+            <ControlPointViewport
+              role="REFERENCE · control points"
+              title={referenceLabel}
+              points={controlPoints}
+              imageUrl={referenceUrl}
+              reference
+            />
+          </div>
+
+          <div className="occupancy-row">
+            <OccupancyMap label="Source occupancy 8×8" cells={sourceCells} />
+            <OccupancyMap label="Reference occupancy 8×8" cells={referenceCells} />
+          </div>
+        </>
       )}
 
       <div className="coverage-readout">
         <div>
           <b>Spatial coverage: {coverage}</b>
-          <span>Measures how much of the image area is represented by selected control points.</span>
+          <span>
+            Coverage value reported by the pipeline for selected control points on this run.
+          </span>
         </div>
         <div className="occupancy-counts" aria-label="Occupied cells">
           <span>Source cells occupied: {occupiedSource}/{GRID * GRID}</span>
           <span>Reference cells occupied: {occupiedReference}/{GRID * GRID}</span>
+          <span>Control points plotted: {controlPoints.length}</span>
         </div>
       </div>
     </section>

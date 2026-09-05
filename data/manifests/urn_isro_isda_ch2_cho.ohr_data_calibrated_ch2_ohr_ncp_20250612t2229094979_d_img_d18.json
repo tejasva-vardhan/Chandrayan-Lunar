@@ -1,0 +1,38 @@
+{
+  "product": {
+    "product_id": "urn:isro:isda:ch2_cho.ohr:data_calibrated:ch2_ohr_ncp_20250612t2229094979_d_img_d18",
+    "instrument": "OHRC",
+    "mission": "Chandrayaan-2",
+    "dimensions": {
+      "width_px": 12000,
+      "height_px": 79780,
+      "band_count": 1
+    },
+    "gsd_meters": 0.28,
+    "acquisition_time": "2025-06-12T22:29:09.497900Z",
+    "radiometric_state": "Calibrated",
+    "coordinates": {
+      "crs": "Selenographic",
+      "bbox": [
+        355.245197,
+        60.204024,
+        355.591876,
+        61.032224
+      ]
+    },
+    "valid_pixel_ratio": 1.0,
+    "raster_uri": "C:\\Users\\tejas\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20250612t2229094979_d_img_d18_raster.npy",
+    "mask_uri": "C:\\Users\\tejas\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20250612t2229094979_d_img_d18_mask.npy",
+    "provenance": {
+      "source_uri": "ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+      "reader": "pds4_stream_reader",
+      "checksum": "bc199886c2efb34ffd2343b39414cf07",
+      "software_commit": "b79bc2378caf6def7fe0fa3abf4cffa72c9b9d14",
+      "notes": "Successfully ingested from ch2_ohr_ncp_20250612T2229094979_d_img_d18"
+    }
+  },
+  "source_path": "D:\\SIH\\Main\\Mid_Equi - 60.6, 355.4\\ch2_ohr_ncp_20250612T2229094979_d_img_d18",
+  "raster_path": "C:\\Users\\tejas\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20250612t2229094979_d_img_d18_raster.npy",
+  "mask_path": "C:\\Users\\tejas\\Chandrayan-Lunar\\data\\processed\\urn_isro_isda_ch2_cho.ohr_data_calibrated_ch2_ohr_ncp_20250612t2229094979_d_img_d18_mask.npy",
+  "processing_state": "ingested"
+}

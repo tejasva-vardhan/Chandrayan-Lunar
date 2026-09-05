@@ -51,9 +51,11 @@ export function OverlayViewer({
 
       <p className="card-desc">
         {canShow
-          ? "Before → after diagnostic: fade the warped source crop over the reference window. Features stay locked when alignment is consistent in this crop."
+          ? mode === "diagnostic_crop"
+            ? "AFTER (diagnostic preview): fade the warped source crop over the reference window. Labeled diagnostic/preview — not a full registered product."
+            : "AFTER: fade registered source over reference. Opacity / blink-style comparison of a genuine pipeline artifact."
           : isLive
-            ? "This live run has not produced a browser diagnostic crop yet."
+            ? "Registered full-raster output / diagnostic crop unavailable for this run. No fake after-image is shown."
             : "No diagnostic overlay for the static fixture. Run a live registration to generate a bounded preview when available."}
       </p>
 
