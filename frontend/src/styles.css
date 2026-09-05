@@ -600,6 +600,18 @@ h1 em {
   width: 100%;
   background: #020409;
 }
+.viewport-canvas.is-portrait-strip {
+  aspect-ratio: 3 / 5;
+  max-height: 640px;
+}
+.viewport-canvas.is-landscape-strip {
+  aspect-ratio: 16 / 9;
+}
+.viewport-orient-note {
+  color: #94a3b8;
+  font: 600 10px var(--mono);
+  letter-spacing: 0.04em;
+}
 .viewport-canvas.is-fallback {
   background: #020409;
 }
@@ -841,6 +853,12 @@ h1 em {
   margin: 2px 0 0;
   color: #e2e8f0;
   font-size: 13px;
+}
+.pair-char-sun-note {
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .refinement-status-card {
   display: grid;
@@ -1858,12 +1876,20 @@ footer {
 .overlay-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 4/3;
+  aspect-ratio: var(--overlay-aspect, 4 / 3);
   background: #020409;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
   overflow: hidden;
   margin: 12px 0;
+  margin-inline: auto;
+}
+.overlay-container.is-portrait {
+  width: min(100%, 420px);
+}
+.overlay-container.is-landscape {
+  width: 100%;
+  max-width: 960px;
 }
 .overlay-base, .overlay-top {
   position: absolute;
@@ -1874,6 +1900,16 @@ footer {
   object-fit: contain;
   object-position: center;
   background: #020409;
+}
+.overlay-points-frame {
+  z-index: 3;
+  pointer-events: none;
+}
+.overlay-points-frame .contained-image {
+  opacity: 0;
+}
+.overlay-point {
+  pointer-events: none;
 }
 .overlay-loading {
   position: absolute;

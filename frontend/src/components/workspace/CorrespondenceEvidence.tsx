@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import type { DisplayPoint } from "../../api/resultsView";
 import { ContainedImageFrame } from "./ContainedImageFrame";
+import {
+  displayPointPercents,
+  needsRotateToMatch,
+  orientationFromSize,
+  sharedStripOrientation,
+  type StripOrientation,
+} from "./previewOrientation";
 
 type CorrespondenceEvidenceProps = {
   sourceLabel: string;
@@ -71,6 +78,9 @@ function Viewport({
   reference = false,
   transform,
   zoomEnabled,
+  rotate90Cw,
+  sharedOrientation,
+  onNaturalSize,
   onWheel,
   onPointerDown,
   onPointerMove,
@@ -85,6 +95,9 @@ function Viewport({
   reference?: boolean;
   transform: string;
   zoomEnabled: boolean;
+  rotate90Cw: boolean;
+  sharedOrientation: StripOrientation | null;
+  onNaturalSize?: (size: { w: number; h: number }) => void;
   onWheel: (e: WheelEvent) => void;
   onPointerDown: (e: PointerEvent) => void;
   onPointerMove: (e: PointerEvent) => void;
@@ -95,15 +108,27 @@ function Viewport({
     setImageError(false);
   }, [imageUrl]);
   const showImage = Boolean(imageUrl) && !imageError;
+  const canvasClass = [
+    "viewport-canvas",
+    showImage ? "" : "is-empty",
+    zoomEnabled ? "zoom-enabled" : "",
+    sharedOrientation === "portrait" ? "is-portrait-strip" : "",
+    sharedOrientation === "landscape" ? "is-landscape-strip" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <figure className={`evidence-viewport ${reference ? "reference" : "source"}`}>
       <header className="viewport-header">
         <span className="viewport-role">{role}</span>
         <strong>{title}</strong>
+        {rotate90Cw && (
+          <span className="viewport-orient-note">Display rotated 90° to match partner strip</span>
+        )}
       </header>
       <div
-        className={`viewport-canvas${showImage ? "" : " is-empty"}${zoomEnabled ? " zoom-enabled" : ""}`}
+        className={canvasClass}
         role="img"
         aria-label={`${role} correspondence points`}
         onWheel={onWheel}
@@ -115,21 +140,23 @@ function Viewport({
           <ContainedImageFrame
             imageUrl={imageUrl!}
             transform={transform}
+            rotate90Cw={rotate90Cw}
+            onNaturalSize={onNaturalSize}
             onImageError={() => setImageError(true)}
           >
             {points.map((point) => {
               const selected = selectedId === point.id;
               const inCrop = reference ? point.inReferencePreview : point.inSourcePreview;
               if (!inCrop) return null;
+              const rawX = reference ? point.rx : point.x;
+              const rawY = reference ? point.ry : point.y;
+              const pos = displayPointPercents(rawX, rawY, rotate90Cw);
               return (
                 <button
                   key={point.id}
                   type="button"
                   className={`evidence-point status-${point.status}${selected ? " is-selected" : ""}`}
-                  style={{
-                    left: `${reference ? point.rx : point.x}%`,
-                    top: `${reference ? point.ry : point.y}%`,
-                  }}
+                  style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                   aria-pressed={selected}
                   aria-label={`${STATUS_LABEL[point.status]} ${point.id}`}
                   onMouseEnter={() => onSelect(point.id)}
@@ -200,6 +227,8 @@ export function CorrespondenceEvidence({
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoomEnabled, setZoomEnabled] = useState(false);
+  const [sourceNatural, setSourceNatural] = useState<{ w: number; h: number } | null>(null);
+  const [referenceNatural, setReferenceNatural] = useState<{ w: number; h: number } | null>(null);
   const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
   useEffect(() => {
@@ -207,6 +236,8 @@ export function CorrespondenceEvidence({
     setPan({ x: 0, y: 0 });
     setSelectedId(null);
     setZoomEnabled(false);
+    setSourceNatural(null);
+    setReferenceNatural(null);
   }, [sourceUrl, referenceUrl, points]);
 
   const visible = useMemo(
@@ -223,6 +254,16 @@ export function CorrespondenceEvidence({
   }, [visible]);
 
   const hasAnyPreview = Boolean(sourceUrl || referenceUrl);
+
+  const sourceOrient = orientationFromSize(sourceNatural?.w, sourceNatural?.h);
+  const referenceOrient = orientationFromSize(referenceNatural?.w, referenceNatural?.h);
+  const sharedOrient = sharedStripOrientation(sourceOrient, referenceOrient);
+  const rotateSource = needsRotateToMatch(sourceOrient, sharedOrient);
+  const rotateReference = needsRotateToMatch(referenceOrient, sharedOrient);
+
+  const inCropCount = useMemo(() => {
+    return visible.filter((p) => p.inSourcePreview || p.inReferencePreview).length;
+  }, [visible]);
 
   function onWheel(e: WheelEvent) {
     if (!zoomEnabled) return;
@@ -268,8 +309,8 @@ export function CorrespondenceEvidence({
       <p className="what-you-see">
         <span>What you&apos;re seeing</span>
         SOURCE ({sourceLabel}) versus REFERENCE ({referenceLabel}). Markers with the same ID mark
-        the same candidate lunar feature on both images. Status comes from geometric verification —
-        drawing a point does not by itself prove correctness.
+        the same candidate lunar feature on both images. When one strip is horizontal and the other
+        vertical, the landscape preview is rotated so both panels share one orientation.
       </p>
 
       {!hasAnyPreview && (
@@ -296,6 +337,9 @@ export function CorrespondenceEvidence({
                     : "Rejected"}
             </span>
           ))}
+          <span className="legend-item">
+            On-strip markers: {inCropCount}/{visible.length}
+          </span>
         </div>
       )}
 
@@ -322,6 +366,9 @@ export function CorrespondenceEvidence({
         {zoomEnabled
           ? "Scroll to zoom · drag to pan (synchronized). Click a marker to inspect."
           : "Page scroll is free. Click “Enable scroll zoom” before zooming — avoids catching the wheel on yellow control points."}
+        {sharedOrient
+          ? ` Both panels use ${sharedOrient} orientation for comparison.`
+          : ""}
       </p>
 
       <div className="evidence-viewports">
@@ -334,6 +381,9 @@ export function CorrespondenceEvidence({
           imageUrl={sourceUrl}
           transform={transform}
           zoomEnabled={zoomEnabled}
+          rotate90Cw={rotateSource}
+          sharedOrientation={sharedOrient}
+          onNaturalSize={setSourceNatural}
           onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -349,6 +399,9 @@ export function CorrespondenceEvidence({
           reference
           transform={transform}
           zoomEnabled={zoomEnabled}
+          rotate90Cw={rotateReference}
+          sharedOrientation={sharedOrient}
+          onNaturalSize={setReferenceNatural}
           onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

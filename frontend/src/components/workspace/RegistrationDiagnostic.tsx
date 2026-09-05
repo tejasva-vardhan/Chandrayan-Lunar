@@ -75,6 +75,7 @@ export function RegistrationDiagnostic({ results }: RegistrationDiagnosticProps)
         note={results.previewNote}
         mode={results.previewMode}
         isLive={results.isLive}
+        points={results.mapPoints.length ? results.mapPoints : results.points}
       />
     </section>
   );

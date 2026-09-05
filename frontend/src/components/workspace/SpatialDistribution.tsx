@@ -1,6 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import type { DisplayPoint } from "../../api/resultsView";
 import { ContainedImageFrame } from "./ContainedImageFrame";
+import {
+  displayPointPercents,
+  needsRotateToMatch,
+  orientationFromSize,
+  sharedStripOrientation,
+  type StripOrientation,
+} from "./previewOrientation";
 
 const GRID = 8;
 
@@ -71,18 +78,32 @@ function ControlPointViewport({
   points,
   imageUrl,
   reference = false,
+  rotate90Cw = false,
+  sharedOrientation = null,
+  onNaturalSize,
 }: {
   role: string;
   title: string;
   points: DisplayPoint[];
   imageUrl?: string | null;
   reference?: boolean;
+  rotate90Cw?: boolean;
+  sharedOrientation?: StripOrientation | null;
+  onNaturalSize?: (size: { w: number; h: number }) => void;
 }) {
   const [imageError, setImageError] = useState(false);
   useEffect(() => {
     setImageError(false);
   }, [imageUrl]);
   const showImage = Boolean(imageUrl) && !imageError;
+  const canvasClass = [
+    "viewport-canvas",
+    showImage ? "" : "is-empty",
+    sharedOrientation === "portrait" ? "is-portrait-strip" : "",
+    sharedOrientation === "landscape" ? "is-landscape-strip" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <figure className={`evidence-viewport ${reference ? "reference" : "source"}`}>
@@ -91,26 +112,28 @@ function ControlPointViewport({
         <strong>{title}</strong>
       </header>
       <div
-        className={`viewport-canvas${showImage ? "" : " is-empty"}`}
+        className={canvasClass}
         role="img"
         aria-label={`${role} selected control points`}
       >
         {showImage ? (
           <ContainedImageFrame
             imageUrl={imageUrl!}
+            rotate90Cw={rotate90Cw}
+            onNaturalSize={onNaturalSize}
             onImageError={() => setImageError(true)}
           >
             {points.map((point) => {
               const inCrop = reference ? point.inReferencePreview : point.inSourcePreview;
               if (!inCrop) return null;
+              const rawX = reference ? point.rx : point.x;
+              const rawY = reference ? point.ry : point.y;
+              const pos = displayPointPercents(rawX, rawY, rotate90Cw);
               return (
                 <span
                   key={point.id}
                   className="evidence-point status-control spatial-cp"
-                  style={{
-                    left: `${reference ? point.rx : point.x}%`,
-                    top: `${reference ? point.ry : point.y}%`,
-                  }}
+                  style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                   title={`${point.id} · (${reference ? point.referencePixel : point.sourcePixel})`}
                 >
                   <span className="evidence-point-label" style={{ opacity: 1 }}>
@@ -156,6 +179,13 @@ export function SpatialDistribution({
   sourceUrl,
   referenceUrl,
 }: SpatialDistributionProps) {
+  const [sourceNatural, setSourceNatural] = useState<{ w: number; h: number } | null>(null);
+  const [referenceNatural, setReferenceNatural] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    setSourceNatural(null);
+    setReferenceNatural(null);
+  }, [sourceUrl, referenceUrl]);
+
   const controlPoints = useMemo(
     () => points.filter((p) => p.status === "control"),
     [points],
@@ -170,6 +200,12 @@ export function SpatialDistribution({
   );
   const occupiedSource = sourceCells.filter((c) => c > 0).length;
   const occupiedReference = referenceCells.filter((c) => c > 0).length;
+
+  const sourceOrient = orientationFromSize(sourceNatural?.w, sourceNatural?.h);
+  const referenceOrient = orientationFromSize(referenceNatural?.w, referenceNatural?.h);
+  const sharedOrient = sharedStripOrientation(sourceOrient, referenceOrient);
+  const rotateSource = needsRotateToMatch(sourceOrient, sharedOrient);
+  const rotateReference = needsRotateToMatch(referenceOrient, sharedOrient);
 
   return (
     <section
@@ -205,6 +241,9 @@ export function SpatialDistribution({
               title={sourceLabel}
               points={controlPoints}
               imageUrl={sourceUrl}
+              rotate90Cw={rotateSource}
+              sharedOrientation={sharedOrient}
+              onNaturalSize={setSourceNatural}
             />
             <OccupancyMap label="Source occupancy 8×8" cells={sourceCells} />
           </div>
@@ -215,6 +254,9 @@ export function SpatialDistribution({
               points={controlPoints}
               imageUrl={referenceUrl}
               reference
+              rotate90Cw={rotateReference}
+              sharedOrientation={sharedOrient}
+              onNaturalSize={setReferenceNatural}
             />
             <OccupancyMap label="Reference occupancy 8×8" cells={referenceCells} />
           </div>
