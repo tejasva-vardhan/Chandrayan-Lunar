@@ -121,6 +121,18 @@ export interface RegistrationResultDTO {
   preview_available?: boolean;
   preview_mode?: string | null;
   preview_note?: string | null;
+  preview_source_crop?: PreviewCropDTO | null;
+  preview_reference_crop?: PreviewCropDTO | null;
+}
+
+export interface PreviewCropDTO {
+  row: number;
+  col: number;
+  height: number;
+  width: number;
+  display_height?: number | null;
+  display_width?: number | null;
+  display_scale?: number | null;
 }
 
 export interface JobResultResponse {

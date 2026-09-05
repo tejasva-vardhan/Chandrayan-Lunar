@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import type { DisplayPoint } from "../../api/resultsView";
+import { ContainedImageFrame } from "./ContainedImageFrame";
 
 type CorrespondenceEvidenceProps = {
   sourceLabel: string;
@@ -14,7 +15,7 @@ type CorrespondenceEvidenceProps = {
 const STATUS_LABEL: Record<DisplayPoint["status"], string> = {
   candidate: "Candidate",
   inlier: "Verified",
-  control: "Verified",
+  control: "Control",
   rejected: "Rejected",
 };
 
@@ -69,6 +70,7 @@ function Viewport({
   imageUrl,
   reference = false,
   transform,
+  zoomEnabled,
   onWheel,
   onPointerDown,
   onPointerMove,
@@ -82,6 +84,7 @@ function Viewport({
   imageUrl?: string | null;
   reference?: boolean;
   transform: string;
+  zoomEnabled: boolean;
   onWheel: (e: WheelEvent) => void;
   onPointerDown: (e: PointerEvent) => void;
   onPointerMove: (e: PointerEvent) => void;
@@ -100,7 +103,7 @@ function Viewport({
         <strong>{title}</strong>
       </header>
       <div
-        className={`viewport-canvas${showImage ? "" : " is-empty"}`}
+        className={`viewport-canvas${showImage ? "" : " is-empty"}${zoomEnabled ? " zoom-enabled" : ""}`}
         role="img"
         aria-label={`${role} correspondence points`}
         onWheel={onWheel}
@@ -109,48 +112,76 @@ function Viewport({
         onPointerUp={onPointerUp}
       >
         {showImage ? (
-          <img
-            className="viewport-image compare-layer"
-            src={imageUrl!}
-            alt={`${role} — ${title}`}
-            style={{ transform }}
-            onError={() => setImageError(true)}
-            draggable={false}
-          />
+          <ContainedImageFrame
+            imageUrl={imageUrl!}
+            transform={transform}
+            onImageError={() => setImageError(true)}
+          >
+            {points.map((point) => {
+              const selected = selectedId === point.id;
+              const inCrop = reference ? point.inReferencePreview : point.inSourcePreview;
+              if (!inCrop) return null;
+              return (
+                <button
+                  key={point.id}
+                  type="button"
+                  className={`evidence-point status-${point.status}${selected ? " is-selected" : ""}`}
+                  style={{
+                    left: `${reference ? point.rx : point.x}%`,
+                    top: `${reference ? point.ry : point.y}%`,
+                  }}
+                  aria-pressed={selected}
+                  aria-label={`${STATUS_LABEL[point.status]} ${point.id}`}
+                  onMouseEnter={() => onSelect(point.id)}
+                  onFocus={() => onSelect(point.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(selected ? null : point.id);
+                  }}
+                >
+                  <span className="evidence-point-label">
+                    {point.id.replace(/^(M|I|CP)-/, "")}
+                  </span>
+                </button>
+              );
+            })}
+          </ContainedImageFrame>
         ) : (
-          <div className="viewport-missing">
-            <b>Image preview unavailable</b>
-            <span>Points use backend coordinates only — not a lunar image substitute.</span>
-          </div>
+          <>
+            <div className="viewport-missing">
+              <b>Image preview unavailable</b>
+              <span>Points use backend coordinates only — not a lunar image substitute.</span>
+            </div>
+            <div className="point-layer" style={{ transform }}>
+              {points.map((point) => {
+                const selected = selectedId === point.id;
+                return (
+                  <button
+                    key={point.id}
+                    type="button"
+                    className={`evidence-point status-${point.status}${selected ? " is-selected" : ""}`}
+                    style={{
+                      left: `${reference ? point.rx : point.x}%`,
+                      top: `${reference ? point.ry : point.y}%`,
+                    }}
+                    aria-pressed={selected}
+                    aria-label={`${STATUS_LABEL[point.status]} ${point.id}`}
+                    onMouseEnter={() => onSelect(point.id)}
+                    onFocus={() => onSelect(point.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(selected ? null : point.id);
+                    }}
+                  >
+                    <span className="evidence-point-label">
+                      {point.id.replace(/^(M|I|CP)-/, "")}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
-        <div className="point-layer" style={{ transform }}>
-          {points.map((point) => {
-            const selected = selectedId === point.id;
-            return (
-              <button
-                key={point.id}
-                type="button"
-                className={`evidence-point status-${point.status}${selected ? " is-selected" : ""}`}
-                style={{
-                  left: `${reference ? point.rx : point.x}%`,
-                  top: `${reference ? point.ry : point.y}%`,
-                }}
-                aria-pressed={selected}
-                aria-label={`${STATUS_LABEL[point.status]} ${point.id}`}
-                onMouseEnter={() => onSelect(point.id)}
-                onFocus={() => onSelect(point.id)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelect(selected ? null : point.id);
-                }}
-              >
-                <span className="evidence-point-label">
-                  {point.id.replace(/^(M|I|CP)-/, "")}
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </figure>
   );
@@ -168,12 +199,14 @@ export function CorrespondenceEvidence({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoomEnabled, setZoomEnabled] = useState(false);
   const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
   useEffect(() => {
     setScale(1);
     setPan({ x: 0, y: 0 });
     setSelectedId(null);
+    setZoomEnabled(false);
   }, [sourceUrl, referenceUrl, points]);
 
   const visible = useMemo(
@@ -192,11 +225,13 @@ export function CorrespondenceEvidence({
   const hasAnyPreview = Boolean(sourceUrl || referenceUrl);
 
   function onWheel(e: WheelEvent) {
+    if (!zoomEnabled) return;
     e.preventDefault();
     setScale((s) => Math.min(6, Math.max(1, s * (e.deltaY < 0 ? 1.12 : 0.9))));
   }
 
   function onPointerDown(e: PointerEvent) {
+    if (!zoomEnabled) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
   }
@@ -232,9 +267,9 @@ export function CorrespondenceEvidence({
 
       <p className="what-you-see">
         <span>What you&apos;re seeing</span>
-        SOURCE ({sourceLabel}) versus REFERENCE ({referenceLabel}). Markers share the same match
-        ID. Drawing a point does not by itself prove correctness — status comes from geometric
-        verification.
+        SOURCE ({sourceLabel}) versus REFERENCE ({referenceLabel}). Markers with the same ID mark
+        the same candidate lunar feature on both images. Status comes from geometric verification —
+        drawing a point does not by itself prove correctness.
       </p>
 
       {!hasAnyPreview && (
@@ -265,10 +300,29 @@ export function CorrespondenceEvidence({
       )}
 
       <div className="compare-controls">
-        <button type="button" onClick={() => { setScale(1); setPan({ x: 0, y: 0 }); }}>
+        <button
+          type="button"
+          className={zoomEnabled ? "active" : ""}
+          aria-pressed={zoomEnabled}
+          onClick={() => setZoomEnabled((v) => !v)}
+        >
+          {zoomEnabled ? "Scroll zoom: On" : "Enable scroll zoom"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setScale(1);
+            setPan({ x: 0, y: 0 });
+          }}
+        >
           Reset synchronized view
         </button>
       </div>
+      <p className="compare-hint">
+        {zoomEnabled
+          ? "Scroll to zoom · drag to pan (synchronized). Click a marker to inspect."
+          : "Page scroll is free. Click “Enable scroll zoom” before zooming — avoids catching the wheel on yellow control points."}
+      </p>
 
       <div className="evidence-viewports">
         <Viewport
@@ -279,6 +333,7 @@ export function CorrespondenceEvidence({
           onSelect={setSelectedId}
           imageUrl={sourceUrl}
           transform={transform}
+          zoomEnabled={zoomEnabled}
           onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -293,6 +348,7 @@ export function CorrespondenceEvidence({
           imageUrl={referenceUrl}
           reference
           transform={transform}
+          zoomEnabled={zoomEnabled}
           onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
