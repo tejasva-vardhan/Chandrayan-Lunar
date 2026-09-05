@@ -198,18 +198,20 @@ function Limitations({ results }: { results: ResultsViewModel }) {
   if (results.verified > 0 && results.verified < 10) {
     items.push(`Only ${results.verified} matches survived verification.`);
   }
+  if (/indeterminate|unavailable|not yet|not confirmed/i.test(results.refinement)) {
+    items.push("Sub-pixel refinement: not yet confirmed for this run.");
+  } else if (results.refinement) {
+    items.push(`Sub-pixel refinement status: ${results.refinement}.`);
+  }
   if (
     results.independentAccuracy.toLowerCase().includes("not") ||
     results.flags.includes("not_independently_validated")
   ) {
-    items.push("Independent accuracy has not been established.");
-  }
-  if (/indeterminate/i.test(results.refinement)) {
-    items.push("Sub-pixel refinement is indeterminate.");
+    items.push("Independent accuracy: unavailable (not independently validated).");
   }
   if (results.fullRasterBlocked) {
     items.push(
-      "Registered full-raster output unavailable for this run due to the safety/output-size limit.",
+      "Full registered output: unavailable for oversized real raster (blocked by the output-size safety cap).",
     );
   }
   if (results.evaluationLimitation) {
@@ -219,7 +221,7 @@ function Limitations({ results }: { results: ResultsViewModel }) {
     "Verification residual RMSE is an image-space fit/verification residual; it does not establish independent registration accuracy.",
   );
   items.push(
-    "The current result is a baseline experiment, not final SIH performance.",
+    "Current result: baseline experiment — not final SIH performance.",
   );
 
   return (
@@ -232,11 +234,12 @@ function Limitations({ results }: { results: ResultsViewModel }) {
         <div>
           <h3 id="limitations-title">Limitations</h3>
           <p className="results-block-subtitle">
-            Scientific honesty about what this run does and does not establish.
+            Scientific honesty about what this run does and does not establish — keep this in
+            view for the internal round.
           </p>
         </div>
       </header>
-      <ul className="limitations-list">
+      <ul className="limitations-list limitations-list-prominent">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}

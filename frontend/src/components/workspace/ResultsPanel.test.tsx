@@ -243,9 +243,11 @@ describe("ResultsPanel UX", () => {
     const evidence = screen.getByRole("heading", { name: "Correspondence Evidence" }).closest(
       "section",
     ) as HTMLElement;
-    const buttons = within(evidence).getAllByRole("button", { pressed: false });
-    expect(buttons.length).toBeGreaterThan(0);
-    fireEvent.click(buttons[0]);
+    const markers = within(evidence).getAllByRole("button", {
+      name: /^(Candidate|Verified|Control) /i,
+    });
+    expect(markers.length).toBeGreaterThan(0);
+    fireEvent.click(markers[0]);
     const selected = within(evidence).getAllByRole("button", { pressed: true });
     expect(selected.length).toBe(2);
     expect(within(evidence).getByText(/Why was this match accepted/i)).toBeInTheDocument();

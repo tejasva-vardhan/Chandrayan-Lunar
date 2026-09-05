@@ -1,4 +1,4 @@
-import type { RegistrationResultDTO } from "../api/types";
+import type { PreviewCropDTO, RegistrationResultDTO } from "../api/types";
 import { exp000 } from "../data/exp000";
 
 export type DisplayPoint = {
@@ -13,6 +13,11 @@ export type DisplayPoint = {
   status: "inlier" | "rejected" | "control" | "candidate";
   sourcePixel: string;
   referencePixel: string;
+  sourceXy: [number, number];
+  referenceXy: [number, number];
+  /** False when the point falls outside the diagnostic preview crop. */
+  inSourcePreview: boolean;
+  inReferencePreview: boolean;
 };
 
 /** Presentation status derived only from backend confidence_class / quality_flags. */
@@ -64,6 +69,8 @@ export type ResultsViewModel = {
   previewAvailable: boolean;
   previewMode: string | null;
   previewNote: string | null;
+  previewSourceCrop: PreviewCropDTO | null;
+  previewReferenceCrop: PreviewCropDTO | null;
   transformationModel: string | null;
   isLive: boolean;
   jobId: string | null;
@@ -138,7 +145,12 @@ function pct(value: number | null | undefined): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function toPercent(xy: [number, number], width: number | null, height: number | null): { x: number; y: number } {
+/** Map full-image pixel → percent of full product (fixture / no-crop fallback). */
+export function toFullImagePercent(
+  xy: [number, number],
+  width: number | null,
+  height: number | null,
+): { x: number; y: number } {
   if (!width || !height || width <= 1 || height <= 1) {
     return { x: 50, y: 50 };
   }
@@ -146,6 +158,26 @@ function toPercent(xy: [number, number], width: number | null, height: number | 
     x: (xy[0] / (width - 1)) * 100,
     y: (xy[1] / (height - 1)) * 100,
   };
+}
+
+/**
+ * Map full-image pixel coordinates into the diagnostic preview crop frame.
+ * When crop metadata is present, percent is relative to the crop — matching the PNG.
+ */
+export function toPreviewPercent(
+  xy: [number, number],
+  crop: PreviewCropDTO | null | undefined,
+  fullWidth: number | null,
+  fullHeight: number | null,
+): { x: number; y: number; inPreview: boolean } {
+  if (crop && crop.width > 1 && crop.height > 1) {
+    const x = ((xy[0] - crop.col) / (crop.width - 1)) * 100;
+    const y = ((xy[1] - crop.row) / (crop.height - 1)) * 100;
+    const inPreview = x >= -1 && x <= 101 && y >= -1 && y <= 101;
+    return { x, y, inPreview };
+  }
+  const full = toFullImagePercent(xy, fullWidth, fullHeight);
+  return { x: full.x, y: full.y, inPreview: true };
 }
 
 function registrationSummary(result: RegistrationResultDTO): string {
@@ -184,9 +216,11 @@ function makeDisplayPoint(
   sh: number | null,
   rw: number | null,
   rh: number | null,
+  sourceCrop: PreviewCropDTO | null | undefined,
+  referenceCrop: PreviewCropDTO | null | undefined,
 ): DisplayPoint {
-  const s = toPercent(item.source_xy, sw, sh);
-  const r = toPercent(item.reference_xy, rw, rh);
+  const s = toPreviewPercent(item.source_xy, sourceCrop, sw, sh);
+  const r = toPreviewPercent(item.reference_xy, referenceCrop, rw, rh);
   return {
     id,
     x: s.x,
@@ -199,7 +233,15 @@ function makeDisplayPoint(
     status,
     sourcePixel: formatPixel(item.source_xy),
     referencePixel: formatPixel(item.reference_xy),
+    sourceXy: item.source_xy,
+    referenceXy: item.reference_xy,
+    inSourcePreview: s.inPreview,
+    inReferencePreview: r.inPreview,
   };
+}
+
+function pointKey(xy: [number, number]): string {
+  return `${xy[0].toFixed(3)}:${xy[1].toFixed(3)}`;
 }
 
 export function baselineResultsView(): ResultsViewModel {
@@ -216,6 +258,10 @@ export function baselineResultsView(): ResultsViewModel {
     status: "control" as const,
     sourcePixel: "Not available",
     referencePixel: "Not available",
+    sourceXy: [p.x, p.y] as [number, number],
+    referenceXy: [p.rx, p.ry] as [number, number],
+    inSourcePreview: true,
+    inReferencePreview: true,
   }));
 
   return {
@@ -270,6 +316,8 @@ export function baselineResultsView(): ResultsViewModel {
     previewAvailable: false,
     previewMode: null,
     previewNote: "Static fixture has no live overlay preview.",
+    previewSourceCrop: null,
+    previewReferenceCrop: null,
     transformationModel: null,
     isLive: false,
     jobId: null,
@@ -285,14 +333,17 @@ export function fromRegistrationResult(
   const sh = result.source.height_px;
   const rw = result.reference.width_px;
   const rh = result.reference.height_px;
+  const sourceCrop = result.preview_source_crop ?? null;
+  const referenceCrop = result.preview_reference_crop ?? null;
   const pointsSource = result.control_points.length
     ? result.control_points
     : result.inliers;
   const points: DisplayPoint[] = pointsSource.slice(0, 12).map((item, i) =>
-    makeDisplayPoint(item, "control", `CP-${i + 1}`, sw, sh, rw, rh),
+    makeDisplayPoint(item, "control", `CP-${i + 1}`, sw, sh, rw, rh, sourceCrop, referenceCrop),
   );
 
   const mapPoints: DisplayPoint[] = [];
+  const bySourceKey = new Map<string, DisplayPoint>();
   const pushMapPoint = (
     item: {
       source_xy: [number, number];
@@ -304,7 +355,19 @@ export function fromRegistrationResult(
     status: DisplayPoint["status"],
     id: string,
   ) => {
-    mapPoints.push(makeDisplayPoint(item, status, id, sw, sh, rw, rh));
+    const point = makeDisplayPoint(
+      item,
+      status,
+      id,
+      sw,
+      sh,
+      rw,
+      rh,
+      sourceCrop,
+      referenceCrop,
+    );
+    mapPoints.push(point);
+    bySourceKey.set(pointKey(item.source_xy), point);
   };
 
   result.correspondences.forEach((item, i) => {
@@ -320,10 +383,7 @@ export function fromRegistrationResult(
     result.inliers.forEach((item, i) => pushMapPoint(item, "inlier", `I-${i + 1}`));
   }
   result.control_points.forEach((item, i) => {
-    const s = toPercent(item.source_xy, sw, sh);
-    const existing = mapPoints.find(
-      (p) => Math.abs(p.x - s.x) < 0.05 && Math.abs(p.y - s.y) < 0.05,
-    );
+    const existing = bySourceKey.get(pointKey(item.source_xy));
     if (existing) {
       existing.status = "control";
       existing.id = `CP-${i + 1}`;
@@ -407,6 +467,8 @@ export function fromRegistrationResult(
     previewAvailable,
     previewMode: result.preview_mode ?? null,
     previewNote: result.preview_note ?? null,
+    previewSourceCrop: sourceCrop,
+    previewReferenceCrop: referenceCrop,
     transformationModel: result.transformation?.model_name ?? null,
     isLive: true,
     jobId,

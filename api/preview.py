@@ -3,6 +3,9 @@
 Uses the existing EXP-000 diagnostic crop policy when a full registered raster
 is unavailable (registration_output_too_large). This is a viewing aid, not a
 claim that the full strip was warped.
+
+Returns crop origin/size/display-scale metadata so the UI can place
+correspondence markers in the same coordinate frame as the preview PNGs.
 """
 
 from __future__ import annotations
@@ -14,7 +17,11 @@ import cv2
 import numpy as np
 
 from src.ingestion.windows import read_product_window
-from src.io.exp000.diagnostic import diagnostic_crop_window, warp_diagnostic_crop
+from src.io.exp000.diagnostic import (
+    DiagnosticWindow,
+    diagnostic_crop_window,
+    warp_diagnostic_crop,
+)
 from src.models.registration_pair import RegistrationPair
 from src.models.registration_result import ControlPoint, RegistrationResult
 
@@ -40,13 +47,16 @@ def ensure_job_previews(
 ) -> dict[str, Any]:
     """Create or reuse preview PNGs under *output_dir*.
 
-    Returns keys: available, mode, note, reference_path, registered_path.
+    Returns keys: available, mode, note, reference_path, registered_path,
+    source_path, source_crop, reference_crop.
     """
 
     output_dir.mkdir(parents=True, exist_ok=True)
     reference_path = output_dir / PREVIEW_REFERENCE_NAME
     registered_path = output_dir / PREVIEW_REGISTERED_NAME
     source_path = output_dir / "preview_source.png"
+
+    crops = _compute_crop_meta(pair, result)
 
     if reference_path.is_file() and registered_path.is_file():
         mode = (
@@ -61,6 +71,8 @@ def ensure_job_previews(
             "reference_path": reference_path,
             "registered_path": registered_path,
             "source_path": source_path if source_path.is_file() else None,
+            "source_crop": crops.get("source_crop"),
+            "reference_crop": crops.get("reference_crop"),
         }
 
     source_uri = pair.source.raster_uri
@@ -72,6 +84,8 @@ def ensure_job_previews(
             "note": _UNAVAILABLE_NOTE,
             "reference_path": None,
             "registered_path": None,
+            "source_crop": None,
+            "reference_crop": None,
         }
 
     dims = pair.reference.dimensions
@@ -82,6 +96,8 @@ def ensure_job_previews(
             "note": _UNAVAILABLE_NOTE,
             "reference_path": None,
             "registered_path": None,
+            "source_crop": None,
+            "reference_crop": None,
         }
 
     transform = result.transformation
@@ -98,6 +114,8 @@ def ensure_job_previews(
             "note": _UNAVAILABLE_NOTE,
             "reference_path": None,
             "registered_path": None,
+            "source_crop": None,
+            "reference_crop": None,
         }
 
     window = diagnostic_crop_window(
@@ -112,6 +130,7 @@ def ensure_job_previews(
 
     source_dims = pair.source.dimensions
     source_path_out: Path | None = None
+    source_window: DiagnosticWindow | None = None
     if source_dims is not None:
         # Place a source-space crop using source_xy as the windowing coordinates.
         source_pts = [
@@ -143,6 +162,61 @@ def ensure_job_previews(
         "reference_path": reference_path,
         "registered_path": registered_path,
         "source_path": source_path_out,
+        "source_crop": _crop_dict(source_window) if source_window is not None else None,
+        "reference_crop": _crop_dict(window),
+    }
+
+
+def _compute_crop_meta(
+    pair: RegistrationPair,
+    result: RegistrationResult,
+) -> dict[str, Any]:
+    """Recompute deterministic crop windows for marker placement (no I/O)."""
+    out: dict[str, Any] = {"source_crop": None, "reference_crop": None}
+    if len(result.control_points) < 1:
+        return out
+
+    ref_dims = pair.reference.dimensions
+    if ref_dims is not None:
+        window = diagnostic_crop_window(
+            int(ref_dims.height_px),
+            int(ref_dims.width_px),
+            list(result.control_points),
+        )
+        out["reference_crop"] = _crop_dict(window)
+
+    src_dims = pair.source.dimensions
+    if src_dims is not None:
+        source_pts = [
+            ControlPoint(source_xy=cp.source_xy, reference_xy=cp.source_xy)
+            for cp in result.control_points
+        ]
+        source_window = diagnostic_crop_window(
+            int(src_dims.height_px),
+            int(src_dims.width_px),
+            source_pts,
+        )
+        out["source_crop"] = _crop_dict(source_window)
+    return out
+
+
+def _crop_dict(window: DiagnosticWindow) -> dict[str, float | int]:
+    scale = 1.0
+    display_width = int(window.width)
+    display_height = int(window.height)
+    longest = max(window.height, window.width)
+    if longest > _MAX_DISPLAY_SIDE:
+        scale = _MAX_DISPLAY_SIDE / float(longest)
+        display_width = max(1, int(round(window.width * scale)))
+        display_height = max(1, int(round(window.height * scale)))
+    return {
+        "row": int(window.row),
+        "col": int(window.col),
+        "height": int(window.height),
+        "width": int(window.width),
+        "display_height": display_height,
+        "display_width": display_width,
+        "display_scale": float(scale),
     }
 
 

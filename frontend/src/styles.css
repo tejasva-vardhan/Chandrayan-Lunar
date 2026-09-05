@@ -636,6 +636,48 @@ h1 em {
 .point-layer .evidence-point {
   pointer-events: auto;
 }
+.contained-image-box {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.contained-zoom-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+}
+.contained-image-frame {
+  position: absolute;
+  overflow: hidden;
+}
+.contained-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+.contained-image.is-fitted {
+  object-fit: fill;
+}
+.contained-image.is-contain {
+  object-fit: contain;
+  object-position: center;
+}
+.contained-point-layer {
+  z-index: 2;
+}
+.viewport-image.measure-only {
+  opacity: 0;
+  pointer-events: none;
+}
+.viewport-canvas.zoom-enabled {
+  cursor: grab;
+  touch-action: none;
+}
+.viewport-canvas.zoom-enabled:active {
+  cursor: grabbing;
+}
 .compare-layer {
   transform-origin: center center;
 }
@@ -921,8 +963,18 @@ h1 em {
 }
 .point-inspector dd { margin: 2px 0 0; color: #e2e8f0; font-size: 13px; }
 
-/* Spatial distribution — separate section, not overlaid on correspondence */
+/* Spatial distribution — image + occupancy paired per column */
 .spatial-distribution { position: relative; z-index: auto; }
+.spatial-paired-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.spatial-pair-column {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
 .occupancy-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1002,6 +1054,12 @@ h1 em {
   color: #e2e8f0;
   font-size: 14px;
   line-height: 1.65;
+}
+.limitations-list-prominent {
+  padding: 14px 16px 14px 32px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.06);
 }
 .limitations-list li { margin-bottom: 6px; }
 
@@ -1317,6 +1375,7 @@ footer {
   .input-pair-cards,
   .evidence-viewports,
   .occupancy-row,
+  .spatial-paired-columns,
   .pair-char-grid { grid-template-columns: 1fr; }
   .point-inspector dl { grid-template-columns: 1fr 1fr; }
   .quality, .report { grid-template-columns: 1fr; gap: 24px; padding: 60px 20px; }

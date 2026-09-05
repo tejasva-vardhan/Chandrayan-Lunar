@@ -45,6 +45,7 @@ export function ImageComparison({
   const [refFailed, setRefFailed] = useState(false);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoomEnabled, setZoomEnabled] = useState(false);
   const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export function ImageComparison({
     setRefFailed(false);
     setScale(1);
     setPan({ x: 0, y: 0 });
+    setZoomEnabled(false);
   }, [sourceUrl, referenceUrl]);
 
   useEffect(() => {
@@ -66,11 +68,13 @@ export function ImageComparison({
   const bothImages = sourceReady && refReady;
 
   function onWheel(e: WheelEvent) {
+    if (!zoomEnabled) return;
     e.preventDefault();
     setScale((s) => Math.min(6, Math.max(1, s * (e.deltaY < 0 ? 1.12 : 0.9))));
   }
 
   function onPointerDown(e: PointerEvent) {
+    if (!zoomEnabled) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
   }
@@ -156,6 +160,14 @@ export function ImageComparison({
             >
               Opacity
             </button>
+            <button
+              type="button"
+              className={zoomEnabled ? "active" : ""}
+              aria-pressed={zoomEnabled}
+              onClick={() => setZoomEnabled((v) => !v)}
+            >
+              {zoomEnabled ? "Scroll zoom: On" : "Enable scroll zoom"}
+            </button>
             <button type="button" onClick={() => { setScale(1); setPan({ x: 0, y: 0 }); }}>
               Reset view
             </button>
@@ -181,7 +193,7 @@ export function ImageComparison({
                   <strong>{sourceLabel}</strong>
                 </header>
                 <div
-                  className="viewport-canvas compare-canvas"
+                  className={`viewport-canvas compare-canvas${zoomEnabled ? " zoom-enabled" : ""}`}
                   onWheel={onWheel}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
@@ -207,7 +219,7 @@ export function ImageComparison({
                   <strong>{referenceLabel}</strong>
                 </header>
                 <div
-                  className="viewport-canvas compare-canvas"
+                  className={`viewport-canvas compare-canvas${zoomEnabled ? " zoom-enabled" : ""}`}
                   onWheel={onWheel}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
@@ -247,7 +259,7 @@ export function ImageComparison({
                 </strong>
               </header>
               <div
-                className="viewport-canvas compare-canvas compare-stack-canvas"
+                className={`viewport-canvas compare-canvas compare-stack-canvas${zoomEnabled ? " zoom-enabled" : ""}`}
                 onWheel={onWheel}
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
@@ -283,8 +295,10 @@ export function ImageComparison({
             </div>
           )}
           <p className="compare-hint">
-            Synchronized zoom/pan · scroll to zoom · drag to pan. This is an image comparison
-            aid, not a registered overlay claim.
+            {zoomEnabled
+              ? "Synchronized zoom/pan · scroll to zoom · drag to pan."
+              : "Page scroll is free until you enable scroll zoom."}{" "}
+            This is an image comparison aid, not a registered overlay claim.
           </p>
         </>
       )}
