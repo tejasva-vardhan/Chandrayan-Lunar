@@ -65,6 +65,30 @@ describe("api client", () => {
     });
   });
 
+  it("shows FastAPI validation details instead of a generic status error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          detail: [
+            {
+              loc: ["body", "source_product_id"],
+              msg: "Field required",
+            },
+          ],
+        }),
+      }),
+    );
+    const client = createApiClient();
+    await expect(client.createJob({})).rejects.toMatchObject({
+      code: "request_failure",
+      message: "source_product_id: Field required",
+      status: 400,
+    });
+  });
+
   it("maps network failures without stack traces", async () => {
     vi.stubGlobal(
       "fetch",

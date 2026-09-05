@@ -461,9 +461,14 @@ class RegistrationService:
             with self._lock:
                 summary = self._products.get(product_id)
             if summary is None:
+                summary = self._restore_catalog_product(product_id)
+            if summary is None:
                 raise ApiError(
                     code="invalid_input",
-                    message=f"Unknown {role} product_id={product_id!r}. Upload it first.",
+                    message=(
+                        f"Unknown {role} product_id={product_id!r}. "
+                        "Reload the selected product or upload it again."
+                    ),
                 )
             resolved = Path(summary.path)
         elif path:
@@ -479,6 +484,24 @@ class RegistrationService:
                 message=f"{role} path does not exist: {resolved}",
             )
         return resolved
+
+    def _restore_catalog_product(self, product_id: str) -> ProductSummary | None:
+        """Restore a manifest-backed selection after an API process restart."""
+
+        prefix = "catalog-"
+        if not product_id.startswith(prefix):
+            return None
+        logical_id = product_id.removeprefix(prefix)
+        try:
+            root, products = resolve_data_root_products()
+        except DataRootError:
+            return None
+        if root is None:
+            return None
+        for declared_id, candidate in products:
+            if declared_id == logical_id:
+                return self._ensure_catalog_product(declared_id, candidate, data_root=root)
+        return None
 
     def _require_job(self, job_id: str) -> _JobRecord:
         with self._lock:
