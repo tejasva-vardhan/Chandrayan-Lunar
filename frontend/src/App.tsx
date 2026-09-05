@@ -6,6 +6,7 @@ import { MoonScene } from "./components/MoonScene";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
 import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
 import { ResultsPanel } from "./components/workspace/ResultsPanel";
+import { CapabilityRoadmap } from "./components/workspace/CapabilityRoadmap";
 import type { ResultsViewModel } from "./api/resultsView";
 
 const stages = [
@@ -183,6 +184,7 @@ function App() {
             <a href="#correspondence">Evidence</a>
             <a href="#spatial">Spatial</a>
             <a href="#quality">Quality</a>
+            <a href="#roadmap">Roadmap</a>
           </div>
           <div className="nav-actions">
             <button
@@ -237,6 +239,8 @@ function App() {
           reducedMotion={reducedMotion}
           onFocusRegion={setFocusedTarget}
         />
+
+        <CapabilityRoadmap />
 
         <footer>
           <span>Seleneon / SIH26166</span>
