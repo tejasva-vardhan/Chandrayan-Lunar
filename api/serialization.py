@@ -79,6 +79,38 @@ def _refinement_note(result: RegistrationResult) -> str:
     return f"Refinement attached uncertainty on {changed} control point(s)."
 
 
+def _circular_azimuth_delta_degrees(a: float, b: float) -> float:
+    """Smallest absolute azimuth difference on a 360° circle."""
+    return abs((float(a) - float(b) + 180.0) % 360.0 - 180.0)
+
+
+def _sun_difference_fields(
+    pair: RegistrationPair,
+) -> tuple[float | None, float | None, float | None]:
+    """Return (vector_angle, azimuth_delta, incidence_delta) without inventing SPICE vectors."""
+    char = pair.characterization
+    sun_angle = (
+        float(char.sun_angle_difference_degrees)
+        if char is not None and char.sun_angle_difference_degrees is not None
+        else None
+    )
+    src_az = pair.source.sun_azimuth
+    ref_az = pair.reference.sun_azimuth
+    src_inc = pair.source.sun_incidence
+    ref_inc = pair.reference.sun_incidence
+    az_delta = (
+        _circular_azimuth_delta_degrees(src_az, ref_az)
+        if src_az is not None and ref_az is not None
+        else None
+    )
+    inc_delta = (
+        abs(float(src_inc) - float(ref_inc))
+        if src_inc is not None and ref_inc is not None
+        else None
+    )
+    return sun_angle, az_delta, inc_delta
+
+
 def result_to_dto(
     result: RegistrationResult,
     pair: RegistrationPair,
@@ -106,6 +138,7 @@ def result_to_dto(
     if manifest is not None:
         export = manifest.model_dump(mode="json")
     matches = result.correspondences.matches if result.correspondences is not None else []
+    sun_angle, az_delta, inc_delta = _sun_difference_fields(pair)
     return RegistrationResultDTO(
         pair_id=result.pair_id,
         source=product_to_dto(pair.source),
@@ -129,4 +162,7 @@ def result_to_dto(
         ),
         runtime_seconds=runtime_seconds,
         export_manifest=export,
+        sun_angle_difference_degrees=sun_angle,
+        sun_azimuth_difference_degrees=az_delta,
+        sun_incidence_difference_degrees=inc_delta,
     )

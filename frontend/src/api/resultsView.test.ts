@@ -146,6 +146,45 @@ describe("resultsView", () => {
     expect(live.coverage).not.toBe(fixture.coverage);
   });
 
+  it("maps sun azimuth/incidence differences onto the view model", () => {
+    const view = fromRegistrationResult(
+      sampleResult({
+        source: {
+          product_id: "src",
+          instrument: "OHRC",
+          mission: null,
+          width_px: 100,
+          height_px: 100,
+          gsd_meters: 0.25,
+          acquisition_time: null,
+          sun_azimuth: 10,
+          sun_incidence: 40,
+          raster_uri: null,
+        },
+        reference: {
+          product_id: "ref",
+          instrument: "LRO_NAC",
+          mission: null,
+          width_px: 100,
+          height_px: 100,
+          gsd_meters: null,
+          acquisition_time: null,
+          sun_azimuth: 40,
+          sun_incidence: 55,
+          raster_uri: null,
+        },
+        sun_azimuth_difference_degrees: 30,
+        sun_incidence_difference_degrees: 15,
+        sun_angle_difference_degrees: null,
+      }),
+      { jobId: "job-sun", artifactUrl: null },
+    );
+    expect(view.sunAzimuth).toBe(10);
+    expect(view.referenceSunAzimuth).toBe(40);
+    expect(view.sunAzimuthDifferenceDegrees).toBe(30);
+    expect(view.sunIncidenceDifferenceDegrees).toBe(15);
+  });
+
   it("builds overlay preview artifact urls when available", () => {
     const view = fromRegistrationResult(
       sampleResult({ preview_available: true, preview_mode: "diagnostic_crop" }),

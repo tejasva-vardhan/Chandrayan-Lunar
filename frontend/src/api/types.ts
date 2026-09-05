@@ -123,6 +123,9 @@ export interface RegistrationResultDTO {
   preview_note?: string | null;
   preview_source_crop?: PreviewCropDTO | null;
   preview_reference_crop?: PreviewCropDTO | null;
+  sun_angle_difference_degrees?: number | null;
+  sun_azimuth_difference_degrees?: number | null;
+  sun_incidence_difference_degrees?: number | null;
 }
 
 export interface PreviewCropDTO {
