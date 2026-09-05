@@ -30,16 +30,38 @@ async function parseError(response: Response): Promise<ApiClientError> {
     message: `Request failed (${response.status})`,
   };
   try {
-    const json = (await response.json()) as Partial<ApiErrorBody>;
+    const json = (await response.json()) as Partial<ApiErrorBody> & {
+      detail?: unknown;
+    };
     body = {
       code: json.code ?? body.code,
-      message: json.message ?? body.message,
+      // FastAPI validation responses use `detail`, not the API error envelope.
+      // Preserve that information so invalid requests are actionable in the UI.
+      message: json.message ?? validationDetailMessage(json.detail) ?? body.message,
       details: json.details,
     };
   } catch {
     /* keep default */
   }
   return new ApiClientError(response.status, body);
+}
+
+function validationDetailMessage(detail: unknown): string | null {
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (!Array.isArray(detail)) return null;
+
+  const messages = detail.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const error = item as { loc?: unknown; msg?: unknown };
+    if (typeof error.msg !== "string" || !error.msg.trim()) return [];
+    const location = Array.isArray(error.loc)
+      ? error.loc
+          .filter((part) => typeof part === "string" && part !== "body")
+          .join(".")
+      : "";
+    return [location ? `${location}: ${error.msg}` : error.msg];
+  });
+  return messages.length ? messages.join("; ") : null;
 }
 
 export function createApiClient(baseUrl: string = resolveApiBaseUrl()) {

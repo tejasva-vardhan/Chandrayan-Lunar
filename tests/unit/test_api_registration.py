@@ -96,6 +96,23 @@ def test_create_job_validation_requires_inputs(client: TestClient) -> None:
     assert response.json()["code"] == "invalid_input"
 
 
+def test_catalog_product_id_is_restored_after_service_restart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data_root = tmp_path / "data-root"
+    source = data_root / "M150368601RC.IMG"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"synthetic")
+    monkeypatch.setenv("CHANDRAYAN_DATA_ROOT", str(data_root))
+
+    service = RegistrationService(work_root=tmp_path / "api-work", run_inline=True)
+    restored = service._resolve_input(
+        product_id="catalog-M150368601RC", path=None, role="reference"
+    )
+
+    assert restored == source.resolve()
+
+
 def test_upload_rejects_empty_file(client: TestClient) -> None:
     response = client.post(
         "/products",
