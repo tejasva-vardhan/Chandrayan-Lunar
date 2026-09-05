@@ -6,11 +6,21 @@ interface RunActionProps {
   state: RunState;
   onRun: () => void;
   onReset: () => void;
+  onViewResults?: () => void;
   validationMessage?: string | null;
   jobId?: string | null;
 }
 
-export function RunAction({ state, onRun, onReset, validationMessage, jobId }: RunActionProps) {
+export function RunAction({
+  state,
+  onRun,
+  onReset,
+  onViewResults,
+  validationMessage,
+  jobId,
+}: RunActionProps) {
+  const canViewResults = state === "completed" || state === "degraded";
+
   return (
     <div className="workspace-card run-card">
       <div className="run-content">
@@ -20,7 +30,7 @@ export function RunAction({ state, onRun, onReset, validationMessage, jobId }: R
             {state === "idle" && "Ready — both products selected. Runs the live ScientificPipeline."}
             {state === "disabled" && (validationMessage || "Awaiting valid Source and Reference images.")}
             {state === "running" && "Pipeline is executing on the backend…"}
-            {state === "completed" && "Execution completed. Live results are shown below."}
+            {state === "completed" && "Execution completed. Open live results below."}
             {state === "degraded" &&
               "Completed with scientific warnings (for example output-size cap). See quality flags."}
             {state === "failed" && "Execution failed. See the error below."}
@@ -29,6 +39,12 @@ export function RunAction({ state, onRun, onReset, validationMessage, jobId }: R
         </div>
 
         <div className="run-actions">
+          {canViewResults && onViewResults ? (
+            <button type="button" className="secondary-button" onClick={onViewResults}>
+              View live results ↓
+            </button>
+          ) : null}
+
           {state === "completed" || state === "failed" || state === "degraded" ? (
             <button type="button" className="secondary-button" onClick={onReset}>
               Reset Workspace
