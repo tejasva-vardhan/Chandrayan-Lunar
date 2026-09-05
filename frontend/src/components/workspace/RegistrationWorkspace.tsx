@@ -22,7 +22,8 @@ const DEGRADED_FLAGS = new Set([
 ]);
 
 export type RegistrationWorkspaceProps = {
-  onResults: (view: ResultsViewModel) => void;
+  onResults: (view: ResultsViewModel | null) => void;
+  onRunError?: (message: string | null) => void;
   client?: ApiClient;
   pollIntervalMs?: number;
 };
@@ -54,8 +55,30 @@ function hintFromName(name: string): string | null {
   return null;
 }
 
+function sleep(ms: number) {
+  return new Promise((r) => window.setTimeout(r, ms));
+}
+
+async function fetchResultWithRetry(
+  client: ApiClient,
+  jobId: string,
+  attempts = 4,
+): Promise<Awaited<ReturnType<ApiClient["getResult"]>>> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await client.getResult(jobId);
+    } catch (err) {
+      lastErr = err;
+      await sleep(400 * (i + 1));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Result fetch failed");
+}
+
 export function RegistrationWorkspace({
   onResults,
+  onRunError,
   client = api,
   pollIntervalMs = 750,
 }: RegistrationWorkspaceProps) {
@@ -69,8 +92,18 @@ export function RegistrationWorkspace({
   const [catalogMessage, setCatalogMessage] = useState<string | null>(null);
   const [exp000Message, setExp000Message] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
+  const settlingRef = useRef(false);
+  const runGenRef = useRef(0);
 
   const busy = runState === "running";
+
+  const reportError = useCallback(
+    (message: string | null) => {
+      setError(message);
+      onRunError?.(message);
+    },
+    [onRunError],
+  );
 
   const refreshCatalog = useCallback(async () => {
     try {
@@ -134,18 +167,18 @@ export function RegistrationWorkspace({
       },
       error: null,
     });
-    setError(null);
+    reportError(null);
   }
 
   function handleSelectExisting(role: "source" | "reference", product: ProductSummary) {
     const setSlot = role === "source" ? setSource : setReference;
     setSlot({ state: "selected", selected: summaryToSelected(product), error: null });
-    setError(null);
+    reportError(null);
   }
 
   async function handleLoadExp000() {
     setExp000Message(null);
-    setError(null);
+    reportError(null);
     setSource({ state: "loading", selected: null, error: null });
     setReference({ state: "loading", selected: null, error: null });
     try {
@@ -175,53 +208,90 @@ export function RegistrationWorkspace({
     }
   }
 
-  async function pollUntilDone(jobId: string) {
+  async function settleJob(jobId: string, gen: number) {
+    if (settlingRef.current) return;
+    settlingRef.current = true;
+    try {
+      if (pollRef.current != null) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      const payload = await fetchResultWithRetry(client, jobId);
+      if (gen !== runGenRef.current) return;
+
+      if (payload.status === "failed" || payload.error) {
+        setRunState("failed");
+        reportError(payload.error?.message ?? "Registration failed.");
+        onResults(null);
+        return;
+      }
+      if (!payload.result) {
+        setRunState("failed");
+        reportError("Result unavailable after a completed job.");
+        onResults(null);
+        return;
+      }
+
+      const artifactUrl = payload.result.registered_artifact_available
+        ? client.artifactUrl(jobId, "registered_source")
+        : null;
+      let result = payload.result;
+      if (!result.preview_available) {
+        await sleep(900);
+        if (gen !== runGenRef.current) return;
+        try {
+          const again = await client.getResult(jobId);
+          if (again.result?.preview_available) result = again.result;
+        } catch {
+          /* keep first result */
+        }
+      }
+
+      const view = fromRegistrationResult(result, { jobId, artifactUrl });
+      if (gen !== runGenRef.current) return;
+      reportError(null);
+      onResults(view);
+      const degraded = view.flags.some((flag) => DEGRADED_FLAGS.has(flag));
+      setRunState(degraded ? "degraded" : "completed");
+    } catch (err) {
+      if (gen !== runGenRef.current) return;
+      setRunState("failed");
+      reportError(err instanceof ApiClientError ? err.message : "Failed to load registration result.");
+      onResults(null);
+    } finally {
+      settlingRef.current = false;
+    }
+  }
+
+  async function pollUntilDone(jobId: string, gen: number) {
     if (pollRef.current != null) window.clearInterval(pollRef.current);
+    let finished = false;
     const tick = async () => {
+      if (gen !== runGenRef.current || settlingRef.current || finished) return;
       try {
         const status = await client.getJob(jobId);
+        if (gen !== runGenRef.current || finished) return;
         setJob(status);
         if (status.status === "completed" || status.status === "failed") {
-          if (pollRef.current != null) window.clearInterval(pollRef.current);
-          pollRef.current = null;
-          const payload = await client.getResult(jobId);
-          if (payload.status === "failed" || payload.error) {
-            setRunState("failed");
-            setError(payload.error?.message ?? "Registration failed.");
-            return;
+          finished = true;
+          if (pollRef.current != null) {
+            window.clearInterval(pollRef.current);
+            pollRef.current = null;
           }
-          if (!payload.result) {
-            setRunState("failed");
-            setError("Result unavailable after a completed job.");
-            return;
-          }
-          const artifactUrl = payload.result.registered_artifact_available
-            ? client.artifactUrl(jobId, "registered_source")
-            : null;
-          let result = payload.result;
-          // Preview PNGs can lag slightly; one short re-fetch covers that case.
-          if (!result.preview_available) {
-            await new Promise((r) => window.setTimeout(r, 750));
-            try {
-              const again = await client.getResult(jobId);
-              if (again.result?.preview_available) result = again.result;
-            } catch {
-              /* keep first result */
-            }
-          }
-          const view = fromRegistrationResult(result, { jobId, artifactUrl });
-          onResults(view);
-          const degraded = view.flags.some((flag) => DEGRADED_FLAGS.has(flag));
-          setRunState(degraded ? "degraded" : "completed");
+          await settleJob(jobId, gen);
         }
       } catch (err) {
+        if (gen !== runGenRef.current) return;
+        finished = true;
         if (pollRef.current != null) window.clearInterval(pollRef.current);
         pollRef.current = null;
         setRunState("failed");
-        setError(err instanceof ApiClientError ? err.message : "Polling failed.");
+        reportError(err instanceof ApiClientError ? err.message : "Polling failed.");
+        onResults(null);
       }
     };
     await tick();
+    if (gen !== runGenRef.current || finished) return;
     pollRef.current = window.setInterval(() => {
       void tick();
     }, pollIntervalMs);
@@ -229,11 +299,18 @@ export function RegistrationWorkspace({
 
   async function handleRun() {
     if (!source.selected || !reference.selected) {
-      setError("Both source and reference products are required.");
+      reportError("Both source and reference products are required.");
       setRunState("disabled");
       return;
     }
-    setError(null);
+    const gen = ++runGenRef.current;
+    settlingRef.current = false;
+    if (pollRef.current != null) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    reportError(null);
+    onResults(null);
     setJob(null);
     setRunState("running");
     try {
@@ -244,6 +321,7 @@ export function RegistrationWorkspace({
 
       if (source.selected.file) {
         const uploaded = await client.uploadProduct(source.selected.file);
+        if (gen !== runGenRef.current) return;
         body.source_product_id = uploaded.product_id;
         setSource((prev) =>
           prev.selected
@@ -264,6 +342,7 @@ export function RegistrationWorkspace({
 
       if (reference.selected.file) {
         const uploaded = await client.uploadProduct(reference.selected.file);
+        if (gen !== runGenRef.current) return;
         body.reference_product_id = uploaded.product_id;
         setReference((prev) =>
           prev.selected
@@ -290,23 +369,33 @@ export function RegistrationWorkspace({
       }
 
       const created = await client.createJob(body);
+      if (gen !== runGenRef.current) return;
       setJob(created);
-      await pollUntilDone(created.job_id);
+      await pollUntilDone(created.job_id, gen);
     } catch (err) {
+      if (gen !== runGenRef.current) return;
       setRunState("failed");
-      setError(err instanceof ApiClientError ? err.message : "Registration request failed.");
+      reportError(err instanceof ApiClientError ? err.message : "Registration request failed.");
+      onResults(null);
     }
   }
 
   function handleReset() {
+    runGenRef.current += 1;
+    settlingRef.current = false;
     if (pollRef.current != null) window.clearInterval(pollRef.current);
     pollRef.current = null;
     setSource(emptySlot());
     setReference(emptySlot());
     setRunState("disabled");
     setJob(null);
-    setError(null);
+    reportError(null);
     setExp000Message(null);
+    onResults(null);
+  }
+
+  function handleViewResults() {
+    document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   const validationMessage =
@@ -360,8 +449,8 @@ export function RegistrationWorkspace({
           </span>
         </div>
         <p className="workspace-lede">
-          Upload OHRC <b>.zip</b> / LROC <b>.IMG</b>, or select products already under the data
-          root. Results come only from the live ScientificPipeline.
+          Prefer <b>Load EXP-000 Real Pair</b> or catalog Select Existing. Large re-uploads can fail
+          when the system disk is full. Results come only from the live ScientificPipeline.
         </p>
       </header>
 
@@ -378,7 +467,10 @@ export function RegistrationWorkspace({
           type="button"
           className="ghost-button"
           disabled={busy}
-          onClick={() => onResults(baselineResultsView())}
+          onClick={() => {
+            reportError(null);
+            onResults(baselineResultsView());
+          }}
         >
           Show static EXP-000 fixture
         </button>
@@ -441,6 +533,7 @@ export function RegistrationWorkspace({
           state={runState}
           onRun={() => void handleRun()}
           onReset={handleReset}
+          onViewResults={handleViewResults}
           validationMessage={validationMessage}
           jobId={job?.job_id ?? null}
         />

@@ -178,6 +178,22 @@ describe("ResultsPanel UX", () => {
     expect(screen.getByText(/NO LIVE RESULT/i)).toBeInTheDocument();
     expect(screen.queryByText("919")).not.toBeInTheDocument();
     expect(screen.queryByText("36")).not.toBeInTheDocument();
+    expect(document.getElementById("correspondence")).toBeTruthy();
+    expect(document.getElementById("spatial")).toBeTruthy();
+    expect(document.getElementById("quality")).toBeTruthy();
+  });
+
+  it("surfaces last registration error when no live result exists", () => {
+    render(
+      <ResultsPanel
+        results={null}
+        lastError="OSError: [Errno 28] No space left on device"
+        reducedMotion
+        onFocusRegion={() => undefined}
+      />,
+    );
+    expect(screen.getByText(/Last registration did not produce a result/i)).toBeInTheDocument();
+    expect(screen.getByText(/No space left on device/i)).toBeInTheDocument();
   });
 
   it("handles missing image preview honestly without fake imagery", () => {
