@@ -13,19 +13,22 @@ function Reveal({
   className = "",
   delay = 0,
   reducedMotion,
+  /** Skip opacity-0 mount — whileInView often never fires after programmatic scroll. */
+  eager = false,
 }: {
   children: ReactNode;
   className?: string;
   delay?: number;
   reducedMotion: boolean;
+  eager?: boolean;
 }) {
-  if (reducedMotion) return <div className={className}>{children}</div>;
+  if (reducedMotion || eager) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
+      viewport={{ once: true, amount: 0.05, margin: "80px 0px" }}
       transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay }}
     >
       {children}
@@ -242,44 +245,76 @@ function Limitations({ results }: { results: ResultsViewModel }) {
   );
 }
 
-function EmptyResults() {
+function EmptyResults({ lastError }: { lastError?: string | null }) {
   return (
-    <section className="results-shell" id="results">
-      <div className="glass-panel panel-left results-panel">
-        <header className="section-header results-header">
-          <div>
-            <p className="eyebrow">AWAITING LIVE RUN</p>
-            <h2>Results</h2>
-            <p className="results-status-sentence">
-              No live registration result is available yet.
-            </p>
-          </div>
-          <span className="state-pill">NO LIVE RESULT</span>
-        </header>
-        <div className="fixture-banner" role="status">
-          <b>Live result required for the normal demo path</b>
-          <span>
-            Load Chandrayaan-2 OHRC + LRO NAC under Register, then Start Registration. Static
-            EXP-000 fixture remains available only via “Show static EXP-000 fixture” for
-            regression testing — it is not mixed into a live run.
-          </span>
+    <>
+      <section className="results-shell" id="results">
+        <div className="glass-panel panel-left results-panel">
+          <header className="section-header results-header">
+            <div>
+              <p className="eyebrow">AWAITING LIVE RUN</p>
+              <h2>Results</h2>
+              <p className="results-status-sentence">
+                No live registration result is available yet.
+              </p>
+            </div>
+            <span className="state-pill">NO LIVE RESULT</span>
+          </header>
+          {lastError ? (
+            <div className="run-error" role="alert">
+              <b>Last registration did not produce a result</b>
+              <span>{lastError}</span>
+            </div>
+          ) : (
+            <div className="fixture-banner" role="status">
+              <b>Live result required for the normal demo path</b>
+              <span>
+                Load Chandrayaan-2 OHRC + LRO NAC under Register, then Start Registration. Prefer
+                “Load EXP-000 Real Pair” or Select Existing when products are already under the
+                data root — avoid re-uploading multi‑hundred‑MB files onto a full system disk.
+              </span>
+            </div>
+          )}
         </div>
-      </div>
-    </section>
+      </section>
+      <section className="results-shell" id="correspondence" aria-label="Correspondence placeholder">
+        <div className="glass-panel panel-left results-panel">
+          <p className="results-empty">Correspondence evidence appears here after a live run completes.</p>
+        </div>
+      </section>
+      <section className="results-shell" id="spatial" aria-label="Spatial placeholder">
+        <div className="glass-panel panel-left results-panel">
+          <p className="results-empty">Spatial distribution appears here after a live run completes.</p>
+        </div>
+      </section>
+      <section className="quality" id="quality" aria-label="Quality placeholder">
+        <div className="glass-panel panel-right">
+          <p className="results-empty">Quality certificate appears here after a live run completes.</p>
+        </div>
+      </section>
+    </>
   );
 }
 
 export type ResultsPanelProps = {
   results: ResultsViewModel | null;
   reducedMotion: boolean;
+  lastError?: string | null;
   onFocusRegion?: (target: { lon: number; lat: number; zoomMultiplier?: number } | null) => void;
 };
 
-export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsPanelProps) {
+export function ResultsPanel({
+  results,
+  reducedMotion,
+  lastError = null,
+  onFocusRegion,
+}: ResultsPanelProps) {
   const [showRejected, setShowRejected] = useState(false);
+  // Live/fixture content must paint visible immediately (demo scroll + whileInView race).
+  const eagerReveal = true;
 
   if (!results) {
-    return <EmptyResults />;
+    return <EmptyResults lastError={lastError} />;
   }
 
   const mapPoints = results.mapPoints.length ? results.mapPoints : results.points;
@@ -296,7 +331,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
   return (
     <>
       <section className="results-shell" id="results">
-        <Reveal className="glass-panel panel-left results-panel" reducedMotion={reducedMotion}>
+        <Reveal className="glass-panel panel-left results-panel" reducedMotion={reducedMotion} eager={eagerReveal}>
           <header className="section-header results-header">
             <div>
               <p className="eyebrow">
@@ -492,7 +527,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
       </section>
 
       <section className="quality" id="quality">
-        <Reveal className="quality-copy glass-panel panel-right" reducedMotion={reducedMotion}>
+        <Reveal className="quality-copy glass-panel panel-right" reducedMotion={reducedMotion} eager={eagerReveal}>
           <p className="eyebrow">QUALITY CERTIFICATE</p>
           <h2>
             Can I trust this result?
@@ -528,7 +563,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             <div className="target-card-action">Focus camera on polar region ↗</div>
           </div>
         </Reveal>
-        <Reveal className="glass-panel panel-right certificate-panel" delay={0.1} reducedMotion={reducedMotion}>
+        <Reveal className="glass-panel panel-right certificate-panel" delay={0.1} reducedMotion={reducedMotion} eager={eagerReveal}>
           <div className={`certificate-status ${statusClass}`}>
             <span>Status</span>
             <strong>{results.resultStatus}</strong>
@@ -620,13 +655,13 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
       </section>
 
       <section className="results-shell limitations-shell">
-        <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
+        <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion} eager={eagerReveal}>
           <Limitations results={results} />
         </Reveal>
       </section>
 
       <section className="report" id="report">
-        <Reveal reducedMotion={reducedMotion}>
+        <Reveal reducedMotion={reducedMotion} eager={eagerReveal}>
           <p className="eyebrow">TECHNICAL DETAILS / EXPORT</p>
           <h2>
             Built for a judge,
@@ -634,7 +669,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             honest for a scientist.
           </h2>
         </Reveal>
-        <Reveal className="report-card glass-panel panel-left" delay={0.1} reducedMotion={reducedMotion}>
+        <Reveal className="report-card glass-panel panel-left" delay={0.1} reducedMotion={reducedMotion} eager={eagerReveal}>
           <span className="report-mark">↗</span>
           <b>
             {results.isLive ? "Live registration report" : "Static EXP-000 fixture report"}
@@ -647,7 +682,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             Print / save report
           </button>
         </Reveal>
-        <Reveal className="technical glass-panel panel-left" delay={0.15} reducedMotion={reducedMotion}>
+        <Reveal className="technical glass-panel panel-left" delay={0.15} reducedMotion={reducedMotion} eager={eagerReveal}>
           <b>Technical details</b>
           <p>Source product: {results.sourceProduct}</p>
           <p>Reference product: {results.referenceProduct}</p>
