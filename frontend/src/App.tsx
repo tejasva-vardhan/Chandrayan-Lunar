@@ -50,6 +50,8 @@ function App() {
   const [focusedTarget, setFocusedTarget] = useState<{ lon: number; lat: number; zoomMultiplier?: number } | null>(null);
   /** Single source of truth for Results → Correspondence → Spatial → Quality. null = no live/fixture yet. */
   const [results, setResults] = useState<ResultsViewModel | null>(null);
+  const [lastRunError, setLastRunError] = useState<string | null>(null);
+  const [scrollToResultsToken, setScrollToResultsToken] = useState(0);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -63,6 +65,15 @@ function App() {
   useEffect(() => {
     return scrollYProgress.on("change", (v) => setProgress(v));
   }, [scrollYProgress]);
+
+  // Scroll only after React has committed live/fixture results (avoids empty-panel race).
+  useEffect(() => {
+    if (!results || scrollToResultsToken === 0) return;
+    const id = window.requestAnimationFrame(() => {
+      document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [results, scrollToResultsToken]);
 
   const orbit = useMoonOrbit();
   const activeStage = Math.min(stages.length - 1, Math.floor(progress * stages.length));
@@ -212,14 +223,17 @@ function App() {
         <RegistrationWorkspace
           onResults={(view) => {
             setResults(view);
-            if (view.isLive) {
-              document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
+            if (view) {
+              setLastRunError(null);
+              setScrollToResultsToken((n) => n + 1);
             }
           }}
+          onRunError={setLastRunError}
         />
 
         <ResultsPanel
           results={results}
+          lastError={lastRunError}
           reducedMotion={reducedMotion}
           onFocusRegion={setFocusedTarget}
         />
