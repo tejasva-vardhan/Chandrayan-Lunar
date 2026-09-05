@@ -2,6 +2,9 @@ import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { ResultsViewModel } from "../../api/resultsView";
 import { CorrespondenceEvidence } from "./CorrespondenceEvidence";
+import { ImageComparison } from "./ImageComparison";
+import { PairCharacterization } from "./PairCharacterization";
+import { RefinementPanel } from "./RefinementPanel";
 import { RegistrationDiagnostic } from "./RegistrationDiagnostic";
 import { SpatialDistribution } from "./SpatialDistribution";
 
@@ -116,6 +119,77 @@ function ProcessFlow({ results }: { results: ResultsViewModel }) {
   );
 }
 
+function MetricStrip({ results }: { results: ResultsViewModel }) {
+  return (
+    <div className="metric-strip metric-strip-readable" aria-label="Result metrics">
+      <div>
+        <span className="metric-kicker">MATCHES FOUND</span>
+        <b>{results.rawMatches}</b>
+        <span>Candidate correspondences</span>
+      </div>
+      <div>
+        <span className="metric-kicker">MATCHES VERIFIED</span>
+        <b>{results.verified}</b>
+        <span>Survived geometric consistency checks</span>
+      </div>
+      <div>
+        <span className="metric-kicker">INLIER RATIO</span>
+        <b>{results.inlierRatio}</b>
+        <span>Verified / candidate correspondences</span>
+      </div>
+      <div>
+        <span className="metric-kicker">CONTROL POINTS</span>
+        <b>{results.controlPointCount}</b>
+        <span>Spatially selected points used for registration</span>
+      </div>
+      <div>
+        <span className="metric-kicker">SPATIAL COVERAGE</span>
+        <b>{results.coverage}</b>
+        <span>Area represented by selected control points</span>
+      </div>
+      <div title="Verification residual RMSE is a geometric-verification fit diagnostic, not independent registration accuracy.">
+        <span className="metric-kicker">{results.rmseLabel.toUpperCase()}</span>
+        <b className="metric-val-formatted">{results.rmse}</b>
+        <span>Image-space fit/verification residual; not independent registration accuracy</span>
+      </div>
+      <div>
+        <span className="metric-kicker">REFINEMENT</span>
+        <b className="metric-text">
+          {/indeterminate/i.test(results.refinement) ? "Indeterminate" : results.refinement}
+        </b>
+        <span>Sub-pixel refinement state</span>
+      </div>
+      <div>
+        <span className="metric-kicker">INDEPENDENT VALIDATION</span>
+        <b className="metric-text">
+          {/not independently|unavailable|not available/i.test(results.independentAccuracy)
+            ? "Not independently validated"
+            : results.independentAccuracy}
+        </b>
+        <span>{results.independentAccuracy}</span>
+      </div>
+    </div>
+  );
+}
+
+function DemoPathNav() {
+  return (
+    <nav className="demo-path-nav" aria-label="Demo evidence path">
+      <a href="#results">Results</a>
+      <span aria-hidden="true">→</span>
+      <a href="#correspondence">Correspondence</a>
+      <span aria-hidden="true">→</span>
+      <a href="#spatial">Spatial</a>
+      <span aria-hidden="true">→</span>
+      <a href="#results-summary">Run summary</a>
+      <span aria-hidden="true">→</span>
+      <a href="#quality">Quality</a>
+      <span aria-hidden="true">→</span>
+      <a href="#limitations">Limitations</a>
+    </nav>
+  );
+}
+
 function Limitations({ results }: { results: ResultsViewModel }) {
   const items: string[] = [];
   if (results.verified > 0 && results.verified < 10) {
@@ -132,18 +206,25 @@ function Limitations({ results }: { results: ResultsViewModel }) {
   }
   if (results.fullRasterBlocked) {
     items.push(
-      "Full-raster output may be unavailable due to the safety/output-size limit.",
+      "Registered full-raster output unavailable for this run due to the safety/output-size limit.",
     );
   }
   if (results.evaluationLimitation) {
     items.push(results.evaluationLimitation);
   }
   items.push(
+    "Verification residual RMSE is an image-space fit/verification residual; it does not establish independent registration accuracy.",
+  );
+  items.push(
     "The current result is a baseline experiment, not final SIH performance.",
   );
 
   return (
-    <section className="results-block limitations-block" aria-labelledby="limitations-title">
+    <section
+      className="results-block limitations-block"
+      id="limitations"
+      aria-labelledby="limitations-title"
+    >
       <header className="results-block-header">
         <div>
           <h3 id="limitations-title">Limitations</h3>
@@ -161,14 +242,46 @@ function Limitations({ results }: { results: ResultsViewModel }) {
   );
 }
 
+function EmptyResults() {
+  return (
+    <section className="results-shell" id="results">
+      <div className="glass-panel panel-left results-panel">
+        <header className="section-header results-header">
+          <div>
+            <p className="eyebrow">AWAITING LIVE RUN</p>
+            <h2>Results</h2>
+            <p className="results-status-sentence">
+              No live registration result is available yet.
+            </p>
+          </div>
+          <span className="state-pill">NO LIVE RESULT</span>
+        </header>
+        <div className="fixture-banner" role="status">
+          <b>Live result required for the normal demo path</b>
+          <span>
+            Load Chandrayaan-2 OHRC + LRO NAC under Register, then Start Registration. Static
+            EXP-000 fixture remains available only via “Show static EXP-000 fixture” for
+            regression testing — it is not mixed into a live run.
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export type ResultsPanelProps = {
-  results: ResultsViewModel;
+  results: ResultsViewModel | null;
   reducedMotion: boolean;
   onFocusRegion?: (target: { lon: number; lat: number; zoomMultiplier?: number } | null) => void;
 };
 
 export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsPanelProps) {
   const [showRejected, setShowRejected] = useState(false);
+
+  if (!results) {
+    return <EmptyResults />;
+  }
+
   const mapPoints = results.mapPoints.length ? results.mapPoints : results.points;
   const isNoMatch = results.rawMatches === 0 || results.verified === 0;
   const statusClass =
@@ -184,12 +297,11 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
     <>
       <section className="results-shell" id="results">
         <Reveal className="glass-panel panel-left results-panel" reducedMotion={reducedMotion}>
-          {/* A. RESULT HEADER */}
           <header className="section-header results-header">
             <div>
               <p className="eyebrow">
                 {results.isLive
-                  ? "EXP-000 Real-data Run / Live result from the scientific pipeline / "
+                  ? "LIVE RESULT / Scientific pipeline job / "
                   : "STATIC EXP-000 FIXTURE / Regression only / "}
                 {results.id}
               </p>
@@ -199,29 +311,38 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
               </p>
               <p className="results-status-sentence">{statusSummary(results)}</p>
             </div>
-            <span className={`state-pill result-status-pill ${statusClass}`}>
-              {results.resultStatus}
-            </span>
+            <div className="results-header-badges">
+              <span className={`provenance-badge ${results.isLive ? "is-live" : "is-fixture"}`}>
+                {results.isLive ? "LIVE RESULT" : "STATIC EXP-000 FIXTURE"}
+              </span>
+              <span className={`state-pill result-status-pill ${statusClass}`}>
+                {results.resultStatus}
+              </span>
+            </div>
           </header>
+
+          <DemoPathNav />
 
           {!results.isLive && (
             <div className="fixture-banner" role="note">
               <b>Static EXP-000 fixture</b>
               <span>
-                Historical regression values — not a live pipeline run. Use “Load EXP-000 Real Pair”
-                then register for a live result.
+                Historical regression values — not a live pipeline run. These numbers must not be
+                mixed into a live registration result.
               </span>
             </div>
           )}
 
           {results.isLive && (
             <div className="live-banner" role="status">
-              <b>Live result · isLive: true</b>
-              <span>Values below come from the scientific pipeline API for this job.</span>
+              <b>LIVE RESULT · isLive: true</b>
+              <span>
+                All metrics and evidence below derive from a single pipeline result object for job{" "}
+                {results.jobId ?? "—"}.
+              </span>
             </div>
           )}
 
-          {/* Input continuity cards */}
           <div className="input-pair-cards">
             <article className="input-pair-card">
               <span className="chip chip-ohrc">SOURCE</span>
@@ -280,55 +401,26 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             </div>
           )}
 
-          {/* Summary metrics — human-readable */}
-          <div className="metric-strip metric-strip-readable" aria-label="Result metrics">
-            <div>
-              <span className="metric-kicker">MATCHES FOUND</span>
-              <b>{results.rawMatches}</b>
-              <span>Candidate correspondences</span>
-            </div>
-            <div>
-              <span className="metric-kicker">MATCHES VERIFIED</span>
-              <b>{results.verified}</b>
-              <span>Survived geometric consistency checks</span>
-            </div>
-            <div>
-              <span className="metric-kicker">INLIER RATIO</span>
-              <b>{results.inlierRatio}</b>
-              <span>Verified / candidate correspondences</span>
-            </div>
-            <div>
-              <span className="metric-kicker">CONTROL POINTS</span>
-              <b>{results.controlPointCount}</b>
-              <span>Spatially selected points used for registration</span>
-            </div>
-            <div>
-              <span className="metric-kicker">SPATIAL COVERAGE</span>
-              <b>{results.coverage}</b>
-              <span>Area represented by selected control points</span>
-            </div>
-            <div title="Verification residual RMSE is a geometric-verification fit diagnostic, not independent registration accuracy.">
-              <span className="metric-kicker">{results.rmseLabel.toUpperCase()}</span>
-              <b className="metric-val-formatted">{results.rmse}</b>
-              <span>Fit residual from the verification model; not independent registration accuracy</span>
-            </div>
-            <div>
-              <span className="metric-kicker">REFINEMENT</span>
-              <b className="metric-text">{/indeterminate/i.test(results.refinement) ? "Indeterminate" : results.refinement}</b>
-              <span>Sub-pixel refinement state</span>
-            </div>
-            <div>
-              <span className="metric-kicker">INDEPENDENT VALIDATION</span>
-              <b className="metric-text">
-                {/not independently|unavailable|not available/i.test(results.independentAccuracy)
-                  ? "Not available"
-                  : results.independentAccuracy}
-              </b>
-              <span>{results.independentAccuracy}</span>
-            </div>
-          </div>
+          <p className="results-section-kicker">What did the system produce?</p>
+          <MetricStrip results={results} />
 
-          {/* C. Correspondence Evidence */}
+          <PairCharacterization results={results} />
+
+          <ImageComparison
+            sourceLabel={results.source}
+            referenceLabel={results.reference}
+            sourceProduct={results.sourceProduct}
+            referenceProduct={results.referenceProduct}
+            sourceDims={results.sourceDims}
+            referenceDims={results.referenceDims}
+            acquisitionTimeSource={results.acquisitionTimeSource}
+            acquisitionTimeReference={results.acquisitionTimeReference}
+            sourceUrl={results.previewSourceUrl}
+            referenceUrl={results.previewReferenceUrl}
+            previewNote={results.previewNote}
+          />
+
+          <p className="results-section-kicker">Show me the actual evidence.</p>
           <CorrespondenceEvidence
             sourceLabel={results.source}
             referenceLabel={results.reference}
@@ -336,6 +428,7 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             referenceUrl={results.previewReferenceUrl}
             points={mapPoints}
             showRejected={showRejected}
+            previewNote={results.previewNote}
           />
 
           <div className="explorer-controls">
@@ -358,19 +451,46 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
           {showRejected && (
             <div className="rejected-note">
               Rejected correspondences are retained for inspection but are not control points and do
-              not enter registration.
+              not enter registration. Rejection reasons beyond geometric verification are not
+              invented when the backend does not expose them.
             </div>
           )}
 
-          {/* D. Spatial Distribution — separate from correspondence */}
-          <SpatialDistribution points={mapPoints} coverage={results.coverage} />
+          <p className="results-section-kicker">Where are these selected points located?</p>
+          <SpatialDistribution
+            points={mapPoints}
+            coverage={results.coverage}
+            sourceLabel={results.source}
+            referenceLabel={results.reference}
+            sourceUrl={results.previewSourceUrl}
+            referenceUrl={results.previewReferenceUrl}
+          />
 
-          {/* E. Registration Diagnostic — separate section */}
+          <RefinementPanel results={results} />
+
           <RegistrationDiagnostic results={results} />
+
+          <section
+            className="results-block run-summary-block"
+            id="results-summary"
+            aria-labelledby="run-summary-title"
+          >
+            <header className="results-block-header">
+              <div>
+                <h3 id="run-summary-title">Run summary</h3>
+                <p className="results-block-subtitle">
+                  Final measured state of this same run — identical metrics object as above.
+                </p>
+              </div>
+              <span className={`provenance-badge ${results.isLive ? "is-live" : "is-fixture"}`}>
+                {results.isLive ? "LIVE RESULT" : "STATIC EXP-000 FIXTURE"}
+              </span>
+            </header>
+            <MetricStrip results={results} />
+          </section>
         </Reveal>
       </section>
 
-      {/* F. Quality Certificate */}
       <section className="quality" id="quality">
         <Reveal className="quality-copy glass-panel panel-right" reducedMotion={reducedMotion}>
           <p className="eyebrow">QUALITY CERTIFICATE</p>
@@ -383,6 +503,10 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             {results.isLive
               ? "This live run shows the real pipeline path and controlled failure reporting. It does not establish independent registration accuracy."
               : "This static fixture shows the EXP-000 observation path and controlled failure reporting. It does not establish independent registration accuracy."}
+          </p>
+          <p className="residual-honesty">
+            <b>Verification residual RMSE</b> is an image-space fit/verification residual; it does
+            not establish independent registration accuracy.
           </p>
           <div
             className="geographic-target-card"
@@ -409,22 +533,21 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
             <span>Status</span>
             <strong>{results.resultStatus}</strong>
           </div>
+          <span className={`provenance-badge ${results.isLive ? "is-live" : "is-fixture"}`}>
+            {results.isLive ? "LIVE RESULT" : "STATIC EXP-000 FIXTURE"}
+          </span>
           <dl className="certificate">
             <div>
               <dt>Candidates</dt>
               <dd>{results.rawMatches}</dd>
             </div>
             <div>
-              <dt>Verified (inliers)</dt>
+              <dt>Verified matches</dt>
               <dd>{results.verified}</dd>
             </div>
             <div>
               <dt>Inlier ratio</dt>
               <dd>{results.inlierRatio}</dd>
-            </div>
-            <div>
-              <dt>{results.rmseLabel}</dt>
-              <dd>{results.rmse}</dd>
             </div>
             <div>
               <dt>Control points</dt>
@@ -435,12 +558,28 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
               <dd>{results.coverage}</dd>
             </div>
             <div>
-              <dt>Sub-pixel refinement</dt>
-              <dd>{/indeterminate/i.test(results.refinement) ? "Indeterminate" : results.refinement}</dd>
+              <dt>{results.rmseLabel}</dt>
+              <dd>{results.rmse}</dd>
             </div>
             <div>
-              <dt>Independent accuracy</dt>
+              <dt>Sub-pixel refinement</dt>
+              <dd>
+                {/indeterminate/i.test(results.refinement) ? "Indeterminate" : results.refinement}
+              </dd>
+            </div>
+            <div>
+              <dt>Independent validation</dt>
               <dd>Not independently validated</dd>
+            </div>
+            <div>
+              <dt>Full-raster output</dt>
+              <dd>
+                {results.fullRasterBlocked
+                  ? "Registered full-raster output unavailable (safety limit)"
+                  : results.registeredArtifactUrl
+                    ? "Available"
+                    : "Unavailable"}
+              </dd>
             </div>
             <div>
               <dt>Illumination variation</dt>
@@ -448,16 +587,6 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
                 {results.sunAzimuth != null && results.sunIncidence != null
                   ? `Azimuth ${results.sunAzimuth.toFixed(1)}° / Incidence ${results.sunIncidence.toFixed(1)}°`
                   : "Not available from product metadata"}
-              </dd>
-            </div>
-            <div>
-              <dt>Full-raster output</dt>
-              <dd>
-                {results.fullRasterBlocked
-                  ? "Blocked by safety limit"
-                  : results.registeredArtifactUrl
-                    ? "Available"
-                    : "Unavailable"}
               </dd>
             </div>
             <div>
@@ -490,14 +619,12 @@ export function ResultsPanel({ results, reducedMotion, onFocusRegion }: ResultsP
         </Reveal>
       </section>
 
-      {/* G. Limitations */}
       <section className="results-shell limitations-shell">
         <Reveal className="glass-panel panel-left" reducedMotion={reducedMotion}>
           <Limitations results={results} />
         </Reveal>
       </section>
 
-      {/* H + I. Technical + Export */}
       <section className="report" id="report">
         <Reveal reducedMotion={reducedMotion}>
           <p className="eyebrow">TECHNICAL DETAILS / EXPORT</p>
