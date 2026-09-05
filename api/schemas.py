@@ -171,6 +171,10 @@ class RegistrationResultDTO(BaseModel):
     preview_note: str | None = None
     preview_source_crop: PreviewCropDTO | None = None
     preview_reference_crop: PreviewCropDTO | None = None
+    # Illumination characterization (None when not computable — not a proven invariance claim).
+    sun_angle_difference_degrees: float | None = None
+    sun_azimuth_difference_degrees: float | None = None
+    sun_incidence_difference_degrees: float | None = None
 
 
 class JobStatusResponse(BaseModel):

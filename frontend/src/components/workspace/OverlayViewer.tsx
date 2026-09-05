@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import type { DisplayPoint } from "../../api/resultsView";
+import { ContainedImageFrame } from "./ContainedImageFrame";
 
 interface OverlayViewerProps {
   referenceUrl?: string | null;
@@ -7,8 +9,15 @@ interface OverlayViewerProps {
   note?: string | null;
   mode?: string | null;
   isLive?: boolean;
+  /** Reference-space points (rx/ry) for the diagnostic crop. */
+  points?: DisplayPoint[];
 }
 
+/**
+ * Alignment diagnostic: reference crop under registered crop.
+ * Container aspect follows the preview strip so portrait NAC windows are not
+ * crushed into a landscape 4:3 letterbox.
+ */
 export function OverlayViewer({
   referenceUrl,
   registeredUrl,
@@ -16,24 +25,45 @@ export function OverlayViewer({
   note,
   mode,
   isLive = false,
+  points = [],
 }: OverlayViewerProps) {
   const [opacity, setOpacity] = useState(55);
   const [refFailed, setRefFailed] = useState(false);
   const [regFailed, setRegFailed] = useState(false);
   const [refLoaded, setRefLoaded] = useState(false);
   const [regLoaded, setRegLoaded] = useState(false);
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
     setRefFailed(false);
     setRegFailed(false);
     setRefLoaded(false);
     setRegLoaded(false);
+    setNatural(null);
   }, [referenceUrl, registeredUrl, available]);
 
   const urlsReady = Boolean(available && referenceUrl && registeredUrl);
   const loadFailed = refFailed || regFailed;
   const canShow = urlsReady && !loadFailed;
   const loading = urlsReady && !loadFailed && !(refLoaded && regLoaded);
+
+  const plotPoints = useMemo(
+    () =>
+      points.filter(
+        (p) =>
+          p.inReferencePreview &&
+          (p.status === "control" || p.status === "inlier"),
+      ),
+    [points],
+  );
+
+  const containerStyle: CSSProperties | undefined =
+    natural && natural.w > 0 && natural.h > 0
+      ? {
+          aspectRatio: `${natural.w} / ${natural.h}`,
+          maxHeight: natural.h >= natural.w ? "min(78vh, 920px)" : "min(62vh, 640px)",
+        }
+      : undefined;
 
   return (
     <div className="workspace-card overlay-viewer-card">
@@ -52,14 +82,17 @@ export function OverlayViewer({
       <p className="card-desc">
         {canShow
           ? mode === "diagnostic_crop"
-            ? "AFTER (diagnostic preview): fade the warped source crop over the reference window. Labeled diagnostic/preview — not a full registered product."
-            : "AFTER: fade registered source over reference. Opacity / blink-style comparison of a genuine pipeline artifact."
+            ? "AFTER (diagnostic preview): fade the warped source crop over the reference window. Verified/control points are drawn on the strip — not a full registered product."
+            : "AFTER: fade registered source over reference. Opacity comparison of a genuine pipeline artifact."
           : isLive
             ? "Registered full-raster output / diagnostic crop unavailable for this run. No fake after-image is shown."
             : "No diagnostic overlay for the static fixture. Run a live registration to generate a bounded preview when available."}
       </p>
 
-      <div className="overlay-container">
+      <div
+        className={`overlay-container${natural && natural.h > natural.w ? " is-portrait" : ""}${natural && natural.w > natural.h ? " is-landscape" : ""}`}
+        style={containerStyle}
+      >
         {canShow ? (
           <>
             {loading && (
@@ -72,7 +105,13 @@ export function OverlayViewer({
               src={referenceUrl!}
               alt="Before registration — reference diagnostic crop"
               className="overlay-base"
-              onLoad={() => setRefLoaded(true)}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                setRefLoaded(true);
+                if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                  setNatural({ w: img.naturalWidth, h: img.naturalHeight });
+                }
+              }}
               onError={() => setRefFailed(true)}
             />
             <img
@@ -84,6 +123,26 @@ export function OverlayViewer({
               onLoad={() => setRegLoaded(true)}
               onError={() => setRegFailed(true)}
             />
+            {plotPoints.length > 0 && (
+              <ContainedImageFrame
+                className="overlay-points-frame"
+                imageUrl={referenceUrl!}
+                onImageError={() => undefined}
+              >
+                {plotPoints.map((point) => (
+                  <span
+                    key={point.id}
+                    className={`evidence-point status-${point.status} overlay-point`}
+                    style={{ left: `${point.rx}%`, top: `${point.ry}%` }}
+                    title={`${point.id} · (${point.referencePixel})`}
+                  >
+                    <span className="evidence-point-label" style={{ opacity: 1 }}>
+                      {point.id.replace(/^(M|I|CP)-/, "")}
+                    </span>
+                  </span>
+                ))}
+              </ContainedImageFrame>
+            )}
           </>
         ) : (
           <div className="overlay-empty" role="status">
@@ -101,6 +160,13 @@ export function OverlayViewer({
           </div>
         )}
       </div>
+
+      {canShow && plotPoints.length > 0 && (
+        <p className="compare-hint">
+          Showing {plotPoints.length} verified/control point(s) on the reference strip
+          (crop-aligned).
+        </p>
+      )}
 
       <div className="overlay-controls">
         <span className="control-label">BEFORE / REFERENCE</span>

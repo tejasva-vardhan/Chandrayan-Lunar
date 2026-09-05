@@ -38,6 +38,9 @@ export function computeContainRect(
 /**
  * Positions children over the letterboxed image content (not the full canvas),
  * so markers stay on lunar features for horizontal vs vertical strips.
+ *
+ * When rotate90Cw is set, the preview is shown as a 90° CW rotation so a
+ * landscape strip can match a portrait partner (or vice versa).
  */
 export function ContainedImageFrame({
   imageUrl,
@@ -45,12 +48,16 @@ export function ContainedImageFrame({
   onImageError,
   children,
   className = "",
+  rotate90Cw = false,
+  onNaturalSize,
 }: {
   imageUrl: string;
   transform?: string;
   onImageError?: () => void;
   children?: ReactNode;
   className?: string;
+  rotate90Cw?: boolean;
+  onNaturalSize?: (size: { w: number; h: number }) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -63,11 +70,16 @@ export function ContainedImageFrame({
     setBox({ w: el.clientWidth, h: el.clientHeight });
   }, []);
 
-  const applyNatural = useCallback((img: HTMLImageElement) => {
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      setNatural({ w: img.naturalWidth, h: img.naturalHeight });
-    }
-  }, []);
+  const applyNatural = useCallback(
+    (img: HTMLImageElement) => {
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        const size = { w: img.naturalWidth, h: img.naturalHeight };
+        setNatural(size);
+        onNaturalSize?.(size);
+      }
+    },
+    [onNaturalSize],
+  );
 
   useEffect(() => {
     measureBox();
@@ -87,12 +99,14 @@ export function ContainedImageFrame({
     if (img?.complete) applyNatural(img);
   }, [imageUrl, applyNatural]);
 
+  const displayW = natural ? (rotate90Cw ? natural.h : natural.w) : 0;
+  const displayH = natural ? (rotate90Cw ? natural.w : natural.h) : 0;
+
   const rect =
-    natural && box.w > 0 && box.h > 0
-      ? computeContainRect(box.w, box.h, natural.w, natural.h)
+    natural && box.w > 0 && box.h > 0 && displayW > 0 && displayH > 0
+      ? computeContainRect(box.w, box.h, displayW, displayH)
       : null;
 
-  // Until natural size is known, fill the canvas so markers still render (tests + first paint).
   const frameStyle: CSSProperties = rect
     ? {
         left: rect.left,
@@ -109,19 +123,36 @@ export function ContainedImageFrame({
         height: "100%",
       };
 
+  const rotImgStyle: CSSProperties | undefined =
+    rotate90Cw && rect
+      ? {
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: rect.height,
+          height: rect.width,
+          transform: "translate(-50%, -50%) rotate(90deg)",
+          objectFit: "fill",
+        }
+      : undefined;
+
   return (
     <div ref={boxRef} className={`contained-image-box ${className}`.trim()}>
       <div
         className="contained-zoom-layer"
         style={transform ? { transform } : undefined}
       >
-        <div className="contained-image-frame" style={frameStyle}>
+        <div
+          className={`contained-image-frame${rotate90Cw ? " is-rot90" : ""}`}
+          style={frameStyle}
+        >
           <img
             ref={imgRef}
-            className={`contained-image${rect ? " is-fitted" : " is-contain"}`}
+            className={`contained-image${rect ? (rotate90Cw ? "" : " is-fitted") : " is-contain"}`}
             src={imageUrl}
             alt=""
             draggable={false}
+            style={rotImgStyle}
             onLoad={(e) => applyNatural(e.currentTarget)}
             onError={() => onImageError?.()}
           />

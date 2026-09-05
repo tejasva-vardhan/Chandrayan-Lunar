@@ -5,8 +5,36 @@ function formatDims(width: number | null, height: number | null): string {
   return `${width.toLocaleString()} × ${height.toLocaleString()} px`;
 }
 
+function formatDeg(value: number | null | undefined): string | null {
+  if (value == null || Number.isNaN(value)) return null;
+  return `${value.toFixed(1)}°`;
+}
+
 /** Compact pair metadata — only fields present on the live/fixture view model. */
 export function PairCharacterization({ results }: { results: ResultsViewModel }) {
+  const sunAngle = formatDeg(results.sunAngleDifferenceDegrees);
+  const sunAzDelta = formatDeg(results.sunAzimuthDifferenceDegrees);
+  const sunIncDelta = formatDeg(results.sunIncidenceDifferenceDegrees);
+  const sourceIllum =
+    results.sunAzimuth != null && results.sunIncidence != null
+      ? `Azimuth ${results.sunAzimuth.toFixed(1)}° / Incidence ${results.sunIncidence.toFixed(1)}°`
+      : "Not available from product metadata";
+  const referenceIllum =
+    results.referenceSunAzimuth != null && results.referenceSunIncidence != null
+      ? `Azimuth ${results.referenceSunAzimuth.toFixed(1)}° / Incidence ${results.referenceSunIncidence.toFixed(1)}°`
+      : "Not available from product metadata";
+
+  let sunInvarianceValue = "Unavailable — sun vectors / angles not present for both products";
+  if (sunAngle) {
+    sunInvarianceValue = `${sunAngle} sun-angle difference (pair characterization)`;
+  } else if (sunAzDelta || sunIncDelta) {
+    const parts = [
+      sunAzDelta ? `Δazimuth ${sunAzDelta}` : null,
+      sunIncDelta ? `Δincidence ${sunIncDelta}` : null,
+    ].filter(Boolean);
+    sunInvarianceValue = `${parts.join(" · ")} (from product sun metadata)`;
+  }
+
   const rows: { label: string; value: string }[] = [
     { label: "Source sensor", value: results.source },
     { label: "Reference sensor", value: results.reference },
@@ -21,12 +49,11 @@ export function PairCharacterization({ results }: { results: ResultsViewModel })
     { label: "Source acquisition", value: results.acquisitionTimeSource },
     { label: "Reference acquisition", value: results.acquisitionTimeReference },
     { label: "Source GSD", value: results.sourceDims.gsd || "Unavailable" },
+    { label: "Illumination (source)", value: sourceIllum },
+    { label: "Illumination (reference)", value: referenceIllum },
     {
-      label: "Illumination (source)",
-      value:
-        results.sunAzimuth != null && results.sunIncidence != null
-          ? `Azimuth ${results.sunAzimuth.toFixed(1)}° / Incidence ${results.sunIncidence.toFixed(1)}°`
-          : "Not available from product metadata",
+      label: "Sun invariance / sun-angle difference",
+      value: sunInvarianceValue,
     },
   ];
 
@@ -59,6 +86,10 @@ export function PairCharacterization({ results }: { results: ResultsViewModel })
           </div>
         ))}
       </dl>
+      <p className="pair-char-sun-note">
+        Sun-angle difference describes illumination mismatch between the two products. It is not a
+        claim that matching is sun-invariant.
+      </p>
     </section>
   );
 }

@@ -37,6 +37,11 @@ export type ResultsViewModel = {
   acquisitionTimeReference: string;
   sunAzimuth: number | null;
   sunIncidence: number | null;
+  referenceSunAzimuth: number | null;
+  referenceSunIncidence: number | null;
+  sunAngleDifferenceDegrees: number | null;
+  sunAzimuthDifferenceDegrees: number | null;
+  sunIncidenceDifferenceDegrees: number | null;
   region: { lat: readonly [number, number]; lon: readonly [number, number]; label: string } | null;
   sourceDims: { width: number | null; height: number | null; gsd: string };
   referenceDims: { width: number | null; height: number | null };
@@ -173,11 +178,43 @@ export function toPreviewPercent(
   if (crop && crop.width > 1 && crop.height > 1) {
     const x = ((xy[0] - crop.col) / (crop.width - 1)) * 100;
     const y = ((xy[1] - crop.row) / (crop.height - 1)) * 100;
-    const inPreview = x >= -1 && x <= 101 && y >= -1 && y <= 101;
-    return { x, y, inPreview };
+    // Soft margin: keep near-edge matches visible on the strip.
+    const inPreview = x >= -8 && x <= 108 && y >= -8 && y <= 108;
+    return {
+      x: Math.min(100, Math.max(0, x)),
+      y: Math.min(100, Math.max(0, y)),
+      inPreview,
+    };
   }
   const full = toFullImagePercent(xy, fullWidth, fullHeight);
   return { x: full.x, y: full.y, inPreview: true };
+}
+
+/** Fallback crop from control-point span when the API omitted crop metadata. */
+export function estimateCropFromPoints(
+  points: Array<{ source_xy: [number, number]; reference_xy: [number, number] }>,
+  axis: "source" | "reference",
+  fullWidth: number | null,
+  fullHeight: number | null,
+): PreviewCropDTO | null {
+  if (!fullWidth || !fullHeight || fullWidth < 2 || fullHeight < 2 || points.length === 0) {
+    return null;
+  }
+  const xs = points.map((p) => (axis === "source" ? p.source_xy[0] : p.reference_xy[0]));
+  const ys = points.map((p) => (axis === "source" ? p.source_xy[1] : p.reference_xy[1]));
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const padX = Math.max(32, (maxX - minX) * 0.15);
+  const padY = Math.max(32, (maxY - minY) * 0.15);
+  const col = Math.max(0, Math.floor(minX - padX));
+  const row = Math.max(0, Math.floor(minY - padY));
+  const right = Math.min(fullWidth - 1, Math.ceil(maxX + padX));
+  const bottom = Math.min(fullHeight - 1, Math.ceil(maxY + padY));
+  const width = Math.max(2, right - col + 1);
+  const height = Math.max(2, bottom - row + 1);
+  return { row, col, height, width, display_height: height, display_width: width, display_scale: 1 };
 }
 
 function registrationSummary(result: RegistrationResultDTO): string {
@@ -274,6 +311,11 @@ export function baselineResultsView(): ResultsViewModel {
     acquisitionTimeReference: exp000.acquisitionTimeReference,
     sunAzimuth: null,
     sunIncidence: null,
+    referenceSunAzimuth: null,
+    referenceSunIncidence: null,
+    sunAngleDifferenceDegrees: null,
+    sunAzimuthDifferenceDegrees: null,
+    sunIncidenceDifferenceDegrees: null,
     region: exp000.region,
     sourceDims: {
       width: exp000.sourceDims.width,
@@ -333,8 +375,26 @@ export function fromRegistrationResult(
   const sh = result.source.height_px;
   const rw = result.reference.width_px;
   const rh = result.reference.height_px;
-  const sourceCrop = result.preview_source_crop ?? null;
-  const referenceCrop = result.preview_reference_crop ?? null;
+  const sourceCrop =
+    result.preview_source_crop ??
+    (result.preview_available
+      ? estimateCropFromPoints(
+          result.control_points.length ? result.control_points : result.inliers,
+          "source",
+          sw,
+          sh,
+        )
+      : null);
+  const referenceCrop =
+    result.preview_reference_crop ??
+    (result.preview_available
+      ? estimateCropFromPoints(
+          result.control_points.length ? result.control_points : result.inliers,
+          "reference",
+          rw,
+          rh,
+        )
+      : null);
   const pointsSource = result.control_points.length
     ? result.control_points
     : result.inliers;
@@ -424,6 +484,11 @@ export function fromRegistrationResult(
     acquisitionTimeReference: result.reference.acquisition_time ?? "Unavailable",
     sunAzimuth: result.source.sun_azimuth ?? null,
     sunIncidence: result.source.sun_incidence ?? null,
+    referenceSunAzimuth: result.reference.sun_azimuth ?? null,
+    referenceSunIncidence: result.reference.sun_incidence ?? null,
+    sunAngleDifferenceDegrees: result.sun_angle_difference_degrees ?? null,
+    sunAzimuthDifferenceDegrees: result.sun_azimuth_difference_degrees ?? null,
+    sunIncidenceDifferenceDegrees: result.sun_incidence_difference_degrees ?? null,
     region: null,
     sourceDims: {
       width: sw,
