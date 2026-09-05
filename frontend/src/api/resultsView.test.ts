@@ -160,6 +160,68 @@ describe("resultsView", () => {
     );
   });
 
+  it("maps correspondence markers into the diagnostic preview crop frame", () => {
+    const view = fromRegistrationResult(
+      sampleResult({
+        preview_available: true,
+        preview_mode: "diagnostic_crop",
+        preview_source_crop: {
+          row: 10,
+          col: 5,
+          height: 50,
+          width: 50,
+          display_height: 50,
+          display_width: 50,
+          display_scale: 1,
+        },
+        preview_reference_crop: {
+          row: 20,
+          col: 20,
+          height: 40,
+          width: 40,
+          display_height: 40,
+          display_width: 40,
+          display_scale: 1,
+        },
+        control_points: [
+          { source_xy: [15, 20], reference_xy: [30, 40], residual: 0.001, uncertainty: null },
+        ],
+      }),
+      { jobId: "job-crop", artifactUrl: null },
+    );
+    // source: (15-5)/(50-1)*100 ≈ 20.408
+    expect(view.points[0].x).toBeCloseTo((15 - 5) / 49 * 100, 5);
+    expect(view.points[0].y).toBeCloseTo((20 - 10) / 49 * 100, 5);
+    // reference: (30-20)/(40-1)*100
+    expect(view.points[0].rx).toBeCloseTo((30 - 20) / 39 * 100, 5);
+    expect(view.points[0].ry).toBeCloseTo((40 - 20) / 39 * 100, 5);
+    expect(view.points[0].inSourcePreview).toBe(true);
+    expect(view.points[0].inReferencePreview).toBe(true);
+    expect(view.previewSourceCrop?.col).toBe(5);
+    expect(view.previewReferenceCrop?.row).toBe(20);
+  });
+
+  it("marks points outside the preview crop so the UI can hide them", () => {
+    const view = fromRegistrationResult(
+      sampleResult({
+        preview_source_crop: {
+          row: 0,
+          col: 0,
+          height: 10,
+          width: 10,
+          display_height: 10,
+          display_width: 10,
+          display_scale: 1,
+        },
+        control_points: [
+          { source_xy: [90, 90], reference_xy: [30, 40], residual: null, uncertainty: null },
+        ],
+      }),
+      { jobId: "job-out", artifactUrl: null },
+    );
+    expect(view.points[0].inSourcePreview).toBe(false);
+  });
+
   it("maps no-match diagnostics", () => {
     const view = fromRegistrationResult(
       sampleResult({

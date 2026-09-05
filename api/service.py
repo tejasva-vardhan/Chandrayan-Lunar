@@ -29,6 +29,7 @@ from api.schemas import (
     JobResultResponse,
     JobStatus,
     JobStatusResponse,
+    PreviewCropDTO,
     ProductSummary,
     ProductUploadResponse,
     RegistrationResultDTO,
@@ -567,7 +568,14 @@ class RegistrationService:
             )
 
     def _ensure_previews(self, record: _JobRecord) -> dict[str, Any]:
-        if record.preview_meta.get("available") and record.preview_paths:
+        if (
+            record.preview_meta.get("available")
+            and record.preview_paths
+            and (
+                record.preview_meta.get("source_crop") is not None
+                or record.preview_meta.get("reference_crop") is not None
+            )
+        ):
             return record.preview_meta
         if record.pair is None or record.result is None:
             return {
@@ -575,6 +583,20 @@ class RegistrationService:
                 "mode": "unavailable",
                 "note": "Overlay preview unavailable.",
             }
+        # If PNG paths already exist but crop meta is missing, rebuild meta only.
+        if record.preview_meta.get("available") and record.preview_paths:
+            try:
+                refreshed = ensure_job_previews(record.pair, record.result, record.output_dir)
+                record.preview_meta = {
+                    **record.preview_meta,
+                    "source_crop": refreshed.get("source_crop"),
+                    "reference_crop": refreshed.get("reference_crop"),
+                    "mode": refreshed.get("mode", record.preview_meta.get("mode")),
+                    "note": refreshed.get("note", record.preview_meta.get("note")),
+                }
+                return record.preview_meta
+            except Exception:  # noqa: BLE001
+                return record.preview_meta
         try:
             meta = ensure_job_previews(record.pair, record.result, record.output_dir)
         except Exception as exc:  # noqa: BLE001 — preview is best-effort viewing aid
@@ -600,6 +622,8 @@ class RegistrationService:
             "available": bool(meta.get("available")),
             "mode": meta.get("mode"),
             "note": meta.get("note"),
+            "source_crop": meta.get("source_crop"),
+            "reference_crop": meta.get("reference_crop"),
         }
         return record.preview_meta
 
@@ -611,6 +635,14 @@ class RegistrationService:
         dto.preview_available = bool(meta.get("available"))
         dto.preview_mode = str(meta.get("mode")) if meta.get("mode") else None
         dto.preview_note = str(meta.get("note")) if meta.get("note") else None
+        src_crop = meta.get("source_crop")
+        ref_crop = meta.get("reference_crop")
+        dto.preview_source_crop = (
+            PreviewCropDTO.model_validate(src_crop) if isinstance(src_crop, dict) else None
+        )
+        dto.preview_reference_crop = (
+            PreviewCropDTO.model_validate(ref_crop) if isinstance(ref_crop, dict) else None
+        )
 
     def _capturing_ops(self, captured: dict[str, Any], record: _JobRecord) -> PipelineOperations:
         from src.pipeline.orchestrator import default_operations

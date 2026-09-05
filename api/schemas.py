@@ -124,6 +124,20 @@ class TransformationDTO(BaseModel):
     parameters: dict[str, Any] = Field(default_factory=dict)
 
 
+class PreviewCropDTO(BaseModel):
+    """Original-pixel crop window used to build a diagnostic preview PNG."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    row: int
+    col: int
+    height: int
+    width: int
+    display_height: int | None = None
+    display_width: int | None = None
+    display_scale: float | None = None
+
+
 class RegistrationResultDTO(BaseModel):
     """API view of RegistrationResult + pair context for the UI."""
 
@@ -155,6 +169,8 @@ class RegistrationResultDTO(BaseModel):
     preview_available: bool = False
     preview_mode: str | None = None
     preview_note: str | None = None
+    preview_source_crop: PreviewCropDTO | None = None
+    preview_reference_crop: PreviewCropDTO | None = None
 
 
 class JobStatusResponse(BaseModel):
