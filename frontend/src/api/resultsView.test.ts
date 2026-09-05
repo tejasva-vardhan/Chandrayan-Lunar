@@ -81,22 +81,69 @@ describe("resultsView", () => {
     expect(view.fullRasterBlocked).toBe(true);
   });
 
-  it("maps successful live results with isLive true", () => {
-    const view = fromRegistrationResult(sampleResult(), {
-      jobId: "job-9",
-      artifactUrl: null,
-    });
+  it("maps successful live results with isLive true and preserves live metrics", () => {
+    const view = fromRegistrationResult(
+      sampleResult({
+        candidate_correspondences: 919,
+        verified_inliers: 25,
+        metrics: {
+          verification_residual_rmse: 1.2e-3,
+          verification_residual_rmse_label: "Verification residual RMSE",
+          inlier_count: 25,
+          inlier_ratio: 0.027,
+          spatial_coverage: 0.506,
+          control_point_count: 11,
+          independent_accuracy_claim: "Not independently validated",
+        },
+        control_points: Array.from({ length: 11 }, (_, i) => ({
+          source_xy: [10 + i * 5, 20 + i] as [number, number],
+          reference_xy: [30 + i, 40 + i] as [number, number],
+          residual: null,
+          uncertainty: null,
+        })),
+      }),
+      {
+        jobId: "job-9",
+        artifactUrl: null,
+      },
+    );
     expect(view.isLive).toBe(true);
-    expect(view.rawMatches).toBe(36);
-    expect(view.verified).toBe(4);
-    expect(view.inlierRatio).toBe("11.1%");
-    expect(view.coverage).toBe("23.2%");
-    expect(view.controlPointCount).toBe(4);
+    expect(view.rawMatches).toBe(919);
+    expect(view.verified).toBe(25);
+    expect(view.inlierRatio).toBe("2.7%");
+    expect(view.coverage).toBe("50.6%");
+    expect(view.controlPointCount).toBe(11);
     expect(view.rmseLabel).toBe("Verification residual RMSE");
     expect(view.rmseLabel.toLowerCase()).not.toContain("accuracy");
     expect(view.resultStatus).toBe("COMPLETED WITH LIMITATIONS");
     expect(view.fullRasterBlocked).toBe(true);
-    expect(view.points).toHaveLength(1);
+    expect(view.points).toHaveLength(11);
+  });
+
+  it("keeps baseline fixture metrics isolated from live mapping", () => {
+    const fixture = baselineResultsView();
+    const live = fromRegistrationResult(
+      sampleResult({
+        candidate_correspondences: 919,
+        verified_inliers: 25,
+        metrics: {
+          verification_residual_rmse: 1.2e-3,
+          verification_residual_rmse_label: "Verification residual RMSE",
+          inlier_count: 25,
+          inlier_ratio: 0.027,
+          spatial_coverage: 0.506,
+          control_point_count: 11,
+          independent_accuracy_claim: "Not independently validated",
+        },
+      }),
+      { jobId: "job-sep", artifactUrl: null },
+    );
+    expect(fixture.isLive).toBe(false);
+    expect(fixture.rawMatches).toBe(36);
+    expect(live.isLive).toBe(true);
+    expect(live.rawMatches).toBe(919);
+    expect(live.inlierRatio).not.toBe(fixture.inlierRatio);
+    expect(live.coverage).not.toBe(fixture.coverage);
   });
 
   it("builds overlay preview artifact urls when available", () => {

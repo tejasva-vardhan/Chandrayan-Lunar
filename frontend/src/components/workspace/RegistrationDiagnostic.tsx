@@ -43,12 +43,20 @@ export function RegistrationDiagnostic({ results }: RegistrationDiagnosticProps)
 
       {results.fullRasterBlocked && (
         <div className="diagnostic-limitation" role="status">
-          <b>Full registered raster unavailable</b>
-          <span>Reason: output-size safety limit</span>
+          <b>Registered full-raster output unavailable for this run</b>
+          <span>Reason: output-size safety limit (backend unchanged)</span>
           <p>
-            The estimated transform may still exist. Bounded diagnostic preview is shown when the
-            pipeline produced one — this is not a pipeline failure.
+            BEFORE comparison uses source/reference previews when available. AFTER uses a
+            diagnostic crop only when the pipeline genuinely produced one — never a fabricated
+            registered strip.
           </p>
+        </div>
+      )}
+
+      {!results.fullRasterBlocked && !hasFullRaster && !hasPreview && (
+        <div className="diagnostic-limitation" role="status">
+          <b>Registered full-raster output unavailable for this run</b>
+          <span>No registered artifact or diagnostic preview was returned for this result.</span>
         </div>
       )}
 
