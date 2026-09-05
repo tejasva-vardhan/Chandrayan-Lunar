@@ -6,7 +6,7 @@ import { MoonScene } from "./components/MoonScene";
 import { SolarSystemEntrance } from "./components/SolarSystemEntrance";
 import { RegistrationWorkspace } from "./components/workspace/RegistrationWorkspace";
 import { ResultsPanel } from "./components/workspace/ResultsPanel";
-import { baselineResultsView, type ResultsViewModel } from "./api/resultsView";
+import type { ResultsViewModel } from "./api/resultsView";
 
 const stages = [
   "Deep space", "Equatorial approach", "OHRC strip scan", "Control points", "Quality certificate", "Audit trail",
@@ -48,7 +48,8 @@ function App() {
   const [progress, setProgress]         = useState(0.0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [focusedTarget, setFocusedTarget] = useState<{ lon: number; lat: number; zoomMultiplier?: number } | null>(null);
-  const [results, setResults] = useState<ResultsViewModel>(() => baselineResultsView());
+  /** Single source of truth for Results → Correspondence → Spatial → Quality. null = no live/fixture yet. */
+  const [results, setResults] = useState<ResultsViewModel | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -85,7 +86,11 @@ function App() {
     hudCoords = "LAT 8.00°N · LON 23.43°E";
     hudStatus = "1.2× APPROACH";
   } else if (progress < 0.68) {
-    hudTitle = results.isLive ? "LIVE SCAN FIELD // PIPELINE RESULT" : "EXP-000 SCAN FIELD // EQUATORIAL INLIERS";
+    hudTitle = results?.isLive
+      ? "LIVE SCAN FIELD // PIPELINE RESULT"
+      : results
+        ? "EXP-000 SCAN FIELD // FIXTURE"
+        : "SCAN FIELD // AWAITING LIVE RESULT";
     hudCoords = "LAT 0.65°N · LON 23.43°E";
     hudStatus = "2.8× EXPANDED (SURFACE FOCUS)";
     hudIsExpanded = true;
@@ -160,10 +165,13 @@ function App() {
         <nav className="top-nav" aria-label="Primary navigation">
           <a className="brand" href="#mission">Selene<span>on</span></a>
           <div className="top-nav-links">
-            <a href="#run">Run</a>
-            <a href="#results">{results.isLive ? "Live result" : "Fixture"}</a>
+            <a href="#run">Register</a>
+            <a href="#results">
+              {results?.isLive ? "Live result" : results ? "Fixture" : "Results"}
+            </a>
+            <a href="#correspondence">Evidence</a>
+            <a href="#spatial">Spatial</a>
             <a href="#quality">Quality</a>
-            <a href="#report">Report</a>
           </div>
           <div className="nav-actions">
             <button
@@ -219,9 +227,11 @@ function App() {
         <footer>
           <span>Seleneon / SIH26166</span>
           <span>
-            {results.isLive
+            {results?.isLive
               ? "Scientific interface. Live pipeline result values."
-              : "Scientific interface. Static EXP-000 fixture values."}
+              : results
+                ? "Scientific interface. Static EXP-000 fixture (regression only)."
+                : "Scientific interface. No live result yet."}
           </span>
         </footer>
       </motion.main>

@@ -601,17 +601,259 @@ h1 em {
   background: #020409;
 }
 .viewport-canvas.is-fallback {
-  background:
-    radial-gradient(circle at 28% 22%, #334155 0 2%, transparent 3%),
-    radial-gradient(circle at 72% 78%, #1e293b 0 3%, transparent 4%),
-    repeating-radial-gradient(circle at 40% 50%, #243044 0 2px, #0f172a 3px 18px);
+  background: #020409;
 }
 .evidence-viewport.reference .viewport-canvas.is-fallback {
-  background:
-    radial-gradient(circle at 22% 38%, #334155 0 2%, transparent 3%),
-    radial-gradient(circle at 82% 68%, #1e293b 0 3%, transparent 4%),
-    repeating-radial-gradient(circle at 60% 40%, #243044 0 2px, #0f172a 3px 18px);
+  background: #020409;
 }
+.viewport-canvas.is-empty {
+  background: #020409;
+}
+.viewport-missing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  padding: 20px;
+  text-align: center;
+  color: var(--mist);
+  font-size: 12px;
+  line-height: 1.45;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+}
+.viewport-missing b {
+  color: #e2e8f0;
+  font: 600 12px var(--mono);
+}
+.point-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  pointer-events: none;
+}
+.point-layer .evidence-point {
+  pointer-events: auto;
+}
+.compare-layer {
+  transform-origin: center center;
+}
+.compare-canvas {
+  cursor: grab;
+  touch-action: none;
+  overflow: hidden;
+}
+.compare-canvas:active {
+  cursor: grabbing;
+}
+.compare-stack {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(8, 14, 26, 0.75);
+}
+.compare-stack-canvas {
+  aspect-ratio: 16 / 9;
+}
+.compare-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.compare-controls button {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(8, 14, 26, 0.55);
+  color: var(--mist);
+  font: 600 10px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.compare-controls button.active,
+.compare-controls button:hover:not(:disabled) {
+  color: #f8fafc;
+  border-color: var(--line-strong);
+  background: rgba(56, 189, 248, 0.12);
+}
+.compare-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.compare-opacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mist);
+  font: 600 10px var(--mono);
+}
+.compare-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+.image-unavailable {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.55);
+}
+.image-unavailable b {
+  color: #e2e8f0;
+  font: 600 12px var(--mono);
+}
+.image-unavailable span {
+  color: var(--mist);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.demo-path-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(6, 12, 22, 0.45);
+  color: #64748b;
+  font: 600 10px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.demo-path-nav a {
+  color: var(--signal);
+}
+.demo-path-nav a:hover {
+  text-decoration: underline;
+}
+.provenance-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 700 10px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.provenance-badge.is-live {
+  color: #67e8f9;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  background: rgba(8, 145, 178, 0.18);
+}
+.provenance-badge.is-fixture {
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(180, 83, 9, 0.15);
+}
+.results-header-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.results-section-kicker {
+  margin: 8px 0 0;
+  color: var(--signal);
+  font: 600 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.acceptance-path {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.acceptance-path b {
+  display: block;
+  margin-bottom: 8px;
+  color: #e2e8f0;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.04em;
+}
+.acceptance-path ol {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--mist);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.pair-char-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  margin: 0;
+}
+.pair-char-grid dt {
+  color: #64748b;
+  font: 600 10px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pair-char-grid dd {
+  margin: 2px 0 0;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+.refinement-status-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(6, 12, 22, 0.45);
+}
+.refinement-status-card b {
+  display: block;
+  margin-top: 4px;
+  color: #f8fafc;
+  font-size: 15px;
+}
+.refinement-status-card p {
+  margin: 0;
+  color: var(--mist);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.refinement-disclaimer {
+  color: #64748b !important;
+  font-size: 12px !important;
+}
+.occupancy-map-note {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.spatial-cp {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+.residual-honesty {
+  padding: 12px 14px;
+  border-left: 3px solid rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.06);
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.residual-honesty b {
+  color: #fbbf24;
+  font: 600 12px var(--mono);
+}
+.run-summary-block {
+  margin-top: 8px;
+}
+.certificate-panel .provenance-badge {
+  margin-bottom: 14px;
+}
+
 .viewport-image {
   position: absolute;
   inset: 0;
@@ -1074,7 +1316,8 @@ footer {
   .results-flow { grid-template-columns: 1fr 1fr; }
   .input-pair-cards,
   .evidence-viewports,
-  .occupancy-row { grid-template-columns: 1fr; }
+  .occupancy-row,
+  .pair-char-grid { grid-template-columns: 1fr; }
   .point-inspector dl { grid-template-columns: 1fr 1fr; }
   .quality, .report { grid-template-columns: 1fr; gap: 24px; padding: 60px 20px; }
   .solar-bottom-bar { flex-direction: column; gap: 16px; align-items: stretch; }
