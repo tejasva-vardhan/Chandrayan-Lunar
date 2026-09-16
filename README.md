@@ -45,7 +45,7 @@ A lower-level source cannot silently override a higher-authority requirement.
 
 | Person | Owns |
 |---|---|
-| Tejas | Architecture, integration, contracts, `src/models/`, `src/pipeline/`, `src/io/`, `configs/`, `docs/`, `api/` |
+| Tejasva Vardhan Sharma | Architecture, integration, contracts, `src/models/`, `src/pipeline/`, `src/io/`, `configs/`, `docs/`, `api/` |
 | Haruto | PDS/ingestion, preprocessing, manifests |
 | Shashwat | SPICE, geometry, pair characterization |
 | Chuba | Representation, matching, adaptive routing |
